@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { api } from '../../api/client';
 
@@ -9,11 +9,13 @@ interface FileEditorProps {
 
 export function FileEditor({ filePath, onClose }: FileEditorProps) {
   const [content, setContent] = useState<string>('');
+  const [originalContent, setOriginalContent] = useState<string>('');
   const [language, setLanguage] = useState<string>('plaintext');
   const [totalLines, setTotalLines] = useState(0);
   const [isModified, setIsModified] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
 
   useEffect(() => {
     loadFile();
@@ -24,6 +26,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
       setError(null);
       const data = await api.readFile(filePath);
       setContent(data.content);
+      setOriginalContent(data.content);
       setLanguage(data.language);
       setTotalLines(data.totalLines);
       setIsModified(false);
@@ -36,6 +39,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
     setIsSaving(true);
     try {
       await api.writeFile(filePath, content);
+      setOriginalContent(content);
       setIsModified(false);
     } catch (e: any) {
       setError(e.message || 'Failed to save file');
@@ -44,11 +48,27 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
     }
   };
 
+  const handleRevert = useCallback(() => {
+    if (isModified) {
+      setContent(originalContent);
+      setIsModified(false);
+    }
+  }, [isModified, originalContent]);
+
   const handleChange = (value: string | undefined) => {
     if (value !== undefined) {
       setContent(value);
-      setIsModified(true);
+      setIsModified(value !== originalContent);
     }
+  };
+
+  const handleEditorMount = (editor: any) => {
+    editor.onDidChangeCursorPosition((e: any) => {
+      setCursorPosition({
+        line: e.position.lineNumber,
+        column: e.position.column,
+      });
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -56,39 +76,119 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
       e.preventDefault();
       handleSave();
     }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+      // Let Monaco handle undo
+    }
+    if (e.key === 'Escape') {
+      onClose();
+    }
   };
 
-  const fileName = filePath.split('/').pop() || '';
+  // Parse file path for breadcrumbs
+  const pathParts = filePath.split('/').filter(Boolean);
+  const fileName = pathParts.pop() || '';
+  const directory = pathParts.join('/');
+
+  // File size
+  const fileSize = new Blob([content]).size;
+  const formatSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
 
   return (
-    <div className="flex flex-col h-full bg-gray-900">
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-800 border-b border-gray-700">
-        <div className="flex items-center gap-2">
-          <span className="text-white text-sm font-medium">{fileName}</span>
-          {isModified && (
-            <span className="text-yellow-400 text-xs">●</span>
-          )}
-          <span className="text-gray-500 text-xs">{totalLines} lines</span>
+    <div className="flex flex-col h-full bg-gradient-subtle">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/60 border-b border-gray-700/50">
+        <div className="flex items-center gap-3">
+          {/* File icon */}
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="text-white text-sm font-medium">{fileName}</span>
+            {isModified && (
+              <span className="w-2 h-2 rounded-full bg-yellow-400" title="Modified" />
+            )}
+          </div>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <span>{directory}</span>
+          </div>
         </div>
+
         <div className="flex items-center gap-2">
+          {/* File info */}
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            <span>{language}</span>
+            <span>{totalLines} lines</span>
+            <span>{formatSize(fileSize)}</span>
+          </div>
+
+          {/* Separator */}
+          <div className="w-px h-4 bg-gray-700/50" />
+
+          {/* Actions */}
+          {isModified && (
+            <button
+              onClick={handleRevert}
+              className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
+              title="Revert changes"
+            >
+              Revert
+            </button>
+          )}
           <button
             onClick={handleSave}
             disabled={!isModified || isSaving}
-            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-600/80 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
-            {isSaving ? 'Saving...' : 'Save'}
+            {isSaving ? (
+              <>
+                <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Saving...
+              </>
+            ) : (
+              <>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                </svg>
+                Save
+                <kbd className="ml-1 px-1 py-0.5 bg-blue-700/50 rounded text-[10px]">⌘S</kbd>
+              </>
+            )}
           </button>
           <button
             onClick={onClose}
-            className="px-3 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors"
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors"
+            title="Close (Esc)"
           >
-            Close
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
           </button>
         </div>
       </div>
+
+      {/* Editor */}
       {error ? (
-        <div className="flex-1 flex items-center justify-center text-red-400">
-          {error}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <svg className="w-12 h-12 mx-auto mb-4 text-red-400/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <p className="text-red-400 mb-2">{error}</p>
+            <button
+              onClick={loadFile}
+              className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
+            >
+              Try again
+            </button>
+          </div>
         </div>
       ) : (
         <div className="flex-1" onKeyDown={handleKeyDown}>
@@ -97,6 +197,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
             language={language}
             value={content}
             onChange={handleChange}
+            onMount={handleEditorMount}
             theme="vs-dark"
             options={{
               minimap: { enabled: false },
@@ -107,11 +208,32 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
               wordWrap: 'on',
               automaticLayout: true,
               scrollBeyondLastLine: false,
-              padding: { top: 8, bottom: 8 },
+              padding: { top: 12, bottom: 12 },
+              smoothScrolling: true,
+              cursorBlinking: 'smooth',
+              cursorSmoothCaretAnimation: 'on',
+              bracketPairColorization: { enabled: true },
+              guides: {
+                bracketPairs: true,
+                indentation: true,
+              },
             }}
           />
         </div>
       )}
+
+      {/* Status bar */}
+      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-800/60 border-t border-gray-700/50 text-[11px] text-gray-500">
+        <div className="flex items-center gap-4">
+          <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
+          <span>{language}</span>
+          <span>UTF-8</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span>Spaces: 2</span>
+          <span>{formatSize(fileSize)}</span>
+        </div>
+      </div>
     </div>
   );
 }
