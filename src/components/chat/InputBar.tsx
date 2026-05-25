@@ -83,7 +83,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop }: InputBarProp
         <span> </span>
         <span>Claude Code</span>
         <span className="text-gray-600">|</span>
-        <span>claude-sonnet-4-20250514</span>
+        <span>mimo-v2.5-pro</span>
         {disabled && (
           <>
             <span className="text-gray-600">|</span>

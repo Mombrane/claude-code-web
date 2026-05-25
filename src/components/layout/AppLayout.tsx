@@ -24,7 +24,7 @@ interface Settings {
 
 const defaultSettings: Settings = {
   theme: 'dark',
-  model: 'claude-sonnet-4-20250514',
+  model: '',
   fontSize: 14,
   tabSize: 2,
   wordWrap: 'on',
@@ -296,7 +296,7 @@ export function AppLayout() {
             Connected
           </span>
           <span className="text-gray-600">|</span>
-          <span>{settings.model}</span>
+          <span>{settings.model || 'mimo-v2.5-pro'}</span>
         </div>
         <div className="flex items-center gap-3">
           <kbd className="px-1.5 py-0.5 bg-gray-700/50 rounded text-[10px]">Ctrl+K</kbd>

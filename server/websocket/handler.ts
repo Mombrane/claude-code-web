@@ -177,7 +177,7 @@ export class WebSocketHandler {
     }
 
     // Send message to Claude
-    const sent = claudeProcessManager.sendMessage(sessionId, userMessage);
+    const sent = await claudeProcessManager.sendMessage(sessionId, userMessage);
     if (!sent) {
       this.sendError(ws, 'Failed to send message to Claude');
     }

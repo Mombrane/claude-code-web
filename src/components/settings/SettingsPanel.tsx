@@ -136,9 +136,8 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
               onChange={(e) => handleChange('model', e.target.value)}
               className="w-full px-3 py-2.5 bg-gray-700/50 text-white rounded-lg border border-gray-600/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
             >
-              <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
-              <option value="claude-opus-4-20250514">Claude Opus 4</option>
-              <option value="claude-haiku-4-20250514">Claude Haiku 4</option>
+              <option value="">Default (mimo-v2.5-pro)</option>
+              <option value="mimo-v2.5-pro">mimo-v2.5-pro</option>
             </select>
           </div>
 

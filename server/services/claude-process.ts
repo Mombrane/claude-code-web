@@ -7,24 +7,10 @@ import type { ClaudeSession, SpawnOptions, StreamEvent } from '../types';
 
 export class ClaudeProcessManager extends EventEmitter {
   private sessions: Map<string, ClaudeSession> = new Map();
-  private outputBuffers: Map<string, string> = new Map();
+  private activeProcesses: Map<string, ChildProcess> = new Map();
 
   constructor() {
     super();
-    this.startSessionCleanup();
-  }
-
-  private startSessionCleanup() {
-    setInterval(() => {
-      const now = Date.now();
-      for (const [id, session] of this.sessions) {
-        const lastActivity = new Date(session.lastActivity).getTime();
-        if (now - lastActivity > config.sessionTimeout) {
-          console.log(`Session ${id} timed out, closing...`);
-          this.closeSession(id);
-        }
-      }
-    }, 60000); // Check every minute
   }
 
   async spawnSession(options: SpawnOptions = {}): Promise<ClaudeSession> {
@@ -32,40 +18,71 @@ export class ClaudeProcessManager extends EventEmitter {
     const cwd = options.cwd || config.defaultCwd;
     const model = options.model || config.defaultModel;
 
-    const args = [
-      '-p', '--verbose',
-      '--output-format', 'stream-json',
-      '--input-format', 'stream-json',
-      '--session-id', sessionId,
-      '--permission-mode', options.permissionMode || 'auto',
-      '--model', model,
-      '--cwd', cwd,
-    ];
-
-    if (options.allowedTools) {
-      args.push('--allowedTools', options.allowedTools.join(','));
-    }
-
-    console.log(`Spawning Claude session ${sessionId} with args:`, args);
-
-    const proc = spawn(config.claudePath, args, {
-      stdio: ['pipe', 'pipe', 'pipe'],
-      env: { ...process.env },
-    });
-
     const session: ClaudeSession = {
       sessionId,
-      process: proc,
+      process: null as any,
       status: 'active',
       lastActivity: new Date().toISOString(),
+      cwd,
+      model,
+      permissionMode: options.permissionMode || 'auto',
+      allowedTools: options.allowedTools,
     };
 
     this.sessions.set(sessionId, session);
-    this.outputBuffers.set(sessionId, '');
+    return session;
+  }
+
+  async sendMessage(sessionId: string, prompt: string): Promise<boolean> {
+    const session = this.sessions.get(sessionId);
+    if (!session || session.status === 'closed') {
+      return false;
+    }
+
+    // Kill any existing process for this session
+    this.killProcess(sessionId);
+
+    const args = [
+      '-p', '--verbose',
+      '--output-format', 'stream-json',
+      '--session-id', sessionId,
+      '--permission-mode', session.permissionMode || 'auto',
+    ];
+
+    const model = session.model || config.defaultModel;
+    if (model) {
+      args.push('--model', model);
+    }
+
+    if (session.allowedTools) {
+      args.push('--allowedTools', session.allowedTools.join(','));
+    }
+
+    // Add the prompt as the last argument
+    args.push(prompt);
+
+    console.log(`Sending message to Claude session ${sessionId}`);
+
+    const proc = spawn(config.claudePath, args, {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: session.cwd || config.defaultCwd,
+      env: { ...process.env },
+    });
+
+    this.activeProcesses.set(sessionId, proc);
+    session.lastActivity = new Date().toISOString();
 
     this.setupProcessHandlers(sessionId, proc);
 
-    return session;
+    return true;
+  }
+
+  private killProcess(sessionId: string) {
+    const proc = this.activeProcesses.get(sessionId);
+    if (proc) {
+      proc.kill();
+      this.activeProcesses.delete(sessionId);
+    }
   }
 
   private setupProcessHandlers(sessionId: string, proc: ChildProcess) {
@@ -87,15 +104,13 @@ export class ClaudeProcessManager extends EventEmitter {
 
     proc.on('close', (code) => {
       console.log(`[${sessionId}] process closed with code ${code}`);
-      const session = this.sessions.get(sessionId);
-      if (session) {
-        session.status = 'closed';
-        this.emit('session:closed', sessionId, code);
-      }
+      this.activeProcesses.delete(sessionId);
+      this.emit('process:closed', sessionId, code);
     });
 
     proc.on('error', (error) => {
       console.error(`[${sessionId}] process error:`, error);
+      this.activeProcesses.delete(sessionId);
       this.emit('error', sessionId, error);
     });
   }
@@ -136,54 +151,26 @@ export class ClaudeProcessManager extends EventEmitter {
         }
         break;
 
-      case 'user':
-        if (event.content_block) {
-          this.emit('user:tool_result', sessionId, {
-            toolUseId: event.content_block.id,
-            output: event.content_block.text || '',
-            isError: false,
-            sessionId,
-          });
-        }
-        break;
-
       case 'result':
         this.emit('result:complete', sessionId, {
-          result: event.message?.content?.[0]?.text || '',
-          costUsd: event.result?.cost_usd || 0,
-          usage: event.result?.usage || { input_tokens: 0, output_tokens: 0 },
+          result: event.result || '',
+          costUsd: event.total_cost_usd || 0,
+          usage: event.usage || { input_tokens: 0, output_tokens: 0 },
           sessionId,
         });
         break;
 
       default:
-        console.log(`[${sessionId}] Unknown event type:`, event.type);
+        console.log(`[${sessionId}] Event type:`, event.type);
     }
-  }
-
-  sendMessage(sessionId: string, prompt: string): boolean {
-    const session = this.sessions.get(sessionId);
-    if (!session || session.status === 'closed') {
-      return false;
-    }
-
-    const message = JSON.stringify({
-      type: 'user_message',
-      content: prompt,
-    }) + '\n';
-
-    session.process.stdin.write(message);
-    session.lastActivity = new Date().toISOString();
-    return true;
   }
 
   closeSession(sessionId: string): void {
+    this.killProcess(sessionId);
     const session = this.sessions.get(sessionId);
     if (session) {
-      session.process.kill();
       session.status = 'closed';
       this.sessions.delete(sessionId);
-      this.outputBuffers.delete(sessionId);
     }
   }
 
