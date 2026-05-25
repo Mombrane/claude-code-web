@@ -37,7 +37,8 @@ router.post('/', async (req: Request, res: Response) => {
 // Get single session
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const session = await sessionStore.getSession(req.params.id);
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const session = await sessionStore.getSession(id);
     if (!session) {
       return res.status(404).json({ error: 'Session not found' });
     }
@@ -50,14 +51,15 @@ router.get('/:id', async (req: Request, res: Response) => {
 // Update session
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
     const { name } = req.body;
     if (name) {
-      const success = await sessionStore.updateSessionName(req.params.id, name);
+      const success = await sessionStore.updateSessionName(id, name);
       if (!success) {
         return res.status(404).json({ error: 'Session not found' });
       }
     }
-    const session = await sessionStore.getSession(req.params.id);
+    const session = await sessionStore.getSession(id);
     res.json(session);
   } catch (e) {
     res.status(500).json({ error: 'Failed to update session' });
@@ -67,11 +69,13 @@ router.patch('/:id', async (req: Request, res: Response) => {
 // Delete session
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+
     // Close Claude process if active
-    claudeProcessManager.closeSession(req.params.id);
+    claudeProcessManager.closeSession(id);
 
     // Delete session data
-    const success = await sessionStore.deleteSession(req.params.id);
+    const success = await sessionStore.deleteSession(id);
     if (!success) {
       return res.status(404).json({ error: 'Session not found' });
     }

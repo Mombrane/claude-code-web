@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
-import type { Session } from '../../types';
 
 export function Sidebar() {
   const {

@@ -1,108 +1,139 @@
 # Claude Code Web Interface
 
-一个基于 Web 的 Claude Code 界面，将 CLI 体验转化为网页端。
+A web-based interface for Claude Code that transforms the CLI experience into a web application.
 
-## 功能特性
+## Features
 
-- 🌐 **Web 对话界面** - 通过网页与 Claude Code 交互
-- 💬 **流式响应** - 实时显示 Claude 的回复
-- 🔧 **工具调用展示** - 可视化展示工具调用过程
-- 📁 **会话管理** - 创建、切换、删除会话
-- 💾 **历史持久化** - 保存对话历史记录
-- ⚡ **WebSocket 通信** - 实时双向通信
+- 🌐 **Web Chat Interface** - Interact with Claude Code through a web UI
+- 💬 **Streaming Responses** - Real-time display of Claude's responses
+- 🔧 **Tool Call Visualization** - Visualize tool calls
+- 📁 **File Management** - Browse and edit project files with Monaco Editor
+- 🔄 **Git Integration** - View status, diff, and commit history
+- 💾 **Session Persistence** - Save conversation history
+- ⚡ **WebSocket Communication** - Real-time bidirectional communication
+- 🎨 **Modern UI** - Dark theme with Tailwind CSS
 
-## 技术栈
+## Quick Start
 
-### 前端
-- React 19 + TypeScript
-- Vite 6
-- Tailwind CSS 4
-- Zustand (状态管理)
-- react-markdown (Markdown 渲染)
+### Prerequisites
 
-### 后端
-- Node.js + Express 5
-- WebSocket (ws)
-- simple-git (Git 集成)
+- Node.js v18 or higher
+- Claude Code CLI installed and configured
 
-## 快速开始
+### Option 1: Run from source
 
-### 安装依赖
 ```bash
+git clone https://github.com/Mombrane/claude-code-web.git
+cd claude-code-web
 npm install
-```
-
-### 启动开发服务器
-```bash
 npm run dev
 ```
 
-这将同时启动:
-- 前端: http://localhost:5173
-- 后端: http://localhost:3001
+Open http://localhost:5173 in your browser.
 
-### 单独启动
+### Option 2: Install from npm
 
-**前端:**
 ```bash
-npm run dev:client
+npm install -g claude-code-web
+claude-code-web
 ```
 
-**后端:**
+Open http://localhost:3001 in your browser.
+
+### Option 3: Download release package
+
+Download the appropriate package for your platform from the releases page:
+
+- `claude-code-web-1.0.0-linux-x64.tar.gz` - Linux x64
+- `claude-code-web-1.0.0-darwin-x64.tar.gz` - macOS x64
+- `claude-code-web-1.0.0-darwin-arm64.tar.gz` - macOS ARM64 (Apple Silicon)
+
+Extract and run:
+
 ```bash
-npm run dev:server
+tar -xzf claude-code-web-1.0.0-linux-x64.tar.gz
+cd claude-code-web-1.0.0-linux-x64
+./start.sh
 ```
 
-## API 接口
+## Keyboard Shortcuts
 
-### 会话管理
-- `GET /api/sessions` - 获取所有会话
-- `POST /api/sessions` - 创建新会话
-- `GET /api/sessions/:id` - 获取单个会话
-- `PATCH /api/sessions/:id` - 更新会话
-- `DELETE /api/sessions/:id` - 删除会话
+- `Ctrl+Shift+F` - Toggle files panel
+- `Ctrl+`` ` `` - Toggle terminal
+- `Ctrl+G` - Toggle git panel
+- `Ctrl+,` - Open settings
 
-### 文件管理
-- `GET /api/files/tree?path=` - 列出目录
-- `GET /api/files/content?path=` - 读取文件
-- `PUT /api/files/content` - 写入文件
-- `GET /api/files/search?q=&path=` - 搜索文件
+## API Endpoints
 
-### Git 操作
-- `GET /api/git/status?cwd=` - Git 状态
-- `GET /api/git/diff?cwd=&staged=` - Git Diff
-- `GET /api/git/log?cwd=&count=` - 提交历史
-- `POST /api/git/stage` - 暂存文件
-- `POST /api/git/commit` - 提交
+### Sessions
+- `GET /api/sessions` - List all sessions
+- `POST /api/sessions` - Create new session
+- `GET /api/sessions/:id` - Get session
+- `DELETE /api/sessions/:id` - Delete session
+
+### Files
+- `GET /api/files/tree?path=` - List directory
+- `GET /api/files/content?path=` - Read file
+- `PUT /api/files/content` - Write file
+- `GET /api/files/search?q=&path=` - Search files
+
+### Git
+- `GET /api/git/status?cwd=` - Git status
+- `GET /api/git/diff?cwd=` - Git diff
+- `GET /api/git/log?cwd=` - Git log
+- `POST /api/git/commit` - Git commit
 
 ### WebSocket
-- `ws://localhost:3001/ws` - 实时通信
+- `ws://localhost:3001/ws` - Real-time communication
 
-## 项目结构
+## Tech Stack
+
+### Frontend
+- React 19 + TypeScript
+- Vite 8
+- Tailwind CSS 4
+- Zustand (state management)
+- Monaco Editor (code editing)
+- xterm.js (terminal emulation)
+- react-markdown (Markdown rendering)
+
+### Backend
+- Node.js + Express 5
+- WebSocket (ws)
+- simple-git (Git integration)
+
+## Project Structure
 
 ```
 claude-code-web/
-├── server/                    # 后端
-│   ├── index.ts              # Express + WebSocket 入口
+├── server/                    # Backend
+│   ├── index.ts              # Express + WebSocket entry
 │   ├── services/
-│   │   ├── claude-process.ts # Claude 子进程管理
-│   │   ├── session-store.ts  # 会话持久化
-│   │   ├── file-service.ts   # 文件操作
-│   │   └── git-service.ts    # Git 操作
+│   │   ├── claude-process.ts # Claude subprocess management
+│   │   ├── session-store.ts  # Session persistence
+│   │   ├── file-service.ts   # File operations
+│   │   └── git-service.ts    # Git operations
 │   ├── routes/               # REST API
-│   └── websocket/            # WebSocket 处理
-├── src/                       # 前端
+│   └── websocket/            # WebSocket handler
+├── src/                       # Frontend
 │   ├── components/
-│   │   ├── chat/             # 对话组件
-│   │   └── layout/           # 布局组件
-│   ├── stores/               # 状态管理
-│   └── api/                  # API 客户端
-└── data/sessions/            # 会话存储
+│   │   ├── chat/             # Chat components
+│   │   ├── files/            # File management
+│   │   ├── git/              # Git integration
+│   │   ├── terminal/         # Terminal panel
+│   │   ├── settings/         # Settings panel
+│   │   └── layout/           # Layout components
+│   ├── stores/               # State management
+│   └── api/                  # API clients
+├── bin/                       # CLI entry point
+├── scripts/                   # Build and packaging scripts
+└── data/sessions/            # Session storage
 ```
 
-## 环境变量
+## Configuration
 
-创建 `.env` 文件:
+Create a `.env` file:
+
 ```env
 PORT=3001
 DATA_DIR=./data/sessions
@@ -111,15 +142,24 @@ DEFAULT_CWD=/path/to/your/project
 SESSION_TIMEOUT=1800000
 ```
 
-## 开发进度
+## Development
 
-- [x] 项目脚手架
-- [x] 后端核心服务
-- [x] 前端核心组件
-- [x] 会话管理功能
-- [ ] 文件管理功能
-- [ ] Git 集成功能
-- [ ] 终端面板
+```bash
+# Install dependencies
+npm install
+
+# Start development servers
+npm run dev
+
+# Build for production
+npm run build
+
+# Create distribution packages
+npm run package
+
+# Run tests
+npm run test
+```
 
 ## License
 

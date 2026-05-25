@@ -1,16 +1,44 @@
 {
   "name": "claude-code-web",
-  "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "A web-based interface for Claude Code",
+  "private": false,
   "type": "module",
+  "main": "server/index.js",
+  "bin": {
+    "claude-code-web": "./bin/cli.js"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
     "dev:server": "tsx watch server/index.ts",
     "build": "tsc -b && vite build",
+    "build:server": "tsc -p tsconfig.server.json",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "node dist/server/index.js"
+    "start": "node dist/server/index.js",
+    "package": "bash scripts/package.sh",
+    "package:linux": "bash scripts/package.sh linux",
+    "package:macos": "bash scripts/package.sh darwin",
+    "clean": "rm -rf dist build"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "ai",
+    "web-interface",
+    "terminal",
+    "code-editor",
+    "git"
+  ],
+  "author": "Mombrane",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mombrane/claude-code-web.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

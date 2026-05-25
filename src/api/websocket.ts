@@ -1,4 +1,4 @@
-import type { WebSocketMessage, StreamEvent } from '../types';
+import type { WebSocketMessage } from '../types';
 
 type MessageHandler = (message: WebSocketMessage) => void;
 

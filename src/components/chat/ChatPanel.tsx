@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
-import type { Message, StreamEvent } from '../../types';
+import type { StreamEvent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export function ChatPanel() {
