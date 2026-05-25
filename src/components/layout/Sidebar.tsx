@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
+import { useI18n } from '../../i18n';
 
 export function Sidebar() {
   const {
@@ -12,6 +13,7 @@ export function Sidebar() {
     setCurrentSession,
     updateSession,
   } = useSessionStore();
+  const { t } = useI18n();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -127,15 +129,15 @@ export function Sidebar() {
 
     let label: string;
     if (days === 0) {
-      label = 'Today';
+      label = t('time.today');
     } else if (days === 1) {
-      label = 'Yesterday';
+      label = t('time.yesterday');
     } else if (days < 7) {
-      label = 'This Week';
+      label = t('time.thisWeek');
     } else if (days < 30) {
-      label = 'This Month';
+      label = t('time.thisMonth');
     } else {
-      label = 'Older';
+      label = t('time.older');
     }
 
     if (!groups[label]) {
@@ -175,7 +177,7 @@ export function Sidebar() {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search sessions..."
+            placeholder={t('sidebar.search')}
             className="w-full pl-8 pr-3 py-1.5 bg-gray-700/50 text-sm text-white placeholder-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:bg-gray-700/70 transition-all"
           />
         </div>
