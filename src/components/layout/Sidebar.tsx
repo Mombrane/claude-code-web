@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 
@@ -10,12 +10,24 @@ export function Sidebar() {
     addSession,
     removeSession,
     setCurrentSession,
+    updateSession,
   } = useSessionStore();
   const [isCreating, setIsCreating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSessions();
   }, []);
+
+  useEffect(() => {
+    if (editingSessionId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingSessionId]);
 
   const loadSessions = async () => {
     try {
@@ -51,82 +63,247 @@ export function Sidebar() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handleRenameSession = async (sessionId: string) => {
+    if (editName.trim()) {
+      try {
+        await api.updateSession(sessionId, { name: editName.trim() });
+        updateSession(sessionId, { name: editName.trim() });
+      } catch (e) {
+        console.error('Failed to rename session:', e);
+      }
+    }
+    setEditingSessionId(null);
+    setEditName('');
   };
 
+  const handleStartRename = (session: any, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingSessionId(session.id);
+    setEditName(session.name);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
+    if (e.key === 'Enter') {
+      handleRenameSession(sessionId);
+    } else if (e.key === 'Escape') {
+      setEditingSessionId(null);
+      setEditName('');
+    }
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    if (days === 0) {
+      return date.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } else if (days === 1) {
+      return 'Yesterday';
+    } else if (days < 7) {
+      return `${days} days ago`;
+    } else {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      });
+    }
+  };
+
+  const filteredSessions = sessions.filter(session =>
+    session.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Group sessions by date
+  const groupedSessions = filteredSessions.reduce((groups, session) => {
+    const date = new Date(session.updatedAt);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    let label: string;
+    if (days === 0) {
+      label = 'Today';
+    } else if (days === 1) {
+      label = 'Yesterday';
+    } else if (days < 7) {
+      label = 'This Week';
+    } else if (days < 30) {
+      label = 'This Month';
+    } else {
+      label = 'Older';
+    }
+
+    if (!groups[label]) {
+      groups[label] = [];
+    }
+    groups[label].push(session);
+    return groups;
+  }, {} as Record<string, typeof sessions>);
+
   return (
-    <div className="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
-      <div className="p-4 border-b border-gray-700">
-        <h1 className="text-xl font-bold text-white">Claude Code Web</h1>
+    <div className="w-64 bg-gray-800/80 flex flex-col h-full">
+      {/* Header */}
+      <div className="p-3 border-b border-gray-700/50">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg"> </span>
+            <h1 className="text-sm font-semibold text-gradient">Claude Code Web</h1>
+          </div>
+          <button
+            onClick={handleCreateSession}
+            disabled={isCreating}
+            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-all duration-200"
+            title="New Session (Ctrl+N)"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Search */}
+        <div className="relative">
+          <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search sessions..."
+            className="w-full pl-8 pr-3 py-1.5 bg-gray-700/50 text-sm text-white placeholder-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:bg-gray-700/70 transition-all"
+          />
+        </div>
       </div>
 
-      <div className="p-2">
-        <button
-          onClick={handleCreateSession}
-          disabled={isCreating}
-          className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
-        >
-          {isCreating ? 'Creating...' : '+ New Session'}
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {sessions.length === 0 ? (
-          <div className="p-4 text-gray-500 text-center">No sessions yet</div>
+      {/* Session list */}
+      <div className="flex-1 overflow-y-auto py-2">
+        {Object.keys(groupedSessions).length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4">
+            {searchQuery ? (
+              <>
+                <svg className="w-8 h-8 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <p className="text-sm text-center">No sessions matching "{searchQuery}"</p>
+              </>
+            ) : (
+              <>
+                <svg className="w-8 h-8 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                </svg>
+                <p className="text-sm text-center mb-3">No sessions yet</p>
+                <button
+                  onClick={handleCreateSession}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  Create your first session
+                </button>
+              </>
+            )}
+          </div>
         ) : (
-          <div className="space-y-1 p-2">
-            {sessions.map((session) => (
-              <div
-                key={session.id}
-                onClick={() => setCurrentSession(session.id)}
-                className={`group relative px-3 py-2 rounded-lg cursor-pointer transition-colors ${
-                  currentSessionId === session.id
-                    ? 'bg-gray-700 text-white'
-                    : 'text-gray-400 hover:bg-gray-700/50 hover:text-white'
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <div className="font-medium truncate">{session.name}</div>
-                    <div className="text-xs text-gray-500 truncate">
-                      {formatDate(session.updatedAt)}
+          Object.entries(groupedSessions).map(([label, groupSessions]) => (
+            <div key={label} className="mb-2">
+              <div className="px-3 py-1.5 text-[10px] font-medium text-gray-500 uppercase tracking-wider">
+                {label}
+              </div>
+              <div className="space-y-0.5 px-1.5">
+                {groupSessions.map((session) => (
+                  <div
+                    key={session.id}
+                    onClick={() => editingSessionId !== session.id && setCurrentSession(session.id)}
+                    className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
+                      currentSessionId === session.id
+                        ? 'bg-gray-700/80 text-white shadow-sm'
+                        : 'text-gray-400 hover:bg-gray-700/40 hover:text-white'
+                    }`}
+                  >
+                    {/* Session icon */}
+                    <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
+                      currentSessionId === session.id
+                        ? 'bg-blue-500/20 text-blue-400'
+                        : 'bg-gray-700/50 text-gray-500'
+                    }`}>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                      </svg>
+                    </div>
+
+                    {/* Session info */}
+                    <div className="flex-1 min-w-0">
+                      {editingSessionId === session.id ? (
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          onBlur={() => handleRenameSession(session.id)}
+                          onKeyDown={(e) => handleKeyDown(e, session.id)}
+                          className="w-full bg-gray-600 text-white text-sm px-1 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      ) : (
+                        <div className="text-sm font-medium truncate">{session.name}</div>
+                      )}
+                      <div className="flex items-center gap-2 text-[11px] text-gray-500">
+                        <span>{formatDate(session.updatedAt)}</span>
+                        {session.messages && session.messages.length > 0 && (
+                          <>
+                            <span className="text-gray-600">·</span>
+                            <span>{session.messages.length} msgs</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => handleStartRename(session, e)}
+                        className="p-1 text-gray-500 hover:text-white hover:bg-gray-600/50 rounded transition-colors"
+                        title="Rename"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => handleDeleteSession(session.id, e)}
+                        className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
+                        title="Delete"
+                      >
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
-                  <button
-                    onClick={(e) => handleDeleteSession(session.id, e)}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-500 hover:text-red-400 transition-opacity"
-                  >
-                    <svg
-                      className="w-4 h-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
-                  </button>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+          ))
         )}
       </div>
 
-      <div className="p-4 border-t border-gray-700">
-        <div className="text-xs text-gray-500">
-          {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+      {/* Footer */}
+      <div className="p-3 border-t border-gray-700/50">
+        <div className="flex items-center justify-between text-xs text-gray-500">
+          <span>{sessions.length} session{sessions.length !== 1 ? 's' : ''}</span>
+          <button
+            onClick={loadSessions}
+            className="p-1 hover:text-gray-300 hover:bg-gray-700/50 rounded transition-colors"
+            title="Refresh"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>
