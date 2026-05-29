@@ -62,7 +62,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     // Enter to send (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
       handleSend();
     }
@@ -75,11 +75,6 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
       }
     }
 
-    // Ctrl+Enter to send (alternative)
-    if (e.key === 'Enter' && e.ctrlKey) {
-      e.preventDefault();
-      handleSend();
-    }
   };
 
   const handleInput = () => {

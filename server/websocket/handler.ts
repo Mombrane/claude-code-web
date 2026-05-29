@@ -9,6 +9,7 @@ export class WebSocketHandler {
   private wss: WebSocketServer;
   private clients: Map<string, Set<WebSocket>> = new Map();
   private processedResults = new Set<string>();
+  private sessionResultCounters: Map<string, number> = new Map();
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/ws' });
@@ -143,9 +144,10 @@ export class WebSocketHandler {
     });
 
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
-      // Generate unique key for deduplication to prevent double-counting costs
-      // on WebSocket reconnects
-      const resultKey = `${sessionId}-${data.costUsd}-${data.usage?.input_tokens}`;
+      // Generate unique key using monotonic counter per session (more robust than cost/tokens)
+      const counter = (this.sessionResultCounters.get(sessionId) || 0) + 1;
+      this.sessionResultCounters.set(sessionId, counter);
+      const resultKey = `${sessionId}-result-${counter}`;
 
       if (this.processedResults.has(resultKey)) {
         // Already processed this result, skip to avoid double-counting costs

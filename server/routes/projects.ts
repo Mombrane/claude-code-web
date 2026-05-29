@@ -39,7 +39,7 @@ router.post('/', async (req: Request, res: Response) => {
 // Get single project
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const project = await projectStore.getProject(req.params.id);
+    const project = await projectStore.getProject(req.params.id as string);
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -53,7 +53,7 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const { name, icon } = req.body;
-    const project = await projectStore.updateProject(req.params.id, { name, icon });
+    const project = await projectStore.updateProject(req.params.id as string, { name, icon });
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -66,7 +66,7 @@ router.patch('/:id', async (req: Request, res: Response) => {
 // Delete project
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const success = await projectStore.removeProject(req.params.id);
+    const success = await projectStore.removeProject(req.params.id as string);
     if (!success) {
       return res.status(404).json({ error: 'Project not found' });
     }
@@ -79,7 +79,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // Touch project (update last accessed time)
 router.post('/:id/touch', async (req: Request, res: Response) => {
   try {
-    const project = await projectStore.getProject(req.params.id);
+    const project = await projectStore.getProject(req.params.id as string);
     if (!project) {
       return res.status(404).json({ error: 'Project not found' });
     }

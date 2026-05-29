@@ -20,6 +20,43 @@ export function ChatPanel() {
   // Sync streamingText to ref so closures always read the latest value
   useEffect(() => { streamingTextRef.current = streamingText; }, [streamingText]);
 
+  // Timeout cleanup for unpaired tool entries (memory leak prevention)
+  useEffect(() => {
+    const FIVE_MINUTES = 5 * 60 * 1000;
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+
+    const scheduleCleanup = () => {
+      // Check current refs and schedule removal for unpaired entries
+      const now = Date.now();
+      for (const [toolUseId] of toolExecutionIdMap.current) {
+        const tid = setTimeout(() => {
+          if (toolExecutionIdMap.current.has(toolUseId)) {
+            console.warn(`Tool execution pairing timeout for toolUseId: ${toolUseId}`);
+            toolExecutionIdMap.current.delete(toolUseId);
+          }
+        }, FIVE_MINUTES);
+        timeoutIds.push(tid);
+      }
+      for (const [toolUseId] of pendingResults.current) {
+        const tid = setTimeout(() => {
+          if (pendingResults.current.has(toolUseId)) {
+            console.warn(`Pending tool result timeout for toolUseId: ${toolUseId}`);
+            pendingResults.current.delete(toolUseId);
+          }
+        }, FIVE_MINUTES);
+        timeoutIds.push(tid);
+      }
+    };
+
+    // Run cleanup check periodically (every minute)
+    const interval = setInterval(scheduleCleanup, 60_000);
+
+    return () => {
+      clearInterval(interval);
+      timeoutIds.forEach(clearTimeout);
+    };
+  }, [currentSessionId]);
+
   // Clear streaming state when session changes
   useEffect(() => {
     setStreamingText('');

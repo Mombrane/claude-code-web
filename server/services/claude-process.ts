@@ -23,7 +23,7 @@ export class ClaudeProcessManager extends EventEmitter {
 
     const session: ClaudeSession = {
       sessionId,
-      process: null as any,
+      process: null,
       status: 'active',
       lastActivity: new Date().toISOString(),
       cwd,

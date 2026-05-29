@@ -220,7 +220,7 @@ function EditResult({ output, input, theme }: { output: string; input: Record<st
       <div className="p-3">
         {output ? (
           <pre className={`text-sm overflow-x-auto font-mono whitespace-pre-wrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-            {output.split('\n').map((line, i) => {
+            {output.split('\n').map((line, idx) => {
               let lineClass = '';
               if (line.startsWith('+') && !line.startsWith('+++')) {
                 lineClass = theme === 'dark' ? 'text-green-400 bg-green-900/20' : 'text-green-600 bg-green-50';
@@ -229,7 +229,7 @@ function EditResult({ output, input, theme }: { output: string; input: Record<st
               } else if (line.startsWith('@@')) {
                 lineClass = theme === 'dark' ? 'text-blue-400' : 'text-blue-600';
               }
-              return <div key={i} className={lineClass}>{line}</div>;
+              return <div key={`${idx}-${line.slice(0, 20)}`} className={lineClass}>{line}</div>;
             })}
           </pre>
         ) : (
@@ -247,14 +247,14 @@ function GrepGlobResult({ output, theme }: { output: string; theme: 'dark' | 'li
       <div className="p-3 space-y-0.5">
         {lines.length === 0 ? (
           <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(no results)</span>
-        ) : lines.map((line, i) => {
+        ) : lines.map((line, idx) => {
           // Highlight file paths (before the colon) differently from match content
           const colonIdx = line.indexOf(':');
           if (colonIdx > 0) {
             const path = line.slice(0, colonIdx);
             const rest = line.slice(colonIdx + 1);
             return (
-              <div key={i} className="text-sm font-mono flex gap-0">
+              <div key={`${idx}-${path}`} className="text-sm font-mono flex gap-0">
                 <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>{path}</span>
                 <span className="text-gray-500">:</span>
                 <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>{rest}</span>
@@ -262,7 +262,7 @@ function GrepGlobResult({ output, theme }: { output: string; theme: 'dark' | 'li
             );
           }
           return (
-            <div key={i} className={`text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{line}</div>
+            <div key={`${idx}-${line.slice(0, 20)}`} className={`text-sm font-mono ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{line}</div>
           );
         })}
       </div>
@@ -453,9 +453,13 @@ function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | '
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Silently fail
+    }
   };
 
   return (
@@ -507,9 +511,13 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       const exec = message.content as ToolExecutionContent;
       textToCopy = `[${exec.toolName}] ${exec.status}\nInput: ${JSON.stringify(exec.input, null, 2)}${exec.output ? `\nOutput: ${exec.output}` : ''}`;
     }
-    navigator.clipboard.writeText(textToCopy);
-    setCopiedMessageId(message.id);
-    setTimeout(() => setCopiedMessageId(null), 2000);
+    try {
+      navigator.clipboard.writeText(textToCopy);
+      setCopiedMessageId(message.id);
+      setTimeout(() => setCopiedMessageId(null), 2000);
+    } catch {
+      // Silently fail
+    }
   };
 
   const renderMessage = (message: Message) => {
@@ -778,19 +786,19 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                 <pre className={`text-sm overflow-x-auto font-mono whitespace-pre-wrap ${
                   theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
                 }`}>
-                  {patchContent.diff.split('\n').map((line, i) => {
-                    let lineClass = '';
-                    if (line.startsWith('+')) {
-                      lineClass = theme === 'dark' ? 'text-green-400 bg-green-900/20' : 'text-green-600 bg-green-50';
-                    } else if (line.startsWith('-')) {
-                      lineClass = theme === 'dark' ? 'text-red-400 bg-red-900/20' : 'text-red-600 bg-red-50';
-                    } else if (line.startsWith('@@')) {
-                      lineClass = theme === 'dark' ? 'text-blue-400' : 'text-blue-600';
-                    }
-                    return (
-                      <div key={i} className={lineClass}>{line}</div>
-                    );
-                  })}
+                {patchContent.diff.split('\n').map((line, idx) => {
+                   let lineClass = '';
+                   if (line.startsWith('+')) {
+                     lineClass = theme === 'dark' ? 'text-green-400 bg-green-900/20' : 'text-green-600 bg-green-50';
+                   } else if (line.startsWith('-')) {
+                     lineClass = theme === 'dark' ? 'text-red-400 bg-red-900/20' : 'text-red-600 bg-red-50';
+                   } else if (line.startsWith('@@')) {
+                     lineClass = theme === 'dark' ? 'text-blue-400' : 'text-blue-600';
+                   }
+                   return (
+                     <div key={`${idx}-${line.slice(0, 20)}`} className={lineClass}>{line}</div>
+                   );
+                 })}
                 </pre>
               </div>
             </div>
