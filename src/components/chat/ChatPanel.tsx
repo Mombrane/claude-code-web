@@ -3,16 +3,19 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
-import type { StreamEvent } from '../../types';
+import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export function ChatPanel() {
-  const { sessions, currentSessionId, currentMessages, addMessage } = useSessionStore();
+  const { sessions, currentSessionId, currentMessages, addMessage, updateMessage } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const currentSession = sessions.find((s) => s.id === currentSessionId);
   const streamingTextRef = useRef<string>('');
+  // Maps for tool_use / tool_result pairing
+  const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
+  const pendingResults = useRef<Map<string, { output: string; isError: boolean }>>(new Map()); // toolUseId → result
 
   // Sync streamingText to ref so closures always read the latest value
   useEffect(() => { streamingTextRef.current = streamingText; }, [streamingText]);
@@ -42,36 +45,62 @@ export function ChatPanel() {
             setIsStreaming(true);
             break;
 
-          case 'tool_use':
-            // Add tool use message
+          case 'tool_use': {
+            const toolUseId = event.data.toolUseId;
+            const msgId = uuidv4();
+
+            // Check if a pending result already arrived for this toolUseId
+            const pending = pendingResults.current.get(toolUseId);
+            const content: ToolExecutionContent = {
+              toolName: event.data.toolName,
+              toolUseId,
+              input: event.data.input,
+              output: pending?.output,
+              isError: pending?.isError,
+              status: pending ? (pending.isError ? 'error' : 'completed') : 'running',
+            };
+            if (pending) {
+              pendingResults.current.delete(toolUseId);
+            }
+
+            // Record mapping: toolUseId → { msgId, content }
+            toolExecutionIdMap.current.set(toolUseId, { msgId, content });
+
             addMessage({
-              id: uuidv4(),
+              id: msgId,
               role: 'assistant',
-              type: 'tool_use',
-              content: {
-                toolName: event.data.toolName,
-                toolUseId: event.data.toolUseId,
-                input: event.data.input,
-              },
+              type: 'tool_execution',
+              content,
               timestamp: new Date().toISOString(),
               sessionId: currentSessionId,
             });
             break;
+          }
 
-          case 'tool_result':
-            addMessage({
-              id: uuidv4(),
-              role: 'assistant',
-              type: 'tool_result',
-              content: {
-                toolUseId: event.data.toolUseId,
+          case 'tool_result': {
+            const toolUseId = event.data.toolUseId;
+            const existing = toolExecutionIdMap.current.get(toolUseId);
+
+            if (existing) {
+              // Found the paired tool_execution — update it in-place with merged content
+              const mergedContent: ToolExecutionContent = {
+                ...existing.content,
                 output: event.data.output,
                 isError: event.data.isError,
-              },
-              timestamp: new Date().toISOString(),
-              sessionId: currentSessionId,
-            });
+                status: event.data.isError ? 'error' : 'completed',
+              };
+              updateMessage(existing.msgId, { content: mergedContent });
+              // Clean up
+              toolExecutionIdMap.current.delete(toolUseId);
+            } else {
+              // tool_result arrived before tool_use — cache it
+              pendingResults.current.set(toolUseId, {
+                output: event.data.output,
+                isError: event.data.isError,
+              });
+            }
             break;
+          }
 
           case 'thinking':
             addMessage({

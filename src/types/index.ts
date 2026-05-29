@@ -26,11 +26,20 @@ export interface Project {
   };
 }
 
+export interface ToolExecutionContent {
+  toolName: string;
+  toolUseId: string;
+  input: Record<string, unknown>;
+  output?: string;
+  isError?: boolean;
+  status: 'running' | 'completed' | 'error';
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
-  type: 'text' | 'tool_use' | 'tool_result' | 'thinking' | 'error' | 'file' | 'patch' | 'step_start' | 'step_finish';
-  content: string | ToolCallContent | ToolResultContent | FileContent | PatchContent;
+  type: 'text' | 'tool_use' | 'tool_result' | 'tool_execution' | 'thinking' | 'error' | 'file' | 'patch' | 'step_start' | 'step_finish';
+  content: string | ToolCallContent | ToolResultContent | ToolExecutionContent | FileContent | PatchContent;
   timestamp: string;
   sessionId: string;
 }

@@ -43,6 +43,7 @@ export interface ToolCallContent {
 
 export interface ToolResultContent {
   toolUseId: string;
+  toolName: string;
   output: string;
   isError: boolean;
 }

@@ -32,6 +32,7 @@ interface SessionState {
   // Message management (fetched from Claude Code's .jsonl transcripts)
   loadMessages: (sessionId: string) => Promise<void>;
   addMessage: (message: Message) => void;
+  updateMessage: (messageId: string, updates: Partial<Message>) => void;
   clearMessages: () => void;
 
   // State management
@@ -106,6 +107,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   addMessage: (message) =>
     set((state) => ({
       currentMessages: [...state.currentMessages, message],
+    })),
+
+  updateMessage: (messageId, updates) =>
+    set((state) => ({
+      currentMessages: state.currentMessages.map((m) =>
+        m.id === messageId ? { ...m, ...updates } : m
+      ),
     })),
 
   clearMessages: () => set({ currentMessages: [] }),

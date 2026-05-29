@@ -9,6 +9,8 @@ export class ClaudeProcessManager extends EventEmitter {
   private sessions: Map<string, ClaudeSession> = new Map();
   private activeProcesses: Map<string, ChildProcess> = new Map();
   private processTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  // Track toolUseId -> toolName so tool_result events can include the tool name
+  private pendingToolNames: Map<string, string> = new Map();
 
   constructor() {
     super();
@@ -161,6 +163,10 @@ export class ClaudeProcessManager extends EventEmitter {
                 sessionId,
               });
             } else if (block.type === 'tool_use') {
+              // Cache toolUseId -> toolName for matching tool_result later
+              if (block.id && block.name) {
+                this.pendingToolNames.set(block.id, block.name);
+              }
               this.emit('assistant:tool_use', sessionId, {
                 toolName: block.name,
                 toolUseId: block.id,
@@ -184,6 +190,37 @@ export class ClaudeProcessManager extends EventEmitter {
           usage: event.usage || { input_tokens: 0, output_tokens: 0 },
           sessionId,
         });
+        break;
+
+      case 'user':
+        if (event.message?.content) {
+          for (const block of event.message.content) {
+            if (block.type === 'tool_result') {
+              // Extract content: may be string or array of content blocks
+              let output = '';
+              if (typeof block.content === 'string') {
+                output = block.content;
+              } else if (Array.isArray(block.content)) {
+                output = block.content
+                  .map((c: any) => c.text || '')
+                  .filter(Boolean)
+                  .join('\n');
+              }
+
+              const toolName = this.pendingToolNames.get(block.tool_use_id) || 'unknown';
+              // Clean up the cached entry
+              this.pendingToolNames.delete(block.tool_use_id);
+
+              this.emit('user:tool_result', sessionId, {
+                toolUseId: block.tool_use_id,
+                toolName,
+                output,
+                isError: block.is_error || false,
+                sessionId,
+              });
+            }
+          }
+        }
         break;
 
       default:
