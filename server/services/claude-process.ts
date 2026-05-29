@@ -8,6 +8,7 @@ import type { ClaudeSession, SpawnOptions, StreamEvent } from '../types';
 export class ClaudeProcessManager extends EventEmitter {
   private sessions: Map<string, ClaudeSession> = new Map();
   private activeProcesses: Map<string, ChildProcess> = new Map();
+  private processTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
 
   constructor() {
     super();
@@ -39,13 +40,18 @@ export class ClaudeProcessManager extends EventEmitter {
       return false;
     }
 
-    // Kill any existing process for this session
-    this.killProcess(sessionId);
+    // Check if there's an active process for this session
+    const existingProc = this.activeProcesses.get(sessionId);
+    if (existingProc && !existingProc.killed) {
+      // Kill existing process before starting new one
+      this.killProcess(sessionId);
+    }
 
     const args = [
       '-p', '--verbose',
       '--output-format', 'stream-json',
-      '--session-id', sessionId,
+      '--continue',
+      '--fork-session',
       '--permission-mode', session.permissionMode || 'auto',
     ];
 
@@ -71,6 +77,15 @@ export class ClaudeProcessManager extends EventEmitter {
 
     this.activeProcesses.set(sessionId, proc);
     session.lastActivity = new Date().toISOString();
+
+    const timeout = setTimeout(() => {
+      if (this.activeProcesses.has(sessionId)) {
+        console.error(`[${sessionId}] Process timeout after 5 minutes`);
+        this.killProcess(sessionId);
+        this.emit('process:closed', sessionId, -1);
+      }
+    }, 5 * 60 * 1000);
+    this.processTimeouts.set(sessionId, timeout);
 
     this.setupProcessHandlers(sessionId, proc);
 
@@ -105,12 +120,22 @@ export class ClaudeProcessManager extends EventEmitter {
     proc.on('close', (code) => {
       console.log(`[${sessionId}] process closed with code ${code}`);
       this.activeProcesses.delete(sessionId);
+      const t = this.processTimeouts.get(sessionId);
+      if (t) {
+        clearTimeout(t);
+        this.processTimeouts.delete(sessionId);
+      }
       this.emit('process:closed', sessionId, code);
     });
 
     proc.on('error', (error) => {
       console.error(`[${sessionId}] process error:`, error);
       this.activeProcesses.delete(sessionId);
+      const t = this.processTimeouts.get(sessionId);
+      if (t) {
+        clearTimeout(t);
+        this.processTimeouts.delete(sessionId);
+      }
       this.emit('error', sessionId, error);
     });
   }
@@ -167,6 +192,11 @@ export class ClaudeProcessManager extends EventEmitter {
 
   closeSession(sessionId: string): void {
     this.killProcess(sessionId);
+    const t = this.processTimeouts.get(sessionId);
+    if (t) {
+      clearTimeout(t);
+      this.processTimeouts.delete(sessionId);
+    }
     const session = this.sessions.get(sessionId);
     if (session) {
       session.status = 'closed';

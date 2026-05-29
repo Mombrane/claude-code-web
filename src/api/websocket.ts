@@ -9,14 +9,26 @@ class WebSocketClient {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private sessionId: string | null = null;
+  private messageQueue: WebSocketMessage[] = [];
+  private isConnected = false;
 
   connect() {
-    const wsUrl = 'ws://localhost:3001/ws';
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
       console.log('WebSocket connected');
       this.reconnectAttempts = 0;
+      this.isConnected = true;
+
+      // Send queued messages
+      while (this.messageQueue.length > 0) {
+        const msg = this.messageQueue.shift();
+        if (msg) {
+          this.ws?.send(JSON.stringify(msg));
+        }
+      }
 
       // Subscribe to current session if any
       if (this.sessionId) {
@@ -35,6 +47,8 @@ class WebSocketClient {
 
     this.ws.onclose = () => {
       console.log('WebSocket disconnected');
+      this.isConnected = false;
+      this.notifyHandlers('disconnected', { type: 'disconnected', payload: {} });
       this.tryReconnect();
     };
 
@@ -87,7 +101,8 @@ class WebSocketClient {
     if (this.ws?.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(message));
     } else {
-      console.error('WebSocket is not connected');
+      // Queue message for when connection is established
+      this.messageQueue.push(message);
     }
   }
 
@@ -107,6 +122,20 @@ class WebSocketClient {
     this.send({
       type: 'chat',
       payload: { sessionId, message },
+    });
+  }
+
+  sendTerminalInput(sessionId: string, data: string) {
+    this.send({
+      type: 'terminal:input',
+      payload: { sessionId, data },
+    });
+  }
+
+  sendTerminalResize(sessionId: string, cols: number, rows: number) {
+    this.send({
+      type: 'terminal:resize',
+      payload: { sessionId, cols, rows },
     });
   }
 

@@ -2,6 +2,7 @@ import { WebSocket, WebSocketServer } from 'ws';
 import { Server } from 'http';
 import { claudeProcessManager } from '../services/claude-process';
 import { sessionStore } from '../services/session-store';
+import { terminalService } from '../services/terminal-service';
 import type { WebSocketMessage, Message } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -13,6 +14,7 @@ export class WebSocketHandler {
     this.wss = new WebSocketServer({ server, path: '/ws' });
     this.setupWebSocket();
     this.setupClaudeEventHandlers();
+    this.setupTerminalEventHandlers();
   }
 
   private setupWebSocket() {
@@ -96,6 +98,50 @@ export class WebSocketHandler {
       });
     });
 
+    claudeProcessManager.on('assistant:step_start', (sessionId, data) => {
+      this.broadcastToSession(sessionId, {
+        type: 'stream',
+        payload: {
+          sessionId,
+          event: 'step_start',
+          data,
+        },
+      });
+    });
+
+    claudeProcessManager.on('assistant:step_finish', (sessionId, data) => {
+      this.broadcastToSession(sessionId, {
+        type: 'stream',
+        payload: {
+          sessionId,
+          event: 'step_finish',
+          data,
+        },
+      });
+    });
+
+    claudeProcessManager.on('assistant:patch', (sessionId, data) => {
+      this.broadcastToSession(sessionId, {
+        type: 'stream',
+        payload: {
+          sessionId,
+          event: 'patch',
+          data,
+        },
+      });
+    });
+
+    claudeProcessManager.on('assistant:file', (sessionId, data) => {
+      this.broadcastToSession(sessionId, {
+        type: 'stream',
+        payload: {
+          sessionId,
+          event: 'file',
+          data,
+        },
+      });
+    });
+
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
       // Save assistant message
       const message: Message = {
@@ -124,6 +170,30 @@ export class WebSocketHandler {
         },
       });
     });
+
+    claudeProcessManager.on('process:closed', (sessionId: string, code: number | null) => {
+      if (code !== 0 && code !== null) {
+        this.broadcastToSession(sessionId, {
+          type: 'error',
+          payload: {
+            sessionId,
+            error: 'Claude process exited unexpectedly (code ' + code + '). This may be due to a session lock conflict or API error.',
+          },
+        });
+      }
+    });
+  }
+
+  private setupTerminalEventHandlers() {
+    terminalService.on('output', (sessionId: string, data: string) => {
+      this.broadcastToSession(sessionId, {
+        type: 'terminal:output',
+        payload: {
+          sessionId,
+          data,
+        },
+      });
+    });
   }
 
   private async handleMessage(ws: WebSocket, message: WebSocketMessage) {
@@ -139,6 +209,37 @@ export class WebSocketHandler {
       case 'unsubscribe':
         this.unsubscribeFromSession(ws, message.payload.sessionId);
         break;
+
+      case 'terminal:start':
+        this.handleTerminalStart(ws, message.payload);
+        break;
+
+      case 'terminal:input':
+        this.handleTerminalInput(message.payload);
+        break;
+
+      case 'terminal:resize':
+        this.handleTerminalResize(message.payload);
+        break;
+
+      case 'terminal:kill':
+        this.handleTerminalKill(message.payload);
+        break;
+
+      case 'stop': {
+        const { sessionId } = message.payload;
+        claudeProcessManager.closeSession(sessionId);
+        this.broadcastToSession(sessionId, {
+          type: 'result',
+          payload: {
+            sessionId,
+            result: '[Generation stopped by user]',
+            costUsd: 0,
+            usage: { input_tokens: 0, output_tokens: 0 },
+          },
+        });
+        break;
+      }
 
       default:
         this.sendError(ws, `Unknown message type: ${message.type}`);
@@ -181,6 +282,26 @@ export class WebSocketHandler {
     if (!sent) {
       this.sendError(ws, 'Failed to send message to Claude');
     }
+  }
+
+  private handleTerminalStart(ws: WebSocket, payload: { sessionId: string }) {
+    const { sessionId } = payload;
+    terminalService.startSession(sessionId);
+  }
+
+  private handleTerminalInput(payload: { sessionId: string; data: string }) {
+    const { sessionId, data } = payload;
+    terminalService.writeToSession(sessionId, data);
+  }
+
+  private handleTerminalResize(payload: { sessionId: string; cols: number; rows: number }) {
+    const { sessionId, cols, rows } = payload;
+    terminalService.resizeSession(sessionId, cols, rows);
+  }
+
+  private handleTerminalKill(payload: { sessionId: string }) {
+    const { sessionId } = payload;
+    terminalService.killSession(sessionId);
   }
 
   private subscribeToSession(ws: WebSocket, sessionId: string) {
