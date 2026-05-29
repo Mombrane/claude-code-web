@@ -9,6 +9,7 @@ import { TerminalPanel } from '../terminal/TerminalPanel';
 import { SettingsPanel } from '../settings/SettingsPanel';
 import { wsClient } from '../../api/websocket';
 import { useSessionStore } from '../../stores/sessionStore';
+import { useI18n } from '../../i18n';
 
 type LeftPanel = 'sessions' | 'files';
 type RightPanel = 'git' | 'terminal' | 'none';
@@ -62,6 +63,7 @@ function applyTheme(theme: 'dark' | 'light') {
 
 export function AppLayout({ projectPath }: { projectPath?: string }) {
   const navigate = useNavigate();
+  const { t } = useI18n();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>('sessions');
   const [rightPanel, setRightPanel] = useState<RightPanel>('none');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -86,7 +88,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const commands = [
     {
       id: 'new-session',
-      label: 'New Session',
+      label: t('command.newSession'),
       shortcut: 'Ctrl+N',
       action: () => {
         if (projectPath) {
@@ -95,11 +97,11 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         }
       }
     },
-    { id: 'toggle-files', label: 'Toggle Files Panel', shortcut: 'Ctrl+Shift+F', action: () => setLeftPanel(prev => prev === 'files' ? 'sessions' : 'files') },
-    { id: 'toggle-terminal', label: 'Toggle Terminal', shortcut: 'Ctrl+`', action: () => setRightPanel(prev => prev === 'terminal' ? 'none' : 'terminal') },
-    { id: 'toggle-git', label: 'Toggle Git Panel', shortcut: 'Ctrl+G', action: () => setRightPanel(prev => prev === 'git' ? 'none' : 'git') },
-    { id: 'open-settings', label: 'Open Settings', shortcut: 'Ctrl+,', action: () => setShowSettings(true) },
-    { id: 'toggle-sidebar', label: 'Toggle Sidebar', shortcut: 'Ctrl+B', action: () => setSidebarCollapsed(prev => !prev) },
+    { id: 'toggle-files', label: t('command.toggleFiles'), shortcut: 'Ctrl+Shift+F', action: () => setLeftPanel(prev => prev === 'files' ? 'sessions' : 'files') },
+    { id: 'toggle-terminal', label: t('command.toggleTerminal'), shortcut: 'Ctrl+`', action: () => setRightPanel(prev => prev === 'terminal' ? 'none' : 'terminal') },
+    { id: 'toggle-git', label: t('command.toggleGit'), shortcut: 'Ctrl+G', action: () => setRightPanel(prev => prev === 'git' ? 'none' : 'git') },
+    { id: 'open-settings', label: t('command.openSettings'), shortcut: 'Ctrl+,', action: () => setShowSettings(true) },
+    { id: 'toggle-sidebar', label: t('command.toggleSidebar'), shortcut: 'Ctrl+B', action: () => setSidebarCollapsed(prev => !prev) },
   ];
 
   const handleCommandSelect = useCallback((commandId: string) => {
@@ -340,6 +342,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           onSelect={handleCommandSelect}
           onClose={() => setShowCommandPalette(false)}
           theme={settings.theme}
+          t={t}
         />
       )}
 
@@ -385,11 +388,12 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 }
 
 // Command Palette Component
-function CommandPalette({ commands, onSelect, onClose, theme = 'dark' }: {
+function CommandPalette({ commands, onSelect, onClose, theme = 'dark', t }: {
   commands: Array<{ id: string; label: string; shortcut: string; action: () => void }>;
   onSelect: (id: string) => void;
   onClose: () => void;
   theme?: 'dark' | 'light';
+  t: (key: string) => string;
 }) {
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -456,7 +460,7 @@ function CommandPalette({ commands, onSelect, onClose, theme = 'dark' }: {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search commands..."
+            placeholder={t('command.search')}
             className={`flex-1 bg-transparent focus:outline-none text-sm ${
               theme === 'dark'
                 ? 'text-white placeholder-gray-500'
@@ -496,7 +500,7 @@ function CommandPalette({ commands, onSelect, onClose, theme = 'dark' }: {
             <div className={`px-4 py-8 text-center ${
               theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
             }`}>
-              No commands found
+              {t('command.noResults')}
             </div>
           )}
         </div>

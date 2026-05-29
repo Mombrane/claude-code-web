@@ -3,6 +3,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
+import { ExportButton } from './ExportButton';
 import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -285,6 +286,7 @@ export function ChatPanel() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} />
           <span className="text-xs text-gray-600">
             {currentMessages.length} messages
           </span>

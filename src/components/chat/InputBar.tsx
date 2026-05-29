@@ -86,11 +86,21 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
   };
 
   const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
-    // Handle multi-line paste
-    const text = e.clipboardData.getData('text');
-    if (text.includes('\n')) {
-      // Allow default behavior for multi-line paste
-      return;
+    const pastedText = e.clipboardData.getData('text');
+    if (!pastedText) return;
+
+    // Only intercept multi-line pastes (wrap in code blocks)
+    // For single-line pastes, let the browser handle it natively to preserve undo history
+    if (pastedText.includes('\n')) {
+      e.preventDefault();
+
+      const textarea = e.target as HTMLTextAreaElement;
+      const wrappedText = `\`\`\`\n${pastedText}\n\`\`\``;
+
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const newValue = message.slice(0, start) + wrappedText + message.slice(end);
+      setMessage(newValue);
     }
   };
 

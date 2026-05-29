@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { MessageErrorBoundary } from './MessageErrorBoundary';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
@@ -452,13 +453,13 @@ function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: stri
 function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | 'light' }) {
   const [copied, setCopied] = useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = async () => {
     try {
-      navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('Copy failed:', err);
     }
   };
 
@@ -471,7 +472,13 @@ function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | '
           : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
       }`}
     >
-      {copied ? 'Copied!' : 'Copy'}
+      {copied ? (
+        <svg className="w-3 h-3 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+        </svg>
+      ) : (
+        'Copy'
+      )}
     </button>
   );
 }
@@ -497,7 +504,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     });
   };
 
-  const handleCopyMessage = (message: Message) => {
+  const handleCopyMessage = async (message: Message) => {
     let textToCopy = '';
     if (typeof message.content === 'string') {
       textToCopy = message.content;
@@ -512,11 +519,11 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       textToCopy = `[${exec.toolName}] ${exec.status}\nInput: ${JSON.stringify(exec.input, null, 2)}${exec.output ? `\nOutput: ${exec.output}` : ''}`;
     }
     try {
-      navigator.clipboard.writeText(textToCopy);
+      await navigator.clipboard.writeText(textToCopy);
       setCopiedMessageId(message.id);
       setTimeout(() => setCopiedMessageId(null), 2000);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('Copy failed:', err);
     }
   };
 
@@ -847,9 +854,11 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       )}
 
       {messages.map((message) => (
-        <div key={message.id} className="animate-fadeIn">
-          {renderMessage(message)}
-        </div>
+        <MessageErrorBoundary key={message.id}>
+          <div className="animate-fadeIn">
+            {renderMessage(message)}
+          </div>
+        </MessageErrorBoundary>
       ))}
 
       {/* Streaming thinking */}
