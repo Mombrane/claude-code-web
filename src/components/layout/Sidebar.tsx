@@ -1,9 +1,44 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
+import type { Session } from '../../types';
 
-export function Sidebar() {
+function groupSessionsByTime(sessions: Session[]): { label: string; sessions: Session[] }[] {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 86400000);
+
+  const groups: Record<string, Session[]> = {
+    'Today': [],
+    'Yesterday': [],
+    'Older': [],
+  };
+
+  for (const session of sessions) {
+    const updated = new Date(session.updatedAt);
+    if (updated >= today) {
+      groups['Today'].push(session);
+    } else if (updated >= yesterday) {
+      groups['Yesterday'].push(session);
+    } else {
+      groups['Older'].push(session);
+    }
+  }
+
+  return Object.entries(groups)
+    .filter(([, sessions]) => sessions.length > 0)
+    .map(([label, sessions]) => ({ label, sessions }));
+}
+
+function formatTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
+  const navigate = useNavigate();
   const {
     sessions,
     currentSessionId,
@@ -12,6 +47,8 @@ export function Sidebar() {
     removeSession,
     setCurrentSession,
     updateSession,
+    streamingSessions,
+    errorSessions,
   } = useSessionStore();
   const { t } = useI18n();
   const [isCreating, setIsCreating] = useState(false);
@@ -22,7 +59,7 @@ export function Sidebar() {
 
   useEffect(() => {
     loadSessions();
-  }, []);
+  }, [projectPath]);
 
   useEffect(() => {
     if (editingSessionId && editInputRef.current) {
@@ -33,7 +70,7 @@ export function Sidebar() {
 
   const loadSessions = async () => {
     try {
-      const data = await api.getSessions();
+      const data = await api.getSessions({ projectPath });
       setSessions(data);
     } catch (e) {
       console.error('Failed to load sessions:', e);
@@ -43,9 +80,11 @@ export function Sidebar() {
   const handleCreateSession = async () => {
     setIsCreating(true);
     try {
-      const session = await api.createSession();
+      const session = await api.createSession(undefined, projectPath, projectPath);
       addSession(session);
       setCurrentSession(session.id);
+      const dir = btoa(projectPath || session.cwd);
+      navigate(`/${dir}/session/${session.id}`);
     } catch (e) {
       console.error('Failed to create session:', e);
     } finally {
@@ -78,7 +117,7 @@ export function Sidebar() {
     setEditName('');
   };
 
-  const handleStartRename = (session: any, e: React.MouseEvent) => {
+  const handleStartRename = (session: Session, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingSessionId(session.id);
     setEditName(session.name);
@@ -93,64 +132,30 @@ export function Sidebar() {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    if (days === 0) {
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } else if (days === 1) {
-      return 'Yesterday';
-    } else if (days < 7) {
-      return `${days} days ago`;
-    } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
+  const handleSessionClick = (session: Session) => {
+    if (editingSessionId === session.id) return;
+    setCurrentSession(session.id);
+    const dir = btoa(session.projectPath || session.cwd);
+    navigate(`/${dir}/session/${session.id}`);
   };
 
-  const filteredSessions = sessions.filter(session =>
-    session.name.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredSessions = useMemo(() => {
+    if (!searchQuery) return sessions;
+    const query = searchQuery.toLowerCase();
+    return sessions.filter(session =>
+      session.name.toLowerCase().includes(query)
+    );
+  }, [sessions, searchQuery]);
+
+  const groupedSessions = useMemo(() =>
+    groupSessionsByTime(filteredSessions),
+    [filteredSessions]
   );
 
-  // Group sessions by date
-  const groupedSessions = filteredSessions.reduce((groups, session) => {
-    const date = new Date(session.updatedAt);
-    const now = new Date();
-    const diff = now.getTime() - date.getTime();
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-    let label: string;
-    if (days === 0) {
-      label = t('time.today');
-    } else if (days === 1) {
-      label = t('time.yesterday');
-    } else if (days < 7) {
-      label = t('time.thisWeek');
-    } else if (days < 30) {
-      label = t('time.thisMonth');
-    } else {
-      label = t('time.older');
-    }
-
-    if (!groups[label]) {
-      groups[label] = [];
-    }
-    groups[label].push(session);
-    return groups;
-  }, {} as Record<string, typeof sessions>);
-
   return (
-    <div className="w-64 bg-gray-800/80 flex flex-col h-full">
+    <div className={`w-64 flex flex-col h-full ${theme === 'dark' ? 'bg-gray-800/80' : 'bg-gray-50'}`}>
       {/* Header */}
-      <div className="p-3 border-b border-gray-700/50">
+      <div className={`p-3 border-b ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg"> </span>
@@ -185,7 +190,7 @@ export function Sidebar() {
 
       {/* Session list */}
       <div className="flex-1 overflow-y-auto py-2">
-        {Object.keys(groupedSessions).length === 0 ? (
+        {groupedSessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-gray-500 px-4">
             {searchQuery ? (
               <>
@@ -210,7 +215,7 @@ export function Sidebar() {
             )}
           </div>
         ) : (
-          Object.entries(groupedSessions).map(([label, groupSessions]) => (
+          groupedSessions.map(({ label, sessions: groupSessions }) => (
             <div key={label} className="mb-2">
               <div className="px-3 py-1.5 text-[10px] font-medium text-gray-500 uppercase tracking-wider">
                 {label}
@@ -219,7 +224,7 @@ export function Sidebar() {
                 {groupSessions.map((session) => (
                   <div
                     key={session.id}
-                    onClick={() => editingSessionId !== session.id && setCurrentSession(session.id)}
+                    onClick={() => handleSessionClick(session)}
                     className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       currentSessionId === session.id
                         ? 'bg-gray-700/80 text-white shadow-sm'
@@ -254,15 +259,18 @@ export function Sidebar() {
                         <div className="text-sm font-medium truncate">{session.name}</div>
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                        <span>{formatDate(session.updatedAt)}</span>
-                        {session.messages && session.messages.length > 0 && (
-                          <>
-                            <span className="text-gray-600">·</span>
-                            <span>{session.messages.length} msgs</span>
-                          </>
-                        )}
+                        <span>{formatTime(session.updatedAt)}</span>
                       </div>
                     </div>
+
+                    {/* Status indicator */}
+                    {streamingSessions.has(session.id) ? (
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                    ) : errorSessions.has(session.id) ? (
+                      <div className="w-2 h-2 rounded-full bg-red-400" />
+                    ) : session.status === 'active' ? (
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                    ) : null}
 
                     {/* Actions */}
                     <div className="flex-shrink-0 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

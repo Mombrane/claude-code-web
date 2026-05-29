@@ -1,0 +1,84 @@
+import { Router } from 'express';
+import { gitService } from '../services/git-service';
+const router = Router();
+// Get git status
+router.get('/status', async (req, res) => {
+    try {
+        const cwd = req.query.cwd || process.cwd();
+        const status = await gitService.getStatus(cwd);
+        res.json(status);
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Get git diff
+router.get('/diff', async (req, res) => {
+    try {
+        const cwd = req.query.cwd || process.cwd();
+        const staged = req.query.staged === 'true';
+        const diff = await gitService.getDiff(cwd, staged);
+        res.json({ diff });
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Get git log
+router.get('/log', async (req, res) => {
+    try {
+        const cwd = req.query.cwd || process.cwd();
+        const count = req.query.count ? parseInt(req.query.count) : 20;
+        const log = await gitService.getLog(cwd, count);
+        res.json(log);
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Get branches
+router.get('/branches', async (req, res) => {
+    try {
+        const cwd = req.query.cwd || process.cwd();
+        const branches = await gitService.getBranches(cwd);
+        res.json(branches);
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Stage files
+router.post('/stage', async (req, res) => {
+    try {
+        const { cwd, files } = req.body;
+        await gitService.stage(cwd || process.cwd(), files);
+        res.json({ success: true });
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Unstage files
+router.post('/unstage', async (req, res) => {
+    try {
+        const { cwd, files } = req.body;
+        await gitService.unstage(cwd || process.cwd(), files);
+        res.json({ success: true });
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+// Commit
+router.post('/commit', async (req, res) => {
+    try {
+        const { cwd, message } = req.body;
+        const hash = await gitService.commit(cwd || process.cwd(), message);
+        res.json({ hash });
+    }
+    catch (e) {
+        res.status(400).json({ error: e.message });
+    }
+});
+export default router;
+//# sourceMappingURL=git.js.map

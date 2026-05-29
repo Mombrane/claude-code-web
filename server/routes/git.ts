@@ -26,6 +26,44 @@ router.get('/diff', async (req: Request, res: Response) => {
   }
 });
 
+// Get branch diff
+router.get('/diff/branch', async (req: Request, res: Response) => {
+  try {
+    const cwd = (req.query.cwd as string) || process.cwd();
+    const baseBranch = req.query.base as string;
+    const diff = await gitService.getBranchDiff(cwd, baseBranch);
+    res.json({ diff });
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Get file diff
+router.get('/diff/file', async (req: Request, res: Response) => {
+  try {
+    const cwd = (req.query.cwd as string) || process.cwd();
+    const filePath = req.query.path as string;
+    if (!filePath) {
+      return res.status(400).json({ error: 'path is required' });
+    }
+    const diff = await gitService.getFileDiff(cwd, filePath);
+    res.json({ diff });
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+// Get diff stat
+router.get('/diff/stat', async (req: Request, res: Response) => {
+  try {
+    const cwd = (req.query.cwd as string) || process.cwd();
+    const stat = await gitService.getDiffStat(cwd);
+    res.json(stat);
+  } catch (e: any) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 // Get git log
 router.get('/log', async (req: Request, res: Response) => {
   try {

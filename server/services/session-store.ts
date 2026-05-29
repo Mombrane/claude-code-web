@@ -2,8 +2,13 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
-import type { Session, Message } from '../types';
+import type { Session } from '../types';
 
+/**
+ * Session metadata store.
+ * Only stores session metadata (name, cwd, model, status, costs).
+ * Message history is read from Claude Code's native .jsonl transcripts.
+ */
 export class SessionStore {
   private dataDir: string;
 
@@ -24,16 +29,16 @@ export class SessionStore {
     return path.join(this.dataDir, `${sessionId}.json`);
   }
 
-  async createSession(name?: string, cwd?: string): Promise<Session> {
+  async createSession(name?: string, cwd?: string, projectPath?: string): Promise<Session> {
     const session: Session = {
       id: uuidv4(),
       name: name || `Session ${new Date().toLocaleString()}`,
       cwd: cwd || config.defaultCwd,
+      projectPath: projectPath || cwd || config.defaultCwd,
       model: config.defaultModel,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       status: 'active',
-      messages: [],
       totalCostUsd: 0,
       totalTokens: 0,
     };
@@ -51,10 +56,15 @@ export class SessionStore {
     }
   }
 
-  async getAllSessions(): Promise<Session[]> {
+  async getAllSessions(options?: {
+    projectPath?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Session[]> {
     try {
       const files = await fs.readdir(this.dataDir);
-      const sessions: Session[] = [];
+      let sessions: Session[] = [];
 
       for (const file of files) {
         if (file.endsWith('.json')) {
@@ -66,9 +76,35 @@ export class SessionStore {
         }
       }
 
-      return sessions.sort((a, b) =>
+      // Filter by project path
+      if (options?.projectPath) {
+        sessions = sessions.filter(s =>
+          s.projectPath === options.projectPath || s.cwd === options.projectPath
+        );
+      }
+
+      // Filter by search query (name only, since messages are no longer stored here)
+      if (options?.search) {
+        const query = options.search.toLowerCase();
+        sessions = sessions.filter(s =>
+          s.name.toLowerCase().includes(query)
+        );
+      }
+
+      // Sort by updated time
+      sessions.sort((a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
       );
+
+      // Apply pagination
+      if (options?.offset) {
+        sessions = sessions.slice(options.offset);
+      }
+      if (options?.limit) {
+        sessions = sessions.slice(0, options.limit);
+      }
+
+      return sessions;
     } catch (e) {
       return [];
     }
@@ -85,23 +121,8 @@ export class SessionStore {
       await fs.rename(tempPath, filePath);
     } catch (e) {
       console.error('Failed to save session:', e);
-      // Try direct write as fallback
       await fs.writeFile(filePath, JSON.stringify(session, null, 2));
     }
-  }
-
-  async addMessage(sessionId: string, message: Message): Promise<void> {
-    const session = await this.getSession(sessionId);
-    if (!session) return;
-
-    session.messages.push(message);
-
-    // Limit messages to prevent huge files
-    if (session.messages.length > config.maxMessages) {
-      session.messages = session.messages.slice(-config.maxMessages);
-    }
-
-    await this.saveSession(session);
   }
 
   async updateSessionStats(sessionId: string, costUsd: number, tokens: number): Promise<void> {

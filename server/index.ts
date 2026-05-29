@@ -6,6 +6,7 @@ import { WebSocketHandler } from './websocket/handler';
 import sessionRoutes from './routes/sessions';
 import fileRoutes from './routes/files';
 import gitRoutes from './routes/git';
+import projectRoutes from './routes/projects';
 
 const app = express();
 const server = createServer(app);
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/git', gitRoutes);
+app.use('/api/projects', projectRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import { DiffViewer } from './DiffViewer';
 
 interface GitStatus {
   branch: string;
@@ -23,11 +24,11 @@ interface GitPanelProps {
 
 export function GitPanel({ cwd }: GitPanelProps) {
   const [status, setStatus] = useState<GitStatus | null>(null);
-  const [diff, setDiff] = useState<string>('');
   const [log, setLog] = useState<CommitInfo[]>([]);
   const [commitMessage, setCommitMessage] = useState('');
   const [isCommitting, setIsCommitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'status' | 'diff' | 'log'>('status');
+  const [diffMode, setDiffMode] = useState<'working' | 'staged' | 'branch'>('working');
 
   useEffect(() => {
     loadGitData();
@@ -35,13 +36,11 @@ export function GitPanel({ cwd }: GitPanelProps) {
 
   const loadGitData = async () => {
     try {
-      const [statusData, diffData, logData] = await Promise.all([
+      const [statusData, logData] = await Promise.all([
         api.getGitStatus(cwd),
-        api.getGitDiff(cwd),
         api.getGitLog(cwd, 20),
       ]);
       setStatus(statusData);
-      setDiff(diffData.diff);
       setLog(logData);
     } catch (e) {
       console.error('Failed to load git data:', e);
@@ -171,10 +170,24 @@ export function GitPanel({ cwd }: GitPanelProps) {
         )}
 
         {activeTab === 'diff' && (
-          <div className="p-4">
-            <pre className="text-xs font-mono text-gray-300 whitespace-pre-wrap overflow-x-auto">
-              {diff || 'No changes'}
-            </pre>
+          <div className="flex flex-col h-full">
+            {/* Diff mode selector */}
+            <div className="flex items-center gap-2 px-4 py-2 border-b border-gray-700/50">
+              {(['working', 'staged', 'branch'] as const).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => setDiffMode(mode)}
+                  className={`px-3 py-1.5 text-xs rounded-md transition-colors ${
+                    diffMode === mode
+                      ? 'bg-blue-600/20 text-blue-400'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  {mode.charAt(0).toUpperCase() + mode.slice(1)}
+                </button>
+              ))}
+            </div>
+            <DiffViewer cwd={cwd} mode={diffMode} />
           </div>
         )}
 

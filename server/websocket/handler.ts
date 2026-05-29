@@ -3,12 +3,12 @@ import { Server } from 'http';
 import { claudeProcessManager } from '../services/claude-process';
 import { sessionStore } from '../services/session-store';
 import { terminalService } from '../services/terminal-service';
-import type { WebSocketMessage, Message } from '../types';
-import { v4 as uuidv4 } from 'uuid';
+import type { WebSocketMessage } from '../types';
 
 export class WebSocketHandler {
   private wss: WebSocketServer;
   private clients: Map<string, Set<WebSocket>> = new Map();
+  private processedResults = new Set<string>();
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/ws' });
@@ -143,17 +143,34 @@ export class WebSocketHandler {
     });
 
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
-      // Save assistant message
-      const message: Message = {
-        id: uuidv4(),
-        role: 'assistant',
-        type: 'text',
-        content: data.result,
-        timestamp: new Date().toISOString(),
+      // Generate unique key for deduplication to prevent double-counting costs
+      // on WebSocket reconnects
+      const resultKey = `${sessionId}-${data.costUsd}-${data.usage?.input_tokens}`;
+
+      if (this.processedResults.has(resultKey)) {
+        // Already processed this result, skip to avoid double-counting costs
+        this.broadcastToSession(sessionId, {
+          type: 'result',
+          payload: data,
+        });
+        return;
+      }
+      this.processedResults.add(resultKey);
+
+      // Cleanup: keep only the most recent 500 entries when exceeding 1000
+      if (this.processedResults.size > 1000) {
+        const entries = Array.from(this.processedResults);
+        this.processedResults.clear();
+        entries.slice(-500).forEach((id) => this.processedResults.add(id));
+      }
+
+      // Only update stats (cost, tokens) - no need to save message
+      // Claude Code already saves the full transcript in its .jsonl files
+      await sessionStore.updateSessionStats(
         sessionId,
-      };
-      await sessionStore.addMessage(sessionId, message);
-      await sessionStore.updateSessionStats(sessionId, data.costUsd, data.usage?.input_tokens + data.usage?.output_tokens || 0);
+        data.costUsd,
+        (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0)
+      );
 
       this.broadcastToSession(sessionId, {
         type: 'result',
@@ -249,16 +266,7 @@ export class WebSocketHandler {
   private async handleChatMessage(ws: WebSocket, payload: { sessionId: string; message: string }) {
     const { sessionId, message: userMessage } = payload;
 
-    // Save user message
-    const messageObj: Message = {
-      id: uuidv4(),
-      role: 'user',
-      type: 'text',
-      content: userMessage,
-      timestamp: new Date().toISOString(),
-      sessionId,
-    };
-    await sessionStore.addMessage(sessionId, messageObj);
+    // No need to save user message here - Claude Code handles that in its .jsonl transcript
 
     // Check if session exists in process manager
     if (!claudeProcessManager.isSessionActive(sessionId)) {
@@ -347,3 +355,5 @@ export class WebSocketHandler {
     return this.wss;
   }
 }
+
+export const websocketHandler = WebSocketHandler;

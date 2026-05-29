@@ -7,7 +7,7 @@ import type { StreamEvent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
 export function ChatPanel() {
-  const { sessions, currentSessionId, addMessage } = useSessionStore();
+  const { sessions, currentSessionId, currentMessages, addMessage } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export function ChatPanel() {
 
           case 'tool_use':
             // Add tool use message
-            addMessage(currentSessionId, {
+            addMessage({
               id: uuidv4(),
               role: 'assistant',
               type: 'tool_use',
@@ -55,7 +55,7 @@ export function ChatPanel() {
             break;
 
           case 'tool_result':
-            addMessage(currentSessionId, {
+            addMessage({
               id: uuidv4(),
               role: 'assistant',
               type: 'tool_result',
@@ -70,7 +70,7 @@ export function ChatPanel() {
             break;
 
           case 'thinking':
-            addMessage(currentSessionId, {
+            addMessage({
               id: uuidv4(),
               role: 'assistant',
               type: 'thinking',
@@ -87,7 +87,7 @@ export function ChatPanel() {
 
         // Add final assistant message if there's streaming text
         if (streamingText) {
-          addMessage(currentSessionId, {
+          addMessage({
             id: uuidv4(),
             role: 'assistant',
             type: 'text',
@@ -104,7 +104,7 @@ export function ChatPanel() {
       wsClient.on('error', (message) => {
         if (message.payload.sessionId !== currentSessionId) return;
 
-        addMessage(currentSessionId, {
+        addMessage({
           id: uuidv4(),
           role: 'system',
           type: 'error',
@@ -129,7 +129,7 @@ export function ChatPanel() {
 
     // Add user message to store
     const userMessageId = uuidv4();
-    addMessage(currentSessionId, {
+    addMessage({
       id: userMessageId,
       role: 'user',
       type: 'text',
@@ -160,7 +160,7 @@ export function ChatPanel() {
 
     // Save any partial streaming text
     if (streamingText && currentSessionId) {
-      addMessage(currentSessionId, {
+      addMessage({
         id: streamingMessageId || uuidv4(),
         role: 'assistant',
         type: 'text',
@@ -211,7 +211,7 @@ export function ChatPanel() {
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs text-gray-600">
-            {currentSession?.messages?.length || 0} messages
+            {currentMessages.length} messages
           </span>
         </div>
       </div>
@@ -219,7 +219,7 @@ export function ChatPanel() {
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
         <MessageList
-          messages={currentSession?.messages || []}
+          messages={currentMessages}
           streamingText={streamingText}
           isStreaming={isStreaming}
         />

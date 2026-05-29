@@ -1,0 +1,20 @@
+[
+  {
+    "id": "3fbfb1b0-c56b-4835-a24f-5efe86365676",
+    "worktree": "/home/huguangyao/mimo-workspace/claude-code-web",
+    "name": "claude-code-web",
+    "time": {
+      "created": "2026-05-29T06:32:17.971Z",
+      "updated": "2026-05-29T06:32:17.971Z"
+    }
+  },
+  {
+    "id": "7986ecbf-2316-42d6-a4ba-1c02eb61171c",
+    "worktree": "/tmp",
+    "name": "tmp",
+    "time": {
+      "created": "2026-05-29T06:38:14.123Z",
+      "updated": "2026-05-29T06:38:14.123Z"
+    }
+  }
+]

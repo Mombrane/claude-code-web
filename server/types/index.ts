@@ -2,13 +2,28 @@ export interface Session {
   id: string;
   name: string;
   cwd: string;
+  projectPath?: string;
   model: string;
   createdAt: string;
   updatedAt: string;
   status: 'active' | 'idle' | 'closed';
-  messages: Message[];
   totalCostUsd: number;
   totalTokens: number;
+}
+
+export interface Project {
+  id: string;
+  worktree: string;
+  name: string;
+  icon?: {
+    url?: string;
+    override?: string;
+    color?: string;
+  };
+  time: {
+    created: string;
+    updated: string;
+  };
 }
 
 export interface Message {

@@ -1,25 +1,69 @@
-import type { Session } from '../types';
+import type { Session, Message, Project } from '../types';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_BASE || `${window.location.protocol}//${window.location.host}/api`;
 
 export const api = {
-  // Sessions
-  async getSessions(): Promise<Session[]> {
-    const res = await fetch(`${API_BASE}/sessions`);
+  // Projects
+  async getProjects(): Promise<Project[]> {
+    const res = await fetch(`${API_BASE}/projects`);
     return res.json();
   },
 
-  async createSession(name?: string, cwd?: string): Promise<Session> {
+  async addProject(worktree: string, name?: string): Promise<Project> {
+    const res = await fetch(`${API_BASE}/projects`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ worktree, name }),
+    });
+    return res.json();
+  },
+
+  async deleteProject(id: string): Promise<void> {
+    await fetch(`${API_BASE}/projects/${id}`, { method: 'DELETE' });
+  },
+
+  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+    const res = await fetch(`${API_BASE}/projects/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates),
+    });
+    return res.json();
+  },
+
+  // Sessions
+  async getSessions(options?: {
+    projectPath?: string;
+    search?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Session[]> {
+    const params = new URLSearchParams();
+    if (options?.projectPath) params.set('projectPath', options.projectPath);
+    if (options?.search) params.set('search', options.search);
+    if (options?.limit) params.set('limit', options.limit.toString());
+    if (options?.offset) params.set('offset', options.offset.toString());
+    const query = params.toString();
+    const res = await fetch(`${API_BASE}/sessions${query ? '?' + query : ''}`);
+    return res.json();
+  },
+
+  async createSession(name?: string, cwd?: string, projectPath?: string): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, cwd }),
+      body: JSON.stringify({ name, cwd, projectPath }),
     });
     return res.json();
   },
 
   async getSession(id: string): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions/${id}`);
+    return res.json();
+  },
+
+  async getSessionMessages(id: string): Promise<Message[]> {
+    const res = await fetch(`${API_BASE}/sessions/${id}/messages`);
     return res.json();
   },
 
@@ -72,6 +116,23 @@ export const api = {
 
   async getGitDiff(cwd: string, staged: boolean = false) {
     const res = await fetch(`${API_BASE}/git/diff?cwd=${encodeURIComponent(cwd)}&staged=${staged}`);
+    return res.json();
+  },
+
+  async getBranchDiff(cwd: string, baseBranch?: string) {
+    let url = `${API_BASE}/git/diff/branch?cwd=${encodeURIComponent(cwd)}`;
+    if (baseBranch) url += `&base=${encodeURIComponent(baseBranch)}`;
+    const res = await fetch(url);
+    return res.json();
+  },
+
+  async getFileDiff(cwd: string, filePath: string) {
+    const res = await fetch(`${API_BASE}/git/diff/file?cwd=${encodeURIComponent(cwd)}&path=${encodeURIComponent(filePath)}`);
+    return res.json();
+  },
+
+  async getDiffStat(cwd: string) {
+    const res = await fetch(`${API_BASE}/git/diff/stat?cwd=${encodeURIComponent(cwd)}`);
     return res.json();
   },
 

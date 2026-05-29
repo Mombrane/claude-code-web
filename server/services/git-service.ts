@@ -53,6 +53,43 @@ export class GitService {
     }
   }
 
+  async getBranchDiff(cwd: string, baseBranch?: string): Promise<string> {
+    try {
+      const git = simpleGit(cwd);
+      const branch = baseBranch || 'main';
+      return await git.diff([branch]);
+    } catch (e) {
+      throw new Error(`Failed to get branch diff: ${e}`);
+    }
+  }
+
+  async getFileDiff(cwd: string, filePath: string): Promise<string> {
+    try {
+      const git = simpleGit(cwd);
+      return await git.diff(['--', filePath]);
+    } catch (e) {
+      throw new Error(`Failed to get file diff: ${e}`);
+    }
+  }
+
+  async getDiffStat(cwd: string): Promise<{ file: string; additions: number; deletions: number }[]> {
+    try {
+      const git = simpleGit(cwd);
+      const diffStat = await git.diff(['--stat']);
+      const lines = diffStat.split('\n').filter(l => l.includes('|'));
+      return lines.map(line => {
+        const parts = line.split('|');
+        const file = parts[0].trim();
+        const changes = parts[1].trim();
+        const additions = (changes.match(/\+/g) || []).length;
+        const deletions = (changes.match(/-/g) || []).length;
+        return { file, additions, deletions };
+      });
+    } catch (e) {
+      throw new Error(`Failed to get diff stat: ${e}`);
+    }
+  }
+
   async getLog(cwd: string, count: number = 20): Promise<CommitInfo[]> {
     try {
       const git = simpleGit(cwd);
