@@ -22,6 +22,11 @@ export default {
   'time.thisMonth': '本月',
   'time.older': '更早',
 
+  // Sidebar groups
+  'sidebar.group.today': '今天',
+  'sidebar.group.yesterday': '昨天',
+  'sidebar.group.older': '更早',
+
   // Chat
   'chat.ready': '就绪',
   'chat.thinking': 'Claude 思考中...',

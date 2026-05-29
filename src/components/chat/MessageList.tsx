@@ -632,6 +632,57 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     });
   };
 
+  const markdownComponents = useMemo(() => ({
+    pre: ({ children, ...props }: any) => {
+      const codeText = (children as any)?.props?.children;
+      return (
+        <div className="relative group/code">
+          <pre {...props} className="rounded-lg p-4 overflow-x-auto">
+            {children}
+          </pre>
+          {typeof codeText === 'string' && <CopyButton text={codeText} theme={theme} />}
+        </div>
+      );
+    },
+    code: ({ inline, className, children, ...props }: any) => {
+      if (inline) {
+        return (
+          <code className={`px-1.5 py-0.5 rounded text-sm ${
+            theme === 'dark'
+              ? 'bg-gray-700/50 text-emerald-400'
+              : 'bg-gray-200 text-emerald-600'
+          }`} {...props}>
+            {children}
+          </code>
+        );
+      }
+      return <code className={className} {...props}>{children}</code>;
+    },
+    table: ({ children, ...props }: any) => (
+      <div className="overflow-x-auto my-4">
+        <table {...props} className={`min-w-full divide-y ${
+          theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'
+        }`}>
+          {children}
+        </table>
+      </div>
+    ),
+    th: ({ children, ...props }: any) => (
+      <th {...props} className={`px-4 py-2 text-left text-sm font-medium ${
+        theme === 'dark' ? 'bg-gray-800/50 text-gray-300' : 'bg-gray-100 text-gray-700'
+      }`}>
+        {children}
+      </th>
+    ),
+    td: ({ children, ...props }: any) => (
+      <td {...props} className={`px-4 py-2 text-sm border-t ${
+        theme === 'dark' ? 'text-gray-300 border-gray-700/50' : 'text-gray-700 border-gray-200'
+      }`}>
+        {children}
+      </td>
+    ),
+  }), [theme]);
+
   const handleCopyMessage = async (message: Message) => {
     let textToCopy = '';
     if (typeof message.content === 'string') {
@@ -694,56 +745,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       rehypePlugins={rehypePlugins}
-                      components={{
-                        pre: ({ children, ...props }) => {
-                          const codeText = (children as any)?.props?.children;
-                          return (
-                            <div className="relative group/code">
-                              <pre {...props} className="rounded-lg p-4 overflow-x-auto">
-                                {children}
-                              </pre>
-                              {typeof codeText === 'string' && <CopyButton text={codeText} theme={theme} />}
-                            </div>
-                          );
-                        },
-                        code: ({ inline, className, children, ...props }: any) => {
-                          if (inline) {
-                            return (
-                              <code className={`px-1.5 py-0.5 rounded text-sm ${
-                                theme === 'dark'
-                                  ? 'bg-gray-700/50 text-emerald-400'
-                                  : 'bg-gray-200 text-emerald-600'
-                              }`} {...props}>
-                                {children}
-                              </code>
-                            );
-                          }
-                          return <code className={className} {...props}>{children}</code>;
-                        },
-                        table: ({ children, ...props }) => (
-                          <div className="overflow-x-auto my-4">
-                            <table {...props} className={`min-w-full divide-y ${
-                              theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'
-                            }`}>
-                              {children}
-                            </table>
-                          </div>
-                        ),
-                        th: ({ children, ...props }) => (
-                          <th {...props} className={`px-4 py-2 text-left text-sm font-medium ${
-                            theme === 'dark' ? 'bg-gray-800/50 text-gray-300' : 'bg-gray-100 text-gray-700'
-                          }`}>
-                            {children}
-                          </th>
-                        ),
-                        td: ({ children, ...props }) => (
-                          <td {...props} className={`px-4 py-2 text-sm border-t ${
-                            theme === 'dark' ? 'text-gray-300 border-gray-700/50' : 'text-gray-700 border-gray-200'
-                          }`}>
-                            {children}
-                          </td>
-                        ),
-                      }}
+                      components={markdownComponents}
                     >
                       {message.content as string}
                     </ReactMarkdown>
@@ -752,6 +754,20 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
                   }`}>
                     {new Date(message.timestamp).toLocaleTimeString()}
+                    {(message.costUsd || message.tokens) && (
+                      <>
+                        <span className="mx-1">·</span>
+                        {message.costUsd != null && (
+                          <span>${message.costUsd < 0.01 ? '<0.01' : message.costUsd.toFixed(2)}</span>
+                        )}
+                        {message.tokens != null && (
+                          <>
+                            {message.costUsd != null && <span> </span>}
+                            <span>{message.tokens < 1000 ? message.tokens : `${(message.tokens / 1000).toFixed(1)}k`} tokens</span>
+                          </>
+                        )}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

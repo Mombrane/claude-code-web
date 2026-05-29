@@ -228,6 +228,11 @@ export function ChatPanel() {
       wsClient.on('result', (message) => {
         if (message.payload.sessionId !== currentSessionId) return;
 
+        // Extract cost/usage data from result
+        const costUsd = message.payload.costUsd as number | undefined;
+        const usage = message.payload.usage as Record<string, number> | undefined;
+        const tokens = usage ? (usage.input_tokens || 0) + (usage.output_tokens || 0) : undefined;
+
         // Add final assistant message if there's streaming text
         const text = streamingTextRef.current;
         if (text) {
@@ -238,9 +243,20 @@ export function ChatPanel() {
             content: text,
             timestamp: new Date().toISOString(),
             sessionId: currentSessionId,
+            costUsd: costUsd ?? undefined,
+            tokens: tokens ?? undefined,
           });
           streamingTextRef.current = '';
           setStreamingText('');
+        } else if (costUsd || tokens) {
+          // No streaming text but cost data exists — update the last assistant message
+          const lastAssistant = [...useSessionStore.getState().currentMessages].reverse().find(m => m.role === 'assistant');
+          if (lastAssistant) {
+            updateMessage(lastAssistant.id, {
+              costUsd: lastAssistant.costUsd ?? costUsd ?? undefined,
+              tokens: lastAssistant.tokens ?? tokens ?? undefined,
+            });
+          }
         }
         setIsStreaming(false);
         setStreamingMessageId(null);

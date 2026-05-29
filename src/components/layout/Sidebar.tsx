@@ -5,36 +5,42 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 import type { Session } from '../../types';
 
-function groupSessionsByTime(sessions: Session[]): { label: string; sessions: Session[] }[] {
+function groupSessionsByTime(sessions: Session[], t: (key: string) => string): { label: string; sessions: Session[] }[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86400000);
 
   const groups: Record<string, Session[]> = {
-    'Today': [],
-    'Yesterday': [],
-    'Older': [],
+    'today': [],
+    'yesterday': [],
+    'older': [],
   };
 
   for (const session of sessions) {
     const updated = new Date(session.updatedAt);
     if (updated >= today) {
-      groups['Today'].push(session);
+      groups['today'].push(session);
     } else if (updated >= yesterday) {
-      groups['Yesterday'].push(session);
+      groups['yesterday'].push(session);
     } else {
-      groups['Older'].push(session);
+      groups['older'].push(session);
     }
   }
 
+  const labelMap: Record<string, string> = {
+    'today': t('sidebar.group.today'),
+    'yesterday': t('sidebar.group.yesterday'),
+    'older': t('sidebar.group.older'),
+  };
+
   return Object.entries(groups)
     .filter(([, sessions]) => sessions.length > 0)
-    .map(([label, sessions]) => ({ label, sessions }));
+    .map(([key, sessions]) => ({ label: labelMap[key] || key, sessions }));
 }
 
-function formatTime(dateStr: string): string {
+function formatTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
-  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
 function formatCost(cost: number): string {
@@ -61,7 +67,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     streamingSessions,
     errorSessions,
   } = useSessionStore();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
@@ -159,8 +165,8 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   }, [sessions, searchQuery]);
 
   const groupedSessions = useMemo(() =>
-    groupSessionsByTime(filteredSessions),
-    [filteredSessions]
+    groupSessionsByTime(filteredSessions, t),
+    [filteredSessions, t]
   );
 
   return (
@@ -270,7 +276,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                         <div className="text-sm font-medium truncate">{session.name}</div>
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                        <span>{formatTime(session.updatedAt)}</span>
+                        <span>{formatTime(session.updatedAt, locale)}</span>
                         {(session.totalCostUsd > 0 || session.totalTokens > 0) && (
                           <>
                             <span>·</span>

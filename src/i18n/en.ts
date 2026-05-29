@@ -22,6 +22,11 @@ export default {
   'time.thisMonth': 'This Month',
   'time.older': 'Older',
 
+  // Sidebar groups
+  'sidebar.group.today': 'Today',
+  'sidebar.group.yesterday': 'Yesterday',
+  'sidebar.group.older': 'Older',
+
   // Chat
   'chat.ready': 'Ready',
   'chat.thinking': 'Claude is thinking...',
