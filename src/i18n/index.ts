@@ -19,7 +19,7 @@ interface I18nContextType {
   t: (key: string, params?: Record<string, string | number>) => string;
 }
 
-const I18nContext = createContext<I18nContextType | null>(null);
+export const I18nContext = createContext<I18nContextType | null>(null);
 
 export function I18nProvider(props: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(() => {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import { useI18n } from '../../i18n';
 
 interface FileEntry {
   name: string;
@@ -15,6 +16,7 @@ interface FileExplorerProps {
 }
 
 export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
+  const { t } = useI18n();
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set([rootPath]));
   const [loading, setLoading] = useState(false);
@@ -153,13 +155,13 @@ export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
           type="text"
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          placeholder="Search files..."
+          placeholder={t('fileExplorer.search')}
           className="w-full px-3 py-1.5 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:outline-none focus:border-blue-500"
         />
       </div>
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <div className="p-4 text-center text-gray-500 text-sm">Loading...</div>
+          <div className="p-4 text-center text-gray-500 text-sm">{t('fileExplorer.loading')}</div>
         )}
         {displayEntries
           .sort((a, b) => {

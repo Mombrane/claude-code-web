@@ -48,6 +48,7 @@ export default {
   'message.error': '错误',
   'message.copy': '复制',
   'message.copied': '已复制!',
+  'message.startConversation': '开始对话以开始编程',
 
   // Tools
   'tool.read': '读取',
@@ -65,6 +66,10 @@ export default {
   'tool.status.running': '运行中',
   'tool.status.completed': '完成',
   'tool.status.error': '错误',
+  // File Explorer
+  'fileExplorer.search': '搜索文件...',
+  'fileExplorer.loading': '加载中...',
+
 
   // File Editor
   'editor.save': '保存',
@@ -142,4 +147,21 @@ export default {
   'error.loadFile': '加载文件失败',
   'error.saveFile': '保存文件失败',
   'error.connection': '连接错误',
+
+  // Diff Viewer
+  'diff.expandAll': '展开全部',
+  'diff.collapseAll': '折叠全部',
+  'diff.noChanges': '没有检测到更改',
+
+  // Export
+  'export.markdown': '导出为 Markdown',
+
+  // Render errors
+  'error.renderMessage': '此消息无法渲染',
+
+  // Search
+  'search.placeholder': '搜索消息...',
+  'search.matches': '{current} / {total}',
+  'search.noResults': '无结果',
+  'search.close': '关闭',
 } as const;

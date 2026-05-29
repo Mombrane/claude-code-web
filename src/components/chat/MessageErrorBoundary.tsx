@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { I18nContext } from '../../i18n';
 
 interface Props {
   children: ReactNode;
@@ -10,6 +11,9 @@ interface State {
 }
 
 export class MessageErrorBoundary extends Component<Props, State> {
+  static contextType = I18nContext;
+  declare context: React.ContextType<typeof I18nContext>;
+
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null };
@@ -30,7 +34,7 @@ export class MessageErrorBoundary extends Component<Props, State> {
           <div className="flex items-center gap-2">
             <span className="text-red-400">⚠️</span>
             <span className="text-red-300 text-sm">
-              This message could not be rendered
+              {this.context?.t('error.renderMessage') ?? 'This message could not be rendered'}
             </span>
           </div>
         </div>

@@ -1,9 +1,96 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo, type JSX } from 'react';
 import { MessageErrorBoundary } from './MessageErrorBoundary';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent, FileContent, PatchContent } from '../../types';
+import { useI18n } from '../../i18n';
+
+// Escape special regex characters
+function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Highlight text by wrapping matches in <mark> elements (for plain text rendering)
+function highlightPlainText(text: string, query: string): (string | JSX.Element)[] {
+  if (!query) return [text];
+  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+  const parts = text.split(regex);
+  let matchIdx = 0;
+  return parts.map((part, i) => {
+    if (part.toLowerCase() === query.toLowerCase()) {
+      const idx = matchIdx++;
+      return (
+        <mark
+          key={`${i}-${idx}`}
+          data-search-match
+          data-match-index={idx}
+          className="bg-yellow-500/40 text-inherit rounded-sm px-0.5"
+        >
+          {part}
+        </mark>
+      );
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
+// Rehype plugin to highlight search matches in HAST tree (for ReactMarkdown)
+function rehypeSearchHighlight(query: string) {
+  return () => (tree: any) => {
+    if (!query) return;
+    const queryLower = query.toLowerCase();
+    walkAndHighlight(tree, queryLower);
+  };
+}
+
+function walkAndHighlight(node: any, queryLower: string): void {
+  if (!node || !node.children) return;
+
+  let i = 0;
+  while (i < node.children.length) {
+    const child = node.children[i];
+
+    if (child.type === 'text' && typeof child.value === 'string') {
+      const lower = child.value.toLowerCase();
+      if (!lower.includes(queryLower)) {
+        i++;
+        continue;
+      }
+
+      const parts: any[] = [];
+      let remaining = child.value;
+      let searchFrom = 0;
+
+      while (searchFrom < remaining.length) {
+        const idx = remaining.toLowerCase().indexOf(queryLower, searchFrom);
+        if (idx === -1) {
+          parts.push({ type: 'text', value: remaining.slice(searchFrom) });
+          break;
+        }
+        if (idx > searchFrom) {
+          parts.push({ type: 'text', value: remaining.slice(searchFrom, idx) });
+        }
+        parts.push({
+          type: 'element',
+          tagName: 'mark',
+          properties: {
+            'data-search-match': true,
+            style: 'background-color: rgba(234, 179, 8, 0.4); border-radius: 2px; padding: 0 2px;',
+          },
+          children: [{ type: 'text', value: remaining.slice(idx, idx + queryLower.length) }],
+        });
+        searchFrom = idx + queryLower.length;
+      }
+
+      node.children.splice(i, 1, ...parts);
+      i += parts.length;
+    } else {
+      walkAndHighlight(child, queryLower);
+      i++;
+    }
+  }
+}
 
 interface MessageListProps {
   messages: Message[];
@@ -11,6 +98,8 @@ interface MessageListProps {
   isStreaming: boolean;
   streamingThinking?: string;
   theme?: 'dark' | 'light';
+  searchQuery?: string;
+  currentMatchIndex?: number;
 }
 
 // Tool icon mapping
@@ -114,6 +203,7 @@ function ToolCallCard({ toolCall, isExpanded, onToggle, theme = 'dark' }: {
 
 // Tool result component
 function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultContent; theme?: 'dark' | 'light' }) {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(false);
   const hasLongContent = result.output && result.output.length > 500;
 
@@ -134,7 +224,7 @@ function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultContent;
         }`}
       >
         <span className="text-sm">{result.isError ? '❌' : '✅'}</span>
-        <span className={`text-sm flex-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Tool Result</span>
+        <span className={`text-sm flex-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('message.toolResult')}</span>
         {result.isError && (
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             theme === 'dark' ? 'text-red-400 bg-red-500/20' : 'text-red-600 bg-red-100'
@@ -394,6 +484,7 @@ function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: 
 
 // Thinking block component - real-time display
 function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: string; isStreaming?: boolean; theme?: 'dark' | 'light' }) {
+  const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(true);
   const preview = content.slice(0, 200);
 
@@ -415,7 +506,7 @@ function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: stri
         <span className={`text-sm flex-1 italic ${
           theme === 'dark' ? 'text-purple-400/80' : 'text-purple-600'
         }`}>
-          {isExpanded ? 'Thinking' : `${preview}...`}
+          {isExpanded ? t('message.thinking') : `${preview}...`}
         </span>
         {isStreaming && (
           <span className={`text-xs ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
@@ -451,6 +542,7 @@ function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: stri
 
 // Copy button for code blocks
 function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | 'light' }) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -477,20 +569,56 @@ function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | '
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       ) : (
-        'Copy'
+        t('message.copy')
       )}
     </button>
   );
 }
 
-export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark' }: MessageListProps) {
+export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex }: MessageListProps) {
+  const { t } = useI18n();
   const bottomRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
+  // Build rehype plugins array — include search highlight plugin when searching
+  const rehypePlugins = useMemo(() => {
+    const plugins: any[] = [rehypeHighlight];
+    if (searchQuery) {
+      plugins.push(rehypeSearchHighlight(searchQuery));
+    }
+    return plugins;
+  }, [searchQuery]);
+
+  // Scroll to current search match
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, streamingText, streamingThinking]);
+    if (!searchQuery || currentMatchIndex === undefined || !containerRef.current) return;
+
+    // Assign global indices to all mark[data-search-match] elements
+    const marks = containerRef.current.querySelectorAll('mark[data-search-match]');
+    marks.forEach((mark, i) => {
+      mark.setAttribute('data-match-index', String(i));
+      // Reset to default yellow styling
+      (mark as HTMLElement).style.backgroundColor = 'rgba(234, 179, 8, 0.4)';
+      (mark as HTMLElement).style.borderRadius = '2px';
+      (mark as HTMLElement).style.padding = '0 2px';
+    });
+
+    // Highlight the current match with orange
+    if (marks[currentMatchIndex]) {
+      const currentMark = marks[currentMatchIndex] as HTMLElement;
+      currentMark.style.backgroundColor = 'rgba(249, 115, 22, 0.6)';
+      currentMark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [searchQuery, currentMatchIndex, messages, streamingText]);
+
+  useEffect(() => {
+    // Only auto-scroll to bottom when not searching
+    if (!searchQuery) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, streamingText, streamingThinking, searchQuery]);
 
   const toggleTool = (id: string) => {
     setExpandedTools(prev => {
@@ -540,7 +668,9 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     ? 'bg-blue-600/90 text-white'
                     : 'bg-blue-500 text-white'
                 }`}>
-                  <p className="whitespace-pre-wrap leading-relaxed">{message.content as string}</p>
+                  <p className="whitespace-pre-wrap leading-relaxed">
+                    {searchQuery ? highlightPlainText(message.content as string, searchQuery) : message.content as string}
+                  </p>
                   <div className="text-xs opacity-70 mt-2 text-right">
                     {new Date(message.timestamp).toLocaleTimeString()}
                   </div>
@@ -563,7 +693,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   }`}>
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
-                      rehypePlugins={[rehypeHighlight]}
+                      rehypePlugins={rehypePlugins}
                       components={{
                         pre: ({ children, ...props }) => {
                           const codeText = (children as any)?.props?.children;
@@ -840,7 +970,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   };
 
   return (
-    <div className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
+    <div ref={containerRef} className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
       {messages.length === 0 && !isStreaming && (
@@ -849,7 +979,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         }`}>
           <div className="text-6xl mb-4"> </div>
           <h2 className="text-xl font-semibold mb-2">Claude Code Web</h2>
-          <p className="text-sm">Start a conversation to begin coding</p>
+          <p className="text-sm">{t('message.startConversation')}</p>
         </div>
       )}
 
@@ -883,7 +1013,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
             }`}>
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeHighlight]}
+                rehypePlugins={rehypePlugins}
               >
                 {streamingText}
               </ReactMarkdown>

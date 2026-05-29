@@ -1,13 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 import { api } from '../../api/client';
+import { useI18n } from '../../i18n';
+
+interface EditorSettings {
+  fontSize?: number;
+  tabSize?: number;
+  wordWrap?: 'on' | 'off';
+  minimap?: boolean;
+}
 
 interface FileEditorProps {
   filePath: string;
   onClose: () => void;
+  settings?: EditorSettings;
 }
 
-export function FileEditor({ filePath, onClose }: FileEditorProps) {
+export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
+  const { t } = useI18n();
   const [content, setContent] = useState<string>('');
   const [originalContent, setOriginalContent] = useState<string>('');
   const [language, setLanguage] = useState<string>('plaintext');
@@ -44,7 +54,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
       setTotalLines(data.totalLines);
       setIsModified(false);
     } catch (e: any) {
-      setError(e.message || 'Failed to load file');
+      setError(e.message || t('editor.error'));
     }
   };
 
@@ -123,7 +133,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
             </svg>
             <span className="text-white text-sm font-medium">{fileName}</span>
             {isModified && (
-              <span className="w-2 h-2 rounded-full bg-yellow-400" title="Modified" />
+              <span className="w-2 h-2 rounded-full bg-yellow-400" title={t('editor.modified')} />
             )}
           </div>
 
@@ -151,7 +161,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
               className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
               title="Revert changes"
             >
-              Revert
+              {t('editor.revert')}
             </button>
           )}
           <button
@@ -164,14 +174,14 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
                 <svg className="w-3 h-3 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                Saving...
+                {t('editor.saving')}
               </>
             ) : (
               <>
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                 </svg>
-                Save
+                {t('editor.save')}
                 <kbd className="ml-1 px-1 py-0.5 bg-blue-700/50 rounded text-[10px]">⌘S</kbd>
               </>
             )}
@@ -179,7 +189,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
           <button
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors"
-            title="Close (Esc)"
+            title={t('editor.close')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -239,12 +249,12 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
           onMount={handleEditorMount}
           theme="vs-dark"
           options={{
-            minimap: { enabled: false },
-            fontSize: 14,
+            minimap: { enabled: settings?.minimap ?? false },
+            fontSize: settings?.fontSize ?? 14,
             lineNumbers: 'on',
             renderWhitespace: 'selection',
-            tabSize: 2,
-            wordWrap: 'on',
+            tabSize: settings?.tabSize ?? 2,
+            wordWrap: settings?.wordWrap ?? 'on',
             automaticLayout: true,
             scrollBeyondLastLine: false,
             padding: { top: 12, bottom: 12 },

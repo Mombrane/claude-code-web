@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { api } from '../../api/client';
+import { useI18n } from '../../i18n';
 
 interface DiffViewerProps {
   cwd: string;
@@ -162,6 +163,7 @@ function DiffFileComponent({ file, isExpanded, onToggle }: {
 }
 
 export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProps) {
+  const { t } = useI18n();
   const [diffText, setDiffText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
@@ -227,7 +229,7 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProp
         <svg className="w-12 h-12 mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-        <p className="text-sm">No changes detected</p>
+        <p className="text-sm">{t('diff.noChanges')}</p>
       </div>
     );
   }
@@ -254,13 +256,13 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProp
               onClick={expandAll}
               className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
             >
-              Expand All
+              {t('diff.expandAll')}
             </button>
             <button
               onClick={collapseAll}
               className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
             >
-              Collapse All
+              {t('diff.collapseAll')}
             </button>
             <button
               onClick={loadDiff}

@@ -11,6 +11,8 @@ export class ClaudeProcessManager extends EventEmitter {
   private processTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
   // Track toolUseId -> toolName so tool_result events can include the tool name
   private pendingToolNames: Map<string, string> = new Map();
+  // Reverse map: sessionId -> Set<toolUseId> for cleanup on session close
+  private sessionToolUseIds: Map<string, Set<string>> = new Map();
 
   constructor() {
     super();
@@ -166,6 +168,11 @@ export class ClaudeProcessManager extends EventEmitter {
               // Cache toolUseId -> toolName for matching tool_result later
               if (block.id && block.name) {
                 this.pendingToolNames.set(block.id, block.name);
+                // Track toolUseId -> sessionId mapping for cleanup
+                if (!this.sessionToolUseIds.has(sessionId)) {
+                  this.sessionToolUseIds.set(sessionId, new Set());
+                }
+                this.sessionToolUseIds.get(sessionId)!.add(block.id);
               }
               this.emit('assistant:tool_use', sessionId, {
                 toolName: block.name,
@@ -234,6 +241,14 @@ export class ClaudeProcessManager extends EventEmitter {
     if (t) {
       clearTimeout(t);
       this.processTimeouts.delete(sessionId);
+    }
+    // Clean up pendingToolNames entries for this session
+    const toolUseIds = this.sessionToolUseIds.get(sessionId);
+    if (toolUseIds) {
+      for (const toolUseId of toolUseIds) {
+        this.pendingToolNames.delete(toolUseId);
+      }
+      this.sessionToolUseIds.delete(sessionId);
     }
     const session = this.sessions.get(sessionId);
     if (session) {

@@ -1,4 +1,5 @@
 import type { Message, ToolExecutionContent, ToolCallContent, ToolResultContent, FileContent, PatchContent } from '../../types';
+import { useI18n } from '../../i18n';
 
 interface ExportButtonProps {
   messages: Message[];
@@ -136,6 +137,7 @@ function downloadMarkdown(content: string, filename: string): void {
 }
 
 export function ExportButton({ messages, sessionTitle }: ExportButtonProps) {
+  const { t } = useI18n();
   const handleExport = () => {
     const markdown = generateMarkdown(messages, sessionTitle);
     const safeTitle = (sessionTitle || 'session')
@@ -153,7 +155,7 @@ export function ExportButton({ messages, sessionTitle }: ExportButtonProps) {
       onClick={handleExport}
       disabled={messages.length === 0}
       className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50 rounded-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
-      title="Export as Markdown"
+      title={t('export.markdown')}
     >
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

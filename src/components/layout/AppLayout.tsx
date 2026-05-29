@@ -315,7 +315,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         {/* Center Panel */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedFile ? (
-            <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} />
+            <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} />
           ) : (
             <ChatPanel />
           )}

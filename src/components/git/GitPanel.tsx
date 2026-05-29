@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { DiffViewer } from './DiffViewer';
+import { useI18n } from '../../i18n';
 
 interface GitStatus {
   branch: string;
@@ -23,6 +24,7 @@ interface GitPanelProps {
 }
 
 export function GitPanel({ cwd }: GitPanelProps) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<GitStatus | null>(null);
   const [log, setLog] = useState<CommitInfo[]>([]);
   const [commitMessage, setCommitMessage] = useState('');
@@ -92,7 +94,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
         {activeTab === 'status' && status && (
           <div className="p-4 space-y-4">
             <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-400">Branch:</span>
+              <span className="text-gray-400">{t('git.branch')}:</span>
               <span className="text-white font-mono">{status.branch}</span>
               {status.ahead > 0 && (
                 <span className="text-green-400">↑{status.ahead}</span>
@@ -125,7 +127,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
                       onClick={() => handleStage([file])}
                       className="opacity-0 group-hover:opacity-100 px-2 py-0.5 text-xs text-blue-400 hover:text-blue-300 transition-opacity"
                     >
-                      Stage
+                      {t('git.stage')}
                     </button>
                   </div>
                 ))}
@@ -163,7 +165,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
                 disabled={!commitMessage.trim() || isCommitting}
                 className="mt-2 w-full px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isCommitting ? 'Committing...' : 'Commit'}
+                {isCommitting ? t('git.commit') + '...' : t('git.commit')}
               </button>
             </div>
           </div>

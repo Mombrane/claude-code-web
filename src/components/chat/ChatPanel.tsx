@@ -1,13 +1,16 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { ExportButton } from './ExportButton';
+import { MessageSearch } from './MessageSearch';
 import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
+import { useI18n } from '../../i18n';
 
 export function ChatPanel() {
+  const { t } = useI18n();
   const { sessions, currentSessionId, currentMessages, addMessage, updateMessage } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -17,6 +20,75 @@ export function ChatPanel() {
   // Maps for tool_use / tool_result pairing
   const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
   const pendingResults = useRef<Map<string, { output: string; isError: boolean }>>(new Map()); // toolUseId → result
+
+  // Search state
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+
+  // Extract text from message content for search
+  const getMessageText = useCallback((msg: typeof currentMessages[number]): string => {
+    if (typeof msg.content === 'string') return msg.content;
+    if (msg.type === 'tool_execution') {
+      const exec = msg.content as ToolExecutionContent;
+      return `[${exec.toolName}] ${exec.input ? JSON.stringify(exec.input) : ''} ${exec.output || ''}`;
+    }
+    return '';
+  }, []);
+
+  // Count all matches across messages
+  const { matchCount, matchIndices } = useMemo(() => {
+    if (!searchQuery) return { matchCount: 0, matchIndices: [] as { msgId: string; localIndex: number }[] };
+    const query = searchQuery.toLowerCase();
+    const indices: { msgId: string; localIndex: number }[] = [];
+    for (const msg of currentMessages) {
+      const text = getMessageText(msg).toLowerCase();
+      let pos = 0;
+      while (true) {
+        const idx = text.indexOf(query, pos);
+        if (idx === -1) break;
+        indices.push({ msgId: msg.id, localIndex: idx });
+        pos = idx + 1;
+      }
+    }
+    return { matchCount: indices.length, matchIndices: indices };
+  }, [currentMessages, searchQuery, getMessageText]);
+
+  // Ctrl+F keyboard handler
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setSearchOpen((prev) => !prev);
+        if (!searchOpen) {
+          setCurrentMatchIndex(0);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [searchOpen]);
+
+  const handleSearchQuery = useCallback((query: string) => {
+    setSearchQuery(query);
+    setCurrentMatchIndex(0);
+  }, []);
+
+  const handleNextMatch = useCallback(() => {
+    if (matchCount === 0) return;
+    setCurrentMatchIndex((prev) => (prev + 1) % matchCount);
+  }, [matchCount]);
+
+  const handlePreviousMatch = useCallback(() => {
+    if (matchCount === 0) return;
+    setCurrentMatchIndex((prev) => (prev - 1 + matchCount) % matchCount);
+  }, [matchCount]);
+
+  const handleCloseSearch = useCallback(() => {
+    setSearchOpen(false);
+    setSearchQuery('');
+    setCurrentMatchIndex(0);
+  }, []);
 
   // Sync streamingText to ref so closures always read the latest value
   useEffect(() => { streamingTextRef.current = streamingText; }, [streamingText]);
@@ -254,18 +326,18 @@ export function ChatPanel() {
       <div className="flex-1 flex items-center justify-center bg-gradient-subtle text-gray-400">
         <div className="text-center animate-fadeIn">
           <div className="text-7xl mb-6"> </div>
-          <h2 className="text-3xl font-bold mb-3 text-gradient">Claude Code Web</h2>
+          <h2 className="text-3xl font-bold mb-3 text-gradient">{t('chat.welcome.title')}</h2>
           <p className="text-gray-500 mb-8 max-w-md mx-auto">
-            Select a session or create a new one to start coding with Claude
+            {t('chat.welcome.subtitle')}
           </p>
           <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
             <span className="flex items-center gap-2">
               <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+N</kbd>
-              New Session
+              {t('chat.welcome.newSession')}
             </span>
             <span className="flex items-center gap-2">
               <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+K</kbd>
-              Commands
+              {t('chat.welcome.commands')}
             </span>
           </div>
         </div>
@@ -281,17 +353,29 @@ export function ChatPanel() {
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
             <span className="text-sm text-gray-400">
-              {isStreaming ? 'Claude is thinking...' : 'Ready'}
+              {isStreaming ? t('chat.thinking') : t('chat.ready')}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
           <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} />
           <span className="text-xs text-gray-600">
-            {currentMessages.length} messages
+            {t('chat.messages', { count: currentMessages.length })}
           </span>
         </div>
       </div>
+
+      {/* Search bar */}
+      {searchOpen && (
+        <MessageSearch
+          onSearch={handleSearchQuery}
+          onNext={handleNextMatch}
+          onPrevious={handlePreviousMatch}
+          onClose={handleCloseSearch}
+          currentMatch={currentMatchIndex}
+          totalMatches={matchCount}
+        />
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
@@ -299,6 +383,8 @@ export function ChatPanel() {
           messages={currentMessages}
           streamingText={streamingText}
           isStreaming={isStreaming}
+          searchQuery={searchQuery || undefined}
+          currentMatchIndex={searchQuery ? currentMatchIndex : undefined}
         />
       </div>
 

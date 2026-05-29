@@ -9,7 +9,6 @@ export class WebSocketHandler {
   private wss: WebSocketServer;
   private clients: Map<string, Set<WebSocket>> = new Map();
   private processedResults = new Set<string>();
-  private sessionResultCounters: Map<string, number> = new Map();
 
   constructor(server: Server) {
     this.wss = new WebSocketServer({ server, path: '/ws' });
@@ -99,58 +98,14 @@ export class WebSocketHandler {
       });
     });
 
-    claudeProcessManager.on('assistant:step_start', (sessionId, data) => {
-      this.broadcastToSession(sessionId, {
-        type: 'stream',
-        payload: {
-          sessionId,
-          event: 'step_start',
-          data,
-        },
-      });
-    });
-
-    claudeProcessManager.on('assistant:step_finish', (sessionId, data) => {
-      this.broadcastToSession(sessionId, {
-        type: 'stream',
-        payload: {
-          sessionId,
-          event: 'step_finish',
-          data,
-        },
-      });
-    });
-
-    claudeProcessManager.on('assistant:patch', (sessionId, data) => {
-      this.broadcastToSession(sessionId, {
-        type: 'stream',
-        payload: {
-          sessionId,
-          event: 'patch',
-          data,
-        },
-      });
-    });
-
-    claudeProcessManager.on('assistant:file', (sessionId, data) => {
-      this.broadcastToSession(sessionId, {
-        type: 'stream',
-        payload: {
-          sessionId,
-          event: 'file',
-          data,
-        },
-      });
-    });
-
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
-      // Generate unique key using monotonic counter per session (more robust than cost/tokens)
-      const counter = (this.sessionResultCounters.get(sessionId) || 0) + 1;
-      this.sessionResultCounters.set(sessionId, counter);
-      const resultKey = `${sessionId}-result-${counter}`;
+      // Generate content-based dedup key from sessionId + cost + tokens
+      const totalTokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
+      const resultKey = `${sessionId}-${data.costUsd}-${totalTokens}`;
 
       if (this.processedResults.has(resultKey)) {
         // Already processed this result, skip to avoid double-counting costs
+        // but still broadcast to clients
         this.broadcastToSession(sessionId, {
           type: 'result',
           payload: data,

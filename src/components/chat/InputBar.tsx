@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react';
 import { FilePickerModal } from '../files/FilePickerModal';
+import { useI18n } from '../../i18n';
 
 interface InputBarProps {
   onSend: (message: string) => void;
@@ -11,6 +12,7 @@ interface InputBarProps {
 }
 
 export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath }: InputBarProps) {
+  const { t } = useI18n();
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
@@ -198,7 +200,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
           onPaste={handlePaste}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          placeholder={isStreaming ? "Claude is responding..." : "Type a message... (Shift+Enter for new line)"}
+          placeholder={isStreaming ? t('input.placeholderStreaming') : t('input.placeholder')}
           disabled={disabled || isStreaming}
           className={`flex-1 bg-transparent pl-10 pr-3 py-3 resize-none focus:outline-none disabled:opacity-50 min-h-[44px] max-h-[200px] ${
             theme === 'dark'
@@ -218,7 +220,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
               </svg>
-              <span className="text-sm font-medium">Stop</span>
+              <span className="text-sm font-medium">{t('input.stop')}</span>
             </button>
           ) : (
             <button
@@ -229,7 +231,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
-              <span className="text-sm font-medium">Send</span>
+              <span className="text-sm font-medium">{t('input.send')}</span>
             </button>
           )}
         </div>
@@ -244,19 +246,19 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
             <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
               theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
             }`}>Enter</kbd>
-            <span>Send</span>
+            <span>{t('input.hint.enter')}</span>
           </span>
           <span className="flex items-center gap-1">
             <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
               theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
             }`}>Shift+Enter</kbd>
-            <span>New line</span>
+            <span>{t('input.hint.shiftEnter')}</span>
           </span>
           <span className="flex items-center gap-1">
             <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
               theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
             }`}>Esc</kbd>
-            <span>Clear</span>
+            <span>{t('input.hint.esc')}</span>
           </span>
         </div>
         {charCount > 0 && (

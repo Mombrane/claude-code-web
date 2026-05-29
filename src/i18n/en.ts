@@ -48,6 +48,7 @@ export default {
   'message.error': 'Error',
   'message.copy': 'Copy',
   'message.copied': 'Copied!',
+  'message.startConversation': 'Start a conversation to begin coding',
 
   // Tools
   'tool.read': 'Read',
@@ -65,6 +66,10 @@ export default {
   'tool.status.running': 'Running',
   'tool.status.completed': 'Done',
   'tool.status.error': 'Error',
+  // File Explorer
+  'fileExplorer.search': 'Search files...',
+  'fileExplorer.loading': 'Loading...',
+
 
   // File Editor
   'editor.save': 'Save',
@@ -142,4 +147,21 @@ export default {
   'error.loadFile': 'Failed to load file',
   'error.saveFile': 'Failed to save file',
   'error.connection': 'Connection error',
+
+  // Diff Viewer
+  'diff.expandAll': 'Expand All',
+  'diff.collapseAll': 'Collapse All',
+  'diff.noChanges': 'No changes detected',
+
+  // Export
+  'export.markdown': 'Export as Markdown',
+
+  // Render errors
+  'error.renderMessage': 'This message could not be rendered',
+
+  // Search
+  'search.placeholder': 'Search messages...',
+  'search.matches': '{current} of {total}',
+  'search.noResults': 'No results',
+  'search.close': 'Close',
 } as const;
