@@ -50,6 +50,7 @@ export class ClaudeProcessManager extends EventEmitter {
     const args = [
       '-p', '--verbose',
       '--output-format', 'stream-json',
+      '--session-id', sessionId,
       '--continue',
       '--fork-session',
       '--permission-mode', session.permissionMode || 'auto',

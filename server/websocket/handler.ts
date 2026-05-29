@@ -289,6 +289,16 @@ export class WebSocketHandler {
     const sent = await claudeProcessManager.sendMessage(sessionId, userMessage);
     if (!sent) {
       this.sendError(ws, 'Failed to send message to Claude');
+      return;
+    }
+
+    // Auto-name session from first user message if it still has the default name
+    const session = await sessionStore.getSession(sessionId);
+    if (session && session.name.startsWith('Session ')) {
+      const autoName = userMessage.length > 50
+        ? userMessage.slice(0, 50).trim() + '...'
+        : userMessage.trim();
+      await sessionStore.updateSessionName(sessionId, autoName);
     }
   }
 

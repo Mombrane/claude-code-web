@@ -171,10 +171,18 @@ export function HomePage() {
             Projects
           </div>
           {projects.map(project => (
-            <button
+            <div
               key={project.id}
+              role="button"
+              tabIndex={0}
               onClick={() => setSelectedProject(project.worktree)}
-              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all duration-200 group ${
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setSelectedProject(project.worktree);
+                }
+              }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-all duration-200 group cursor-pointer ${
                 selectedProject === project.worktree
                   ? 'bg-gray-700/80 text-white'
                   : 'text-gray-400 hover:bg-gray-700/40 hover:text-white'
@@ -200,7 +208,7 @@ export function HomePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-            </button>
+            </div>
           ))}
 
           {/* Add project button */}

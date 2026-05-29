@@ -16,10 +16,23 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
+  const [monacoLoaded, setMonacoLoaded] = useState(false);
+  const [monacoLoadError, setMonacoLoadError] = useState(false);
 
   useEffect(() => {
     loadFile();
   }, [filePath]);
+
+  // Timeout: if Monaco doesn't load within 10s, switch to textarea fallback
+  useEffect(() => {
+    if (monacoLoaded || monacoLoadError) return;
+    const timer = setTimeout(() => {
+      if (!monacoLoaded) {
+        setMonacoLoadError(true);
+      }
+    }, 10000);
+    return () => clearTimeout(timer);
+  }, [monacoLoaded, monacoLoadError]);
 
   const loadFile = async () => {
     try {
@@ -63,6 +76,7 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
   };
 
   const handleEditorMount = (editor: any) => {
+    setMonacoLoaded(true);
     editor.onDidChangeCursorPosition((e: any) => {
       setCursorPosition({
         line: e.position.lineNumber,
@@ -190,37 +204,61 @@ export function FileEditor({ filePath, onClose }: FileEditorProps) {
             </button>
           </div>
         </div>
-      ) : (
-        <div className="flex-1" onKeyDown={handleKeyDown}>
-          <Editor
-            height="100%"
-            language={language}
+      ) : monacoLoadError ? (
+        // Textarea fallback when Monaco fails to load
+        <div className="flex-1 flex flex-col" onKeyDown={handleKeyDown}>
+          <div className="px-4 py-1.5 bg-yellow-900/20 border-b border-yellow-700/30 text-[11px] text-yellow-400">
+            Monaco Editor failed to load. Using basic editor. Check your network connection.
+          </div>
+          <textarea
+            className="flex-1 w-full bg-[#1e1e1e] text-gray-200 p-4 font-mono text-sm resize-none focus:outline-none"
             value={content}
-            onChange={handleChange}
-            onMount={handleEditorMount}
-            theme="vs-dark"
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: 'on',
-              renderWhitespace: 'selection',
-              tabSize: 2,
-              wordWrap: 'on',
-              automaticLayout: true,
-              scrollBeyondLastLine: false,
-              padding: { top: 12, bottom: 12 },
-              smoothScrolling: true,
-              cursorBlinking: 'smooth',
-              cursorSmoothCaretAnimation: 'on',
-              bracketPairColorization: { enabled: true },
-              guides: {
-                bracketPairs: true,
-                indentation: true,
-              },
-            }}
+            onChange={(e) => handleChange(e.target.value)}
+            spellCheck={false}
           />
         </div>
-      )}
+      ) : !monacoLoaded ? (
+        // Loading spinner while Monaco loads
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <svg className="w-8 h-8 mx-auto mb-3 animate-spin text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <p className="text-gray-400 text-sm">Loading editor...</p>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Monaco Editor (always rendered, hidden when fallback is shown) */}
+      <div className={`flex-1 ${error || monacoLoadError ? 'hidden' : ''}`} onKeyDown={handleKeyDown}>
+        <Editor
+          height="100%"
+          language={language}
+          value={content}
+          onChange={handleChange}
+          onMount={handleEditorMount}
+          theme="vs-dark"
+          options={{
+            minimap: { enabled: false },
+            fontSize: 14,
+            lineNumbers: 'on',
+            renderWhitespace: 'selection',
+            tabSize: 2,
+            wordWrap: 'on',
+            automaticLayout: true,
+            scrollBeyondLastLine: false,
+            padding: { top: 12, bottom: 12 },
+            smoothScrolling: true,
+            cursorBlinking: 'smooth',
+            cursorSmoothCaretAnimation: 'on',
+            bracketPairColorization: { enabled: true },
+            guides: {
+              bracketPairs: true,
+              indentation: true,
+            },
+          }}
+        />
+      </div>
 
       {/* Status bar */}
       <div className="flex items-center justify-between px-4 py-1.5 bg-gray-800/60 border-t border-gray-700/50 text-[11px] text-gray-500">

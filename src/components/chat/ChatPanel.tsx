@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
@@ -12,6 +12,10 @@ export function ChatPanel() {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const currentSession = sessions.find((s) => s.id === currentSessionId);
+  const streamingTextRef = useRef<string>('');
+
+  // Sync streamingText to ref so closures always read the latest value
+  useEffect(() => { streamingTextRef.current = streamingText; }, [streamingText]);
 
   // Clear streaming state when session changes
   useEffect(() => {
@@ -86,15 +90,17 @@ export function ChatPanel() {
         if (message.payload.sessionId !== currentSessionId) return;
 
         // Add final assistant message if there's streaming text
-        if (streamingText) {
+        const text = streamingTextRef.current;
+        if (text) {
           addMessage({
             id: uuidv4(),
             role: 'assistant',
             type: 'text',
-            content: streamingText,
+            content: text,
             timestamp: new Date().toISOString(),
             sessionId: currentSessionId,
           });
+          streamingTextRef.current = '';
           setStreamingText('');
         }
         setIsStreaming(false);
@@ -113,6 +119,7 @@ export function ChatPanel() {
           sessionId: currentSessionId,
         });
         setIsStreaming(false);
+        streamingTextRef.current = '';
         setStreamingText('');
         setStreamingMessageId(null);
       }),
@@ -122,7 +129,7 @@ export function ChatPanel() {
       unsubscribers.forEach((unsub) => unsub());
       wsClient.unsubscribe(currentSessionId);
     };
-  }, [currentSessionId, addMessage, streamingText]);
+  }, [currentSessionId, addMessage]);
 
   const handleSendMessage = useCallback((message: string) => {
     if (!currentSessionId || !message.trim()) return;
@@ -159,19 +166,21 @@ export function ChatPanel() {
     setIsStreaming(false);
 
     // Save any partial streaming text
-    if (streamingText && currentSessionId) {
+    const text = streamingTextRef.current;
+    if (text && currentSessionId) {
       addMessage({
         id: streamingMessageId || uuidv4(),
         role: 'assistant',
         type: 'text',
-        content: streamingText + '\n\n[Generation stopped]',
+        content: text + '\n\n[Generation stopped]',
         timestamp: new Date().toISOString(),
         sessionId: currentSessionId,
       });
+      streamingTextRef.current = '';
     }
     setStreamingText('');
     setStreamingMessageId(null);
-  }, [currentSessionId, streamingText, streamingMessageId, addMessage]);
+  }, [currentSessionId, streamingMessageId, addMessage]);
 
   if (!currentSessionId) {
     return (
