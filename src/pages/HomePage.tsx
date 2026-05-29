@@ -44,6 +44,17 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
+function formatCost(cost: number): string {
+  if (cost < 0.01) return '<$0.01';
+  return `$${cost.toFixed(2)}`;
+}
+
+function formatTokens(tokens: number): string {
+  if (tokens < 1000) return `${tokens} tokens`;
+  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k tokens`;
+  return `${(tokens / 1000000).toFixed(1)}M tokens`;
+}
+
 export function HomePage() {
   const navigate = useNavigate();
   const { setSessions, setCurrentSession } = useSessionStore();
@@ -317,7 +328,7 @@ export function HomePage() {
                             {session.totalCostUsd > 0 && (
                               <>
                                 <span className="text-gray-600">·</span>
-                                <span>${session.totalCostUsd.toFixed(4)}</span>
+                                <span>{formatCost(session.totalCostUsd)}</span>
                               </>
                             )}
                           </div>

@@ -37,6 +37,17 @@ function formatTime(dateStr: string): string {
   return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
+function formatCost(cost: number): string {
+  if (cost < 0.01) return '<$0.01';
+  return `$${cost.toFixed(2)}`;
+}
+
+function formatTokens(tokens: number): string {
+  if (tokens < 1000) return `${tokens} tokens`;
+  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k tokens`;
+  return `${(tokens / 1000000).toFixed(1)}M tokens`;
+}
+
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
   const navigate = useNavigate();
   const {
@@ -260,6 +271,17 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
                         <span>{formatTime(session.updatedAt)}</span>
+                        {(session.totalCostUsd > 0 || session.totalTokens > 0) && (
+                          <>
+                            <span>·</span>
+                            {session.totalCostUsd > 0 && (
+                              <span>{formatCost(session.totalCostUsd)}</span>
+                            )}
+                            {session.totalTokens > 0 && (
+                              <span>{formatTokens(session.totalTokens)}</span>
+                            )}
+                          </>
+                        )}
                       </div>
                     </div>
 
