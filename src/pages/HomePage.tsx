@@ -149,6 +149,23 @@ export function HomePage() {
     }
   };
 
+  // Compute session statistics
+  const stats = useMemo(() => {
+    if (sessions.length === 0) {
+      return { totalSessions: 0, totalCost: 0, totalTokens: 0, avgCost: 0, mostExpensive: null };
+    }
+    const totalCost = sessions.reduce((sum, s) => sum + (s.totalCostUsd ?? 0), 0);
+    const totalTokens = sessions.reduce((sum, s) => sum + (s.totalTokens ?? 0), 0);
+    const paidSessions = sessions.filter(s => (s.totalCostUsd ?? 0) > 0);
+    const avgCost = paidSessions.length > 0
+      ? paidSessions.reduce((sum, s) => sum + s.totalCostUsd, 0) / paidSessions.length
+      : 0;
+    const mostExpensive = sessions.reduce((max, s) =>
+      (s.totalCostUsd ?? 0) > (max.totalCostUsd ?? 0) ? s : max
+    , sessions[0]);
+    return { totalSessions: sessions.length, totalCost, totalTokens, avgCost, mostExpensive };
+  }, [sessions]);
+
   const filteredSessions = useMemo(() => {
     if (!searchQuery) return sessions;
     const query = searchQuery.toLowerCase();
@@ -276,6 +293,37 @@ export function HomePage() {
             />
           </div>
         </div>
+
+        {/* Statistics */}
+        {!isLoading && sessions.length > 0 && (
+          <div className="px-6 py-4 border-b border-gray-700/50">
+            <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-3">Statistics</h3>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+                <div className="text-[11px] text-gray-500 mb-1">Sessions</div>
+                <div className="text-lg font-semibold text-white">{stats.totalSessions}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+                <div className="text-[11px] text-gray-500 mb-1">Total Cost</div>
+                <div className="text-lg font-semibold text-white">{formatCost(stats.totalCost)}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+                <div className="text-[11px] text-gray-500 mb-1">Total Tokens</div>
+                <div className="text-lg font-semibold text-white">{formatTokens(stats.totalTokens)}</div>
+              </div>
+              <div className="bg-gray-800/60 rounded-lg px-4 py-3">
+                <div className="text-[11px] text-gray-500 mb-1">Avg Cost</div>
+                <div className="text-lg font-semibold text-white">{formatCost(stats.avgCost)}</div>
+              </div>
+            </div>
+            {stats.mostExpensive && (stats.mostExpensive.totalCostUsd ?? 0) > 0 && (
+              <div className="mt-2 text-[11px] text-gray-500">
+                Most expensive: <span className="text-gray-300">"{stats.mostExpensive.name}"</span>{' '}
+                <span className="text-gray-400">({formatCost(stats.mostExpensive.totalCostUsd)})</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Session list */}
         <div className="flex-1 overflow-y-auto px-6 py-4">
