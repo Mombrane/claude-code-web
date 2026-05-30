@@ -10,6 +10,19 @@ import { CopyButton } from './CopyButton';
 import { ToolCallCard, ToolResultCard, ToolExecutionCard, ToolGroupCard } from './ToolExecutionCard';
 import { ThinkingBlock } from './ThinkingBlock';
 
+function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {
+  const now = Date.now();
+  const msgTime = new Date(timestamp).getTime();
+  const diffMs = now - msgTime;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+
+  if (diffMin < 1) return t('time.justNow');
+  if (diffMin < 60) return t('time.minutesAgo', { n: diffMin });
+  if (diffHours < 24) return t('time.hoursAgo', { n: diffHours });
+  return null;
+}
+
 // Escape special regex characters
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -365,7 +378,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     {searchQuery ? highlightPlainText(message.content as string, searchQuery) : message.content as string}
                   </p>
                   <div className="text-xs opacity-70 mt-2 text-right">
-                    {new Date(message.timestamp).toLocaleTimeString(locale)}
+                    {getRelativeTime(message.timestamp, t) || new Date(message.timestamp).toLocaleTimeString(locale)}
                   </div>
                 </div>
               </div>
@@ -395,7 +408,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   <div className={`text-xs mt-3 ${
                     theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
                   }`}>
-                    {new Date(message.timestamp).toLocaleTimeString(locale)}
+                    {getRelativeTime(message.timestamp, t) || new Date(message.timestamp).toLocaleTimeString(locale)}
                     {(message.costUsd || message.tokens) && (
                       <>
                         <span className="mx-1">·</span>
@@ -666,7 +679,13 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         }`}>
           <div className="text-6xl mb-4"> </div>
           <h2 className="text-xl font-semibold mb-2">{t('app.name')}</h2>
-          <p className="text-sm">{t('message.startConversation')}</p>
+          <p className="text-sm mb-6">{t('message.startConversation')}</p>
+          <div className={`text-xs space-y-1 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
+            <p><kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${theme === 'dark' ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>Ctrl+N</kbd> {t('shortcuts.newSession')}</p>
+            <p><kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${theme === 'dark' ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>Ctrl+K</kbd> {t('shortcuts.commandPalette')}</p>
+            <p><kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${theme === 'dark' ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>Ctrl+F</kbd> {t('shortcuts.search')}</p>
+            <p><kbd className={`px-1.5 py-0.5 rounded text-[10px] font-mono ${theme === 'dark' ? 'bg-gray-700/50 text-gray-400' : 'bg-gray-200 text-gray-500'}`}>Ctrl+B</kbd> {t('shortcuts.toggleSidebar')}</p>
+          </div>
         </div>
       )}
 
@@ -747,7 +766,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
           </svg>
-          <span className="text-xs font-medium">{t('chat.scrollToBottom') || '↓'}</span>
+
         </button>
       )}
     </div>
