@@ -235,6 +235,8 @@ export default {
   'shortcuts.newLine': '输入中换行',
   'shortcuts.close': '关闭搜索 / 取消',
   'shortcuts.toggleTheme': '切换主题',
+  'shortcuts.prevSession': '上一个会话',
+  'shortcuts.nextSession': '下一个会话',
 
   // Toast notifications
   'toast.copied': '已复制！',

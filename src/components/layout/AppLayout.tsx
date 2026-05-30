@@ -169,6 +169,38 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         e.preventDefault();
         setSettings(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }));
       }
+
+      // Ctrl+Up/Down: Session quick-switch
+      if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+        // Don't trigger when input/textarea is focused
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+
+        e.preventDefault();
+        const state = useSessionStore.getState();
+        const { sessions, currentSessionId } = state;
+        if (sessions.length === 0) return;
+
+        // Sort sessions by updatedAt (newest first) - same as sidebar
+        const sorted = [...sessions].sort(
+          (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+
+        const currentIndex = sorted.findIndex(s => s.id === currentSessionId);
+        let nextIndex: number;
+        if (e.key === 'ArrowUp') {
+          nextIndex = currentIndex <= 0 ? sorted.length - 1 : currentIndex - 1;
+        } else {
+          nextIndex = currentIndex >= sorted.length - 1 ? 0 : currentIndex + 1;
+        }
+
+        const nextSession = sorted[nextIndex];
+        if (nextSession) {
+          state.setCurrentSession(nextSession.id);
+          const dir = btoa(nextSession.projectPath || nextSession.cwd);
+          navigate(`/${dir}/session/${nextSession.id}`);
+        }
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

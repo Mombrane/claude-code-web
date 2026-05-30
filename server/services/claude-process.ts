@@ -4,6 +4,7 @@ import readline from 'readline';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
 import type { ClaudeSession, SpawnOptions, StreamEvent } from '../types';
+import { sessionStore } from './session-store';
 
 export class ClaudeProcessManager extends EventEmitter {
   private sessions: Map<string, ClaudeSession> = new Map();
@@ -35,6 +36,10 @@ export class ClaudeProcessManager extends EventEmitter {
     };
 
     this.sessions.set(sessionId, session);
+    // Persist active status to disk
+    sessionStore.updateSession(sessionId, { status: 'active' }).catch(err => {
+      console.error(`Failed to persist session active status:`, err);
+    });
     return session;
   }
 
@@ -264,6 +269,10 @@ export class ClaudeProcessManager extends EventEmitter {
       this.processTimeouts.delete(sessionId);
     }
     // Don't delete from this.sessions — keep session alive
+    // Persist idle status to disk
+    sessionStore.updateSession(sessionId, { status: 'idle' }).catch(err => {
+      console.error(`Failed to persist session idle status:`, err);
+    });
   }
 
   async closeSession(sessionId: string): Promise<void> {
@@ -284,6 +293,10 @@ export class ClaudeProcessManager extends EventEmitter {
     const session = this.sessions.get(sessionId);
     if (session) {
       session.status = 'closed';
+      // Persist closed status to disk
+      sessionStore.updateSession(sessionId, { status: 'closed' }).catch(err => {
+        console.error(`Failed to persist session closed status:`, err);
+      });
       this.sessions.delete(sessionId);
     }
   }

@@ -7,6 +7,7 @@ import sessionRoutes from './routes/sessions';
 import fileRoutes from './routes/files';
 import gitRoutes from './routes/git';
 import projectRoutes from './routes/projects';
+import { sessionStore } from './services/session-store';
 
 const app = express();
 const server = createServer(app);
@@ -54,6 +55,10 @@ server.on('error', (err: NodeJS.ErrnoException) => {
 server.listen(config.port, () => {
   console.log(`Server running on http://localhost:${config.port}`);
   console.log(`WebSocket available at ws://localhost:${config.port}/ws`);
+  // Reset stale active session statuses on startup (no processes are actually running)
+  sessionStore.resetActiveSessions().catch(err => {
+    console.error('Failed to reset active sessions on startup:', err);
+  });
 });
 
 export { app, server, wsHandler };

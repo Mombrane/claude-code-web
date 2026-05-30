@@ -119,6 +119,16 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     groupSessionsByTime(filteredSessions, t),
     [filteredSessions, t]
   );
+  const totalCost = useMemo(() =>
+    sessions.reduce((sum, s) => sum + (s.totalCostUsd ?? 0), 0),
+    [sessions]
+  );
+
+  const totalTokens = useMemo(() =>
+    sessions.reduce((sum, s) => sum + (s.totalTokens ?? 0), 0),
+    [sessions]
+  );
+
 
   return (
     <div className={`w-64 flex flex-col h-full ${theme === 'dark' ? 'bg-gray-800/80' : 'bg-gray-50'}`}>
@@ -295,7 +305,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       {/* Footer */}
       <div className="p-3 border-t border-gray-700/50">
         <div className="flex items-center justify-between text-xs text-gray-500">
-          <span>{t('sidebar.sessionCount', { count: sessions.length })}</span>
+          <span>{t('sidebar.sessionCount', { count: sessions.length })} · {formatCost(totalCost, t)} · {formatTokens(totalTokens, t)}</span>
           <button
             onClick={loadSessions}
             className="p-1 hover:text-gray-300 hover:bg-gray-700/50 rounded transition-colors"

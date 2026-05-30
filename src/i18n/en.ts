@@ -235,6 +235,8 @@ export default {
   'shortcuts.newLine': 'New line in input',
   'shortcuts.close': 'Close search / Cancel',
   'shortcuts.toggleTheme': 'Toggle theme',
+  'shortcuts.prevSession': 'Previous session',
+  'shortcuts.nextSession': 'Next session',
 
   // Toast notifications
   'toast.copied': 'Copied!',

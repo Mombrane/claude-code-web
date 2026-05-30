@@ -33,6 +33,8 @@ export function KeyboardShortcutsDialog({ onClose, theme = 'dark' }: KeyboardSho
     { keys: ['Ctrl', '/'], label: t('shortcuts.showShortcuts') },
     { keys: ['Ctrl', ','], label: t('shortcuts.settings') },
     { keys: ['Ctrl', 'Shift', 'T'], label: t('shortcuts.toggleTheme') },
+    { keys: ['Ctrl', '↑'], label: t('shortcuts.prevSession') },
+    { keys: ['Ctrl', '↓'], label: t('shortcuts.nextSession') },
     { keys: ['Enter'], label: t('shortcuts.sendMessage') },
     { keys: ['Shift', 'Enter'], label: t('shortcuts.newLine') },
     { keys: ['Escape'], label: t('shortcuts.close') },

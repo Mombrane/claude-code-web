@@ -160,6 +160,32 @@ export class SessionStore {
     await this.saveSession(session);
     return true;
   }
+
+  async resetActiveSessions(): Promise<void> {
+    try {
+      const sessions = await this.getAllSessions();
+      let count = 0;
+      for (const session of sessions) {
+        if (session.status === 'active') {
+          session.status = 'idle';
+          // Write directly to file without updating updatedAt
+          const filePath = this.getSessionPath(session.id);
+          const tempPath = filePath + '.tmp';
+          try {
+            await fs.writeFile(tempPath, JSON.stringify(session, null, 2));
+            await fs.rename(tempPath, filePath);
+          } catch (e) {
+            await fs.writeFile(filePath, JSON.stringify(session, null, 2));
+          }
+          count++;
+        }
+      }
+      console.log(`Reset ${count} stale active sessions to idle`);
+    } catch (e) {
+      console.error('Failed to reset active sessions:', e);
+    }
+  }
 }
 
 export const sessionStore = new SessionStore();
+
