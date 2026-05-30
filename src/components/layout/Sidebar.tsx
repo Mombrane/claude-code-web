@@ -3,56 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
+import { formatCost, formatTokens, formatTime, groupSessionsByTime } from '../../utils/format';
 import type { Session } from '../../types';
-
-function groupSessionsByTime(sessions: Session[], t: (key: string) => string): { label: string; sessions: Session[] }[] {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-
-  const groups: Record<string, Session[]> = {
-    'today': [],
-    'yesterday': [],
-    'older': [],
-  };
-
-  for (const session of sessions) {
-    const updated = new Date(session.updatedAt);
-    if (updated >= today) {
-      groups['today'].push(session);
-    } else if (updated >= yesterday) {
-      groups['yesterday'].push(session);
-    } else {
-      groups['older'].push(session);
-    }
-  }
-
-  const labelMap: Record<string, string> = {
-    'today': t('sidebar.group.today'),
-    'yesterday': t('sidebar.group.yesterday'),
-    'older': t('sidebar.group.older'),
-  };
-
-  return Object.entries(groups)
-    .filter(([, sessions]) => sessions.length > 0)
-    .map(([key, sessions]) => ({ label: labelMap[key] || key, sessions }));
-}
-
-function formatTime(dateStr: string, locale: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
-}
-
-function formatCost(cost: number, t: (key: string, params?: Record<string, string | number>) => string): string {
-  if (cost === undefined || cost === null) return '';
-  return t('chat.cost', { amount: cost.toFixed(2) });
-}
-
-function formatTokens(tokens: number, t: (key: string, params?: Record<string, string | number>) => string): string {
-  if (tokens < 1000) return `${tokens} ${t('chat.tokens')}`;
-  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k ${t('chat.tokens')}`;
-  return `${(tokens / 1000000).toFixed(1)}M ${t('chat.tokens')}`;
-}
 
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
   const navigate = useNavigate();

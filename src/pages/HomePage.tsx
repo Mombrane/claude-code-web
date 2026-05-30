@@ -3,62 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useSessionStore } from '../stores/sessionStore';
 import { useI18n } from '../i18n';
+import { formatCost, formatTokens, formatDate, groupSessionsByTime } from '../utils/format';
 import type { Project, Session } from '../types';
-
-function groupSessionsByTime(sessions: Session[], t: (key: string) => string): { label: string; sessions: Session[] }[] {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const yesterday = new Date(today.getTime() - 86400000);
-
-  const todayLabel = t('home.today');
-  const yesterdayLabel = t('home.yesterday');
-  const olderLabel = t('home.older');
-
-  const groups: Record<string, Session[]> = {
-    [todayLabel]: [],
-    [yesterdayLabel]: [],
-    [olderLabel]: [],
-  };
-
-  for (const session of sessions) {
-    const updated = new Date(session.updatedAt);
-    if (updated >= today) {
-      groups[todayLabel].push(session);
-    } else if (updated >= yesterday) {
-      groups[yesterdayLabel].push(session);
-    } else {
-      groups[olderLabel].push(session);
-    }
-  }
-
-  return Object.entries(groups)
-    .filter(([, sessions]) => sessions.length > 0)
-    .map(([label, sessions]) => ({ label, sessions }));
-}
-
-function formatDate(dateStr: string, locale: string = 'en-US', t: (key: string, params?: Record<string, string | number>) => string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-
-  if (minutes < 1) return t('time.justNow');
-  if (minutes < 60) return t('time.minutesAgo', { n: minutes });
-  if (hours < 24) return t('time.hoursAgo', { n: hours });
-  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
-}
-
-function formatCost(cost: number, t: (key: string, params?: Record<string, string | number>) => string): string {
-  if (cost === undefined || cost === null) return '';
-  return t('chat.cost', { amount: cost.toFixed(2) });
-}
-
-function formatTokens(tokens: number, t: (key: string, params?: Record<string, string | number>) => string): string {
-  if (tokens < 1000) return `${tokens} ${t('chat.tokens')}`;
-  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k ${t('chat.tokens')}`;
-  return `${(tokens / 1000000).toFixed(1)}M ${t('chat.tokens')}`;
-}
 
 export function HomePage() {
   const navigate = useNavigate();
@@ -181,7 +127,7 @@ export function HomePage() {
   }, [sessions, searchQuery]);
 
   const groupedSessions = useMemo(() =>
-    groupSessionsByTime(filteredSessions, t),
+    groupSessionsByTime(filteredSessions, t, { today: 'home.today', yesterday: 'home.yesterday', older: 'home.older' }),
     [filteredSessions, t]
   );
 

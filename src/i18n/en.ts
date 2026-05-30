@@ -65,6 +65,7 @@ export default {
   // Chat cost/tokens
   'chat.cost': '${amount}',
   'chat.tokens': 'tokens',
+  'chat.lastMessageCost': 'Last message cost',
 
   // Layout tooltips
   'layout.gitTooltip': 'Git Panel (Ctrl+G)',

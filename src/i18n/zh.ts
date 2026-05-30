@@ -65,6 +65,7 @@ export default {
   // Chat cost/tokens
   'chat.cost': '¥{amount}',
   'chat.tokens': '令牌',
+  'chat.lastMessageCost': '最近消息费用',
 
   // Layout tooltips
   'layout.gitTooltip': 'Git 面板 (Ctrl+G)',

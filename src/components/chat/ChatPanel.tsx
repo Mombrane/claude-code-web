@@ -20,6 +20,17 @@ export function ChatPanel() {
   const currentSession = sessions.find((s) => s.id === currentSessionId);
   const streamingTextRef = useRef<string>('');
   const streamingThinkingRef = useRef<string>('');
+
+  // Compute last assistant message cost for header display
+  const lastAssistantCost = useMemo(() => {
+    for (let i = currentMessages.length - 1; i >= 0; i--) {
+      const msg = currentMessages[i];
+      if (msg.role === 'assistant' && msg.type === 'text' && msg.costUsd != null && msg.costUsd > 0) {
+        return msg.costUsd;
+      }
+    }
+    return null;
+  }, [currentMessages]);
   // Maps for tool_use / tool_result pairing
   const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
   const pendingResults = useRef<Map<string, { output: string; isError: boolean }>>(new Map()); // toolUseId → result
@@ -215,6 +226,7 @@ export function ChatPanel() {
 
           case 'thinking':
             setStreamingThinking((prev) => prev + (event.data.text || ''));
+            setIsStreaming(true);
             break;
         }
       }),
@@ -446,6 +458,11 @@ export function ChatPanel() {
           {currentSession?.totalTokens != null && currentSession.totalTokens > 0 && (
             <span className="text-xs text-gray-600">
               · {currentSession.totalTokens < 1000 ? currentSession.totalTokens : `${(currentSession.totalTokens / 1000).toFixed(1)}k`} {t('chat.tokens')}
+            </span>
+          )}
+          {lastAssistantCost != null && (
+            <span className="text-xs text-gray-500" title={t('chat.lastMessageCost')}>
+              ({t('chat.cost', { amount: lastAssistantCost.toFixed(2) })})
             </span>
           )}
         </div>
