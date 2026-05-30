@@ -273,7 +273,11 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <div className="text-sm font-medium truncate">{session.name}</div>
+                        <div
+                          className="text-sm font-medium truncate cursor-text"
+                          onDoubleClick={(e) => handleStartRename(session, e)}
+                          title={t('session.renameHint')}
+                        >{session.name}</div>
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
                         <span>{formatTime(session.updatedAt, locale)}</span>

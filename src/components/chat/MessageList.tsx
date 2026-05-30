@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent, FileContent, PatchContent } from '../../types';
 import { useI18n } from '../../i18n';
+import { useToast } from '../ui/ToastProvider';
 import { CopyButton } from './CopyButton';
 import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
 import { ThinkingBlock } from './ThinkingBlock';
@@ -130,6 +131,7 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
 
 export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry }: MessageListProps) {
   const { t } = useI18n();
+  const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
@@ -259,8 +261,9 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       await navigator.clipboard.writeText(textToCopy);
       setCopiedMessageId(message.id);
       setTimeout(() => setCopiedMessageId(null), 2000);
+      toast.success(t('toast.copied') || 'Copied!');
     } catch (err) {
-      console.warn('Copy failed:', err);
+      toast.error(t('toast.copyFailed') || 'Copy failed');
     }
   };
 

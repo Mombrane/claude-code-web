@@ -86,9 +86,30 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   },
 
   addMessage: (message) =>
-    set((state) => ({
-      currentMessages: [...state.currentMessages, message],
-    })),
+    set((state) => {
+      // Dedup: skip if message already exists by id or content similarity
+      const isDuplicate = state.currentMessages.some(m => {
+        if (m.id === message.id) return true;
+        // Only dedup non-user messages by content
+        if (message.role === 'user') return false;
+        if (m.role === message.role && m.type === message.type) {
+          // For text messages, compare content string
+          if (m.type === 'text' && typeof m.content === 'string' && typeof message.content === 'string') {
+            if (m.content === message.content) {
+              const timeDiff = Math.abs(new Date(m.timestamp).getTime() - new Date(message.timestamp).getTime());
+              if (timeDiff < 10000) return true; // 10 second window
+            }
+          }
+          // For tool_execution, compare toolUseId
+          if (m.type === 'tool_execution' && typeof m.content === 'object' && typeof message.content === 'object') {
+            if ((m.content as any).toolUseId === (message.content as any).toolUseId) return true;
+          }
+        }
+        return false;
+      });
+      if (isDuplicate) return state;
+      return { currentMessages: [...state.currentMessages, message] };
+    }),
 
   updateMessage: (messageId, updates) =>
     set((state) => ({

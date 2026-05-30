@@ -205,4 +205,14 @@ export default {
   'shortcuts.sendMessage': '发送消息',
   'shortcuts.newLine': '输入中换行',
   'shortcuts.close': '关闭搜索 / 取消',
+
+  // Toast notifications
+  'toast.copied': '已复制！',
+  'toast.copyFailed': '复制失败',
+  'toast.exportSuccess': '已导出！',
+  'toast.exportFailed': '导出失败',
+
+  // Session rename
+  'session.rename': '重命名',
+  'session.renameHint': '双击重命名',
 } as const;

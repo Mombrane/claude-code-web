@@ -205,4 +205,14 @@ export default {
   'shortcuts.sendMessage': 'Send message',
   'shortcuts.newLine': 'New line in input',
   'shortcuts.close': 'Close search / Cancel',
+
+  // Toast notifications
+  'toast.copied': 'Copied!',
+  'toast.copyFailed': 'Copy failed',
+  'toast.exportSuccess': 'Exported!',
+  'toast.exportFailed': 'Export failed',
+
+  // Session rename
+  'session.rename': 'Rename',
+  'session.renameHint': 'Double-click to rename',
 } as const;

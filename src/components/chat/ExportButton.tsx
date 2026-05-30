@@ -1,5 +1,6 @@
 import type { Message, ToolExecutionContent, ToolCallContent, ToolResultContent, FileContent, PatchContent } from '../../types';
 import { useI18n } from '../../i18n';
+import { useToast } from '../ui/ToastProvider';
 
 interface ExportButtonProps {
   messages: Message[];
@@ -138,16 +139,22 @@ function downloadMarkdown(content: string, filename: string): void {
 
 export function ExportButton({ messages, sessionTitle }: ExportButtonProps) {
   const { t } = useI18n();
+  const toast = useToast();
   const handleExport = () => {
-    const markdown = generateMarkdown(messages, sessionTitle);
-    const safeTitle = (sessionTitle || 'session')
-      .replace(/[^a-zA-Z0-9\-_ ]/g, '')
-      .replace(/\s+/g, '-')
-      .toLowerCase()
-      .slice(0, 50);
-    const date = new Date().toISOString().split('T')[0];
-    const filename = `session-${safeTitle}-${date}.md`;
-    downloadMarkdown(markdown, filename);
+    try {
+      const markdown = generateMarkdown(messages, sessionTitle);
+      const safeTitle = (sessionTitle || 'session')
+        .replace(/[^a-zA-Z0-9\-_ ]/g, '')
+        .replace(/\s+/g, '-')
+        .toLowerCase()
+        .slice(0, 50);
+      const date = new Date().toISOString().split('T')[0];
+      const filename = `session-${safeTitle}-${date}.md`;
+      downloadMarkdown(markdown, filename);
+      toast.success(t('toast.exportSuccess') || 'Exported!');
+    } catch (err) {
+      toast.error(t('toast.exportFailed') || 'Export failed');
+    }
   };
 
   return (
