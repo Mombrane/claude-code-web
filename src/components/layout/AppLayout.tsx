@@ -72,6 +72,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { currentSessionId } = useSessionStore();
+  const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false });
 
   // Apply theme on mount and when settings change
   useEffect(() => {
@@ -81,7 +82,9 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 
   useEffect(() => {
     wsClient.connect();
-    return () => wsClient.disconnect();
+    setWsStatus(wsClient.getStatus());
+    const unsubscribe = wsClient.onStatusChange(setWsStatus);
+    return () => { unsubscribe(); wsClient.disconnect(); };
   }, []);
 
   // Command palette commands
@@ -294,6 +297,25 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               </svg>
             </button>
           </div>
+
+          {/* Connection status indicator */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+            <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-green-400' : wsStatus.reconnecting ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`} />
+            {wsStatus.connected
+              ? t('status.connected')
+              : wsStatus.reconnecting
+                ? t('status.reconnecting')
+                : <>
+                    {t('status.disconnected')}
+                    <button
+                      onClick={() => wsClient.connect()}
+                      className={`ml-1 px-1.5 py-0.5 rounded text-[10px] transition-colors ${settings.theme === 'dark' ? 'bg-gray-600/50 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                    >
+                      {t('status.reconnect')}
+                    </button>
+                  </>
+            }
+          </div>
         </div>
       </header>
 
@@ -342,7 +364,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           onSelect={handleCommandSelect}
           onClose={() => setShowCommandPalette(false)}
           theme={settings.theme}
-          t={t}
+
         />
       )}
 
@@ -369,11 +391,11 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           </span>
           <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full bg-green-400" />
-            {t('status.connected')}
+            <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-green-400' : wsStatus.reconnecting ? 'bg-yellow-400' : 'bg-red-400'}`} />
+            {wsStatus.connected ? t('status.connected') : wsStatus.reconnecting ? t('status.reconnecting') : t('status.disconnected')}
           </span>
           <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
-          <span>{settings.model || 'mimo-v2.5-pro'}</span>
+          <span>{settings.model || t('status.defaultModel')}</span>
         </div>
         <div className="flex items-center gap-3">
           <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+K</kbd>
@@ -388,13 +410,13 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 }
 
 // Command Palette Component
-function CommandPalette({ commands, onSelect, onClose, theme = 'dark', t }: {
+function CommandPalette({ commands, onSelect, onClose, theme = 'dark' }: {
   commands: Array<{ id: string; label: string; shortcut: string; action: () => void }>;
   onSelect: (id: string) => void;
   onClose: () => void;
   theme?: 'dark' | 'light';
-  t: (key: string) => string;
 }) {
+  const { t } = useI18n();
   const [search, setSearch] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
 

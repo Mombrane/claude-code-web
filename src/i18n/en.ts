@@ -142,6 +142,9 @@ export default {
   // Status bar
   'status.connected': 'Connected',
   'status.disconnected': 'Disconnected',
+  'status.reconnecting': 'Reconnecting...',
+  'status.reconnect': 'Reconnect',
+  'status.defaultModel': 'Default Model',
 
   // Confirmations
   'confirm.deleteSession': 'Are you sure you want to delete this session?',

@@ -142,6 +142,9 @@ export default {
   // Status bar
   'status.connected': '已连接',
   'status.disconnected': '未连接',
+  'status.reconnecting': '重新连接中...',
+  'status.reconnect': '重新连接',
+  'status.defaultModel': '默认模型',
 
   // Confirmations
   'confirm.deleteSession': '确定要删除这个会话吗？',

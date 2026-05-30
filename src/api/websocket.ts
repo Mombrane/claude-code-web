@@ -11,8 +11,14 @@ class WebSocketClient {
   private sessionId: string | null = null;
   private messageQueue: WebSocketMessage[] = [];
   private isConnected = false;
+  private isReconnecting = false;
+  private statusCallbacks: Set<(status: { connected: boolean; reconnecting: boolean }) => void> = new Set();
 
   connect() {
+    // Guard against duplicate connections
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+      return;
+    }
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     this.ws = new WebSocket(wsUrl);
@@ -21,6 +27,8 @@ class WebSocketClient {
       console.log('WebSocket connected');
       this.reconnectAttempts = 0;
       this.isConnected = true;
+      this.isReconnecting = false;
+      this.fireStatusChange();
 
       // Send queued messages
       while (this.messageQueue.length > 0) {
@@ -48,6 +56,8 @@ class WebSocketClient {
     this.ws.onclose = () => {
       console.log('WebSocket disconnected');
       this.isConnected = false;
+      this.isReconnecting = false;
+      this.fireStatusChange();
       this.notifyHandlers('disconnected', { type: 'disconnected', payload: {} });
       this.tryReconnect();
     };
@@ -60,9 +70,29 @@ class WebSocketClient {
   private tryReconnect() {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
+      this.isReconnecting = true;
+      this.fireStatusChange();
       console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
     }
+  }
+
+  private fireStatusChange() {
+    const status = this.getStatus();
+    for (const cb of this.statusCallbacks) {
+      cb(status);
+    }
+  }
+
+  getStatus(): { connected: boolean; reconnecting: boolean } {
+    return { connected: this.isConnected, reconnecting: this.isReconnecting };
+  }
+
+  onStatusChange(callback: (status: { connected: boolean; reconnecting: boolean }) => void): () => void {
+    this.statusCallbacks.add(callback);
+    return () => {
+      this.statusCallbacks.delete(callback);
+    };
   }
 
   private notifyHandlers(type: string, message: WebSocketMessage) {

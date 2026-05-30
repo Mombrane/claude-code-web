@@ -176,7 +176,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <span className="text-lg"> </span>
-            <h1 className="text-sm font-semibold text-gradient">Claude Code Web</h1>
+            <h1 className="text-sm font-semibold text-gradient">{t('app.name')}</h1>
           </div>
           <button
             onClick={handleCreateSession}

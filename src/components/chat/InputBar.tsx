@@ -19,6 +19,8 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
   const [showFilePicker, setShowFilePicker] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<Array<{ path: string; content: string }>>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [messageHistory, setMessageHistory] = useState<string[]>([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
 
   // Auto-focus on mount
   useEffect(() => {
@@ -46,8 +48,16 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
       }
 
       onSend(finalMessage);
+      // Push to message history (deduplicate consecutive identical, max 50)
+      setMessageHistory(prev => {
+        const trimmed = message.trim();
+        if (prev.length > 0 && prev[prev.length - 1] === trimmed) return prev;
+        const next = [...prev, trimmed];
+        return next.length > 50 ? next.slice(next.length - 50) : next;
+      });
       setMessage('');
       setAttachedFiles([]);
+      setHistoryIndex(-1);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -64,6 +74,39 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    // Up arrow: navigate message history when input is empty or browsing
+    if (e.key === 'ArrowUp') {
+      if (messageHistory.length === 0) return;
+      if (message === '' && historyIndex === -1) {
+        e.preventDefault();
+        const newIndex = messageHistory.length - 1;
+        setHistoryIndex(newIndex);
+        setMessage(messageHistory[newIndex]);
+        return;
+      }
+      if (historyIndex > 0) {
+        e.preventDefault();
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setMessage(messageHistory[newIndex]);
+        return;
+      }
+    }
+
+    // Down arrow: navigate forward in history or clear
+    if (e.key === 'ArrowDown' && historyIndex >= 0) {
+      e.preventDefault();
+      if (historyIndex < messageHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setMessage(messageHistory[newIndex]);
+      } else {
+        setHistoryIndex(-1);
+        setMessage('');
+      }
+      return;
+    }
+
     // Enter to send (without Shift)
     if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.metaKey) {
       e.preventDefault();
@@ -73,6 +116,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     // Escape to clear
     if (e.key === 'Escape') {
       setMessage('');
+      setHistoryIndex(-1);
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }
@@ -199,7 +243,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
         <textarea
           ref={textareaRef}
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => { setMessage(e.target.value); setHistoryIndex(-1); }}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
           onPaste={handlePaste}
