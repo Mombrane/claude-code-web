@@ -105,6 +105,7 @@ interface MessageListProps {
   searchQuery?: string;
   currentMatchIndex?: number;
   onRetry?: () => void;
+  isLoading?: boolean;
 }
 
 // Code block wrapper with copy button — uses ref to extract textContent
@@ -129,7 +130,7 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
   );
 }
 
-export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry }: MessageListProps) {
+export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry, isLoading = false }: MessageListProps) {
   const { t, locale } = useI18n();
   const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -575,7 +576,21 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     <div ref={containerRef} className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
-      {messages.length === 0 && !isStreaming && (
+      {messages.length === 0 && !isStreaming && isLoading && (
+        <div className="space-y-4 p-4">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="flex gap-3">
+              <div className={`w-8 h-8 rounded-full animate-pulse ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300/50'}`} />
+              <div className="flex-1 space-y-2">
+                <div className={`h-4 rounded animate-pulse ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300/50'}`} style={{ width: `${60 + i * 10}%` }} />
+                <div className={`h-3 rounded animate-pulse ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-300/30'}`} style={{ width: `${40 + i * 5}%` }} />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {messages.length === 0 && !isStreaming && !isLoading && (
         <div className={`flex flex-col items-center justify-center h-full ${
           theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
         }`}>

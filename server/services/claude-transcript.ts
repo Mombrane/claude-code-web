@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
-import type { Message } from '../types';
+import type { Message, ToolExecutionContent } from '../types';
 
 /**
  * Reads Claude Code's native .jsonl transcript files.
@@ -9,6 +9,12 @@ import type { Message } from '../types';
  */
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
+
+/** Metadata about a tool_use block collected from assistant messages. */
+interface ToolUseInfo {
+  toolName: string;
+  input: Record<string, unknown>;
+}
 
 /**
  * Convert a project path to Claude Code's directory name format.
@@ -27,25 +33,119 @@ function getTranscriptPath(sessionId: string, projectPath: string): string {
 }
 
 /**
+ * First pass: extract tool_use metadata from a JSONL line.
+ * Returns a map of toolUseId → { toolName, input } for any tool_use blocks found.
+ */
+function collectToolUseInfo(line: string): Map<string, ToolUseInfo> {
+  const map = new Map<string, ToolUseInfo>();
+  try {
+    const entry = JSON.parse(line);
+    if (entry.type === 'assistant' && Array.isArray(entry.message?.content)) {
+      for (const block of entry.message.content) {
+        if (block.type === 'tool_use' && block.id) {
+          map.set(block.id, {
+            toolName: block.name,
+            input: block.input,
+          });
+        }
+      }
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return map;
+}
+
+/**
  * Parse a single JSONL line into Messages if it's a user/assistant message.
  * Returns an array to support multiple content blocks (text, thinking, tool_use).
+ *
+ * toolUseMap provides metadata from earlier tool_use blocks so that tool_result
+ * entries can be emitted as complete ToolExecutionContent messages.
  */
-function parseLine(line: string, sessionId: string): Message[] {
+function parseLine(
+  line: string,
+  sessionId: string,
+  toolUseMap: Map<string, ToolUseInfo>
+): Message[] {
   try {
     const entry = JSON.parse(line);
     const messages: Message[] = [];
 
     if (entry.type === 'user' && entry.message?.content) {
-      messages.push({
-        id: entry.uuid || `user-${entry.timestamp}`,
-        role: 'user',
-        type: 'text',
-        content: typeof entry.message.content === 'string'
-          ? entry.message.content
-          : JSON.stringify(entry.message.content),
-        timestamp: entry.timestamp,
-        sessionId,
-      });
+      const content = entry.message.content;
+
+      if (Array.isArray(content)) {
+        // Check for tool_result blocks in array content
+        const hasToolResults = content.some(
+          (block: any) => block.type === 'tool_result'
+        );
+
+        if (hasToolResults) {
+          // Emit tool_result blocks as tool_execution messages
+          let resultIndex = 0;
+          for (const block of content) {
+            if (block.type === 'tool_result') {
+              const toolInfo = toolUseMap.get(block.tool_use_id);
+              const toolExecutionContent: ToolExecutionContent = {
+                toolName: toolInfo?.toolName || 'unknown',
+                toolUseId: block.tool_use_id,
+                input: toolInfo?.input || {},
+                output: typeof block.content === 'string'
+                  ? block.content
+                  : JSON.stringify(block.content),
+                isError: block.is_error || false,
+                status: block.is_error ? 'error' : 'completed',
+              };
+              messages.push({
+                id: `tool-exec-${entry.uuid || entry.timestamp}-${resultIndex}`,
+                role: 'assistant',
+                type: 'tool_execution',
+                content: toolExecutionContent,
+                timestamp: entry.timestamp,
+                sessionId,
+              });
+              resultIndex++;
+            }
+          }
+
+          // Also emit any text blocks in the same array as user text messages
+          let textIndex = 0;
+          for (const block of content) {
+            if (block.type === 'text' && block.text) {
+              messages.push({
+                id: `user-text-${entry.uuid || entry.timestamp}-${textIndex}`,
+                role: 'user',
+                type: 'text',
+                content: block.text,
+                timestamp: entry.timestamp,
+                sessionId,
+              });
+              textIndex++;
+            }
+          }
+        } else {
+          // Array content without tool_results — stringify as before
+          messages.push({
+            id: entry.uuid || `user-${entry.timestamp}`,
+            role: 'user',
+            type: 'text',
+            content: JSON.stringify(content),
+            timestamp: entry.timestamp,
+            sessionId,
+          });
+        }
+      } else {
+        // Plain string content — regular user text message
+        messages.push({
+          id: entry.uuid || `user-${entry.timestamp}`,
+          role: 'user',
+          type: 'text',
+          content: typeof content === 'string' ? content : JSON.stringify(content),
+          timestamp: entry.timestamp,
+          sessionId,
+        });
+      }
     }
 
     if (entry.type === 'assistant' && entry.message?.content) {
@@ -102,6 +202,11 @@ function parseLine(line: string, sessionId: string): Message[] {
 /**
  * Read messages from a Claude Code transcript file.
  * Supports pagination via offset, limit, and reverse options.
+ *
+ * Uses a two-pass approach:
+ *   1. Collect tool_use metadata from all assistant messages
+ *   2. Parse each line with the full tool_use map so tool_result
+ *      entries can reference the corresponding tool name and input
  */
 export async function readTranscript(
   sessionId: string,
@@ -118,9 +223,19 @@ export async function readTranscript(
     const content = await fs.readFile(filePath, 'utf-8');
     const lines = content.split('\n').filter(line => line.trim());
 
+    // Pass 1: Build the tool_use info map across all lines
+    const toolUseMap = new Map<string, ToolUseInfo>();
+    for (const line of lines) {
+      const info = collectToolUseInfo(line);
+      for (const [id, meta] of info) {
+        toolUseMap.set(id, meta);
+      }
+    }
+
+    // Pass 2: Parse all lines with the complete toolUseMap
     let messages: Message[] = [];
     for (const line of lines) {
-      const msgs = parseLine(line, sessionId);
+      const msgs = parseLine(line, sessionId, toolUseMap);
       messages.push(...msgs);
     }
 

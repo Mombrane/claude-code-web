@@ -111,13 +111,12 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
 
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm(t('confirm.deleteSession'))) {
-      try {
-        await api.deleteSession(sessionId);
-        removeSession(sessionId);
-      } catch (e) {
-        console.error('Failed to delete session:', e);
-      }
+    if (!window.confirm(t('confirm.deleteSession'))) return;
+    try {
+      await api.deleteSession(sessionId);
+      removeSession(sessionId);
+    } catch (e) {
+      console.error('Failed to delete session:', e);
     }
   };
 

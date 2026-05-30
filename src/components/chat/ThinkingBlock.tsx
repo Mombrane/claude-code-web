@@ -5,7 +5,8 @@ import { useI18n } from '../../i18n';
 export function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: string; isStreaming?: boolean; theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(true);
-  const preview = content.slice(0, 200);
+  const safeContent = typeof content === 'string' ? content : String(content || '');
+  const preview = safeContent.slice(0, 200);
 
   return (
     <div className={`border rounded-lg overflow-hidden ${
@@ -50,7 +51,7 @@ export function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { conten
           <p className={`text-sm italic leading-relaxed whitespace-pre-wrap ${
             theme === 'dark' ? 'text-purple-300/80' : 'text-purple-700'
           }`}>
-            {content}
+            {safeContent}
             {isStreaming && <span className="inline-block w-2 h-4 bg-purple-400 animate-pulse ml-1 rounded-sm" />}
           </p>
         </div>

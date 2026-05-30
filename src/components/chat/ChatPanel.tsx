@@ -12,7 +12,7 @@ import { useI18n } from '../../i18n';
 
 export function ChatPanel() {
   const { t } = useI18n();
-  const { sessions, currentSessionId, currentMessages, addMessage, updateMessage } = useSessionStore();
+  const { sessions, currentSessionId, currentMessages, addMessage, updateMessage, isLoadingMessages } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -460,6 +460,7 @@ export function ChatPanel() {
           searchQuery={searchQuery || undefined}
           currentMatchIndex={searchQuery ? currentMatchIndex : undefined}
           onRetry={handleRetry}
+          isLoading={isLoadingMessages}
         />
       </div>
 
