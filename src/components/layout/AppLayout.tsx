@@ -345,7 +345,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           {selectedFile ? (
             <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} />
           ) : (
-            <ChatPanel />
+            <ChatPanel theme={settings.theme} />
           )}
           {rightPanel === 'terminal' && currentSessionId && (
             <TerminalPanel

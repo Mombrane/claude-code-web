@@ -10,7 +10,7 @@ import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
 
-export function ChatPanel() {
+export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
   const { sessions, currentSessionId, currentMessages, addMessage, updateMessage, isLoadingMessages } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
@@ -407,24 +407,24 @@ export function ChatPanel() {
 
   if (!currentSessionId) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gradient-subtle text-gray-400">
+      <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
         <div className="text-center animate-fadeIn">
           <div className="text-7xl mb-6"> </div>
-          <h2 className="text-3xl font-bold mb-3 text-gradient">{t('chat.welcome.title')}</h2>
-          <p className="text-gray-500 mb-8 max-w-md mx-auto">
+          <h2 className={`text-3xl font-bold mb-3 ${theme === 'dark' ? 'text-gradient' : 'text-gray-800'}`}>{t('chat.welcome.title')}</h2>
+          <p className={`mb-8 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
             {t('chat.welcome.subtitle')}
           </p>
-          <div className="flex items-center justify-center gap-4 text-sm text-gray-600">
+          <div className={`flex items-center justify-center gap-4 text-sm ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
             <span className="flex items-center gap-2">
-              <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+N</kbd>
+              <kbd className={`px-2 py-1 rounded text-xs ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`}>Ctrl+N</kbd>
               {t('chat.welcome.newSession')}
             </span>
             <span className="flex items-center gap-2">
-              <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+K</kbd>
+              <kbd className={`px-2 py-1 rounded text-xs ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`}>Ctrl+K</kbd>
               {t('chat.welcome.commands')}
             </span>
             <span className="flex items-center gap-2">
-              <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+/</kbd>
+              <kbd className={`px-2 py-1 rounded text-xs ${theme === 'dark' ? 'bg-gray-800' : 'bg-gray-200'}`}>Ctrl+/</kbd>
               {t('shortcuts.title')}
             </span>
           </div>
@@ -436,32 +436,34 @@ export function ChatPanel() {
   return (
     <div className="flex-1 flex flex-col bg-gradient-subtle">
       {/* Chat header */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-700/50 bg-gray-800/30">
+      <div className={`flex items-center justify-between px-4 py-2 border-b ${
+        theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200 bg-white/50'
+      }`}>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
-            <span className="text-sm text-gray-400">
+            <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               {isStreaming ? t('chat.thinking') : t('chat.ready')}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} />
-          <span className="text-xs text-gray-600">
+          <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} theme={theme} />
+          <span className={`text-xs ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
             {t('chat.messages', { count: currentMessages.length })}
           </span>
           {currentSession?.totalCostUsd != null && currentSession.totalCostUsd > 0 && (
-            <span className="text-xs text-gray-600">
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
               · {t('chat.cost', { amount: currentSession.totalCostUsd.toFixed(2) })}
             </span>
           )}
           {currentSession?.totalTokens != null && currentSession.totalTokens > 0 && (
-            <span className="text-xs text-gray-600">
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
               · {currentSession.totalTokens < 1000 ? currentSession.totalTokens : `${(currentSession.totalTokens / 1000).toFixed(1)}k`} {t('chat.tokens')}
             </span>
           )}
           {lastAssistantCost != null && (
-            <span className="text-xs text-gray-500" title={t('chat.lastMessageCost')}>
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} title={t('chat.lastMessageCost')}>
               ({t('chat.cost', { amount: lastAssistantCost.toFixed(2) })})
             </span>
           )}
@@ -477,6 +479,7 @@ export function ChatPanel() {
           onClose={handleCloseSearch}
           currentMatch={currentMatchIndex}
           totalMatches={matchCount}
+          theme={theme}
         />
       )}
 
@@ -491,6 +494,7 @@ export function ChatPanel() {
           currentMatchIndex={searchQuery ? currentMatchIndex : undefined}
           onRetry={handleRetry}
           isLoading={isLoadingMessages}
+          theme={theme}
         />
       </div>
 
@@ -501,11 +505,12 @@ export function ChatPanel() {
         isStreaming={isStreaming}
         onStop={handleStopStreaming}
         model={currentSession?.model}
+        theme={theme}
       />
 
       {/* Keyboard shortcuts dialog */}
       {shortcutsOpen && (
-        <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} />
+        <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} theme={theme} />
       )}
     </div>
   );

@@ -5,6 +5,7 @@ import { useToast } from '../ui/ToastProvider';
 interface ExportButtonProps {
   messages: Message[];
   sessionTitle?: string;
+  theme?: 'dark' | 'light';
 }
 
 /** Escape triple backticks by wrapping in 4 backticks */
@@ -137,7 +138,7 @@ function downloadMarkdown(content: string, filename: string): void {
   }
 }
 
-export function ExportButton({ messages, sessionTitle }: ExportButtonProps) {
+export function ExportButton({ messages, sessionTitle, theme = 'dark' }: ExportButtonProps) {
   const { t } = useI18n();
   const toast = useToast();
   const handleExport = () => {
@@ -161,7 +162,11 @@ export function ExportButton({ messages, sessionTitle }: ExportButtonProps) {
     <button
       onClick={handleExport}
       disabled={messages.length === 0}
-      className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50 rounded-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+      className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed ${
+        theme === 'dark'
+          ? 'text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50'
+          : 'text-gray-500 hover:text-gray-700 bg-gray-200/50 hover:bg-gray-200'
+      }`}
       title={t('export.markdown')}
     >
       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

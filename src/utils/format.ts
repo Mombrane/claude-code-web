@@ -2,7 +2,7 @@ import type { Session } from '../types';
 
 type TFunction = (key: string, params?: Record<string, string | number>) => string;
 
-export function formatCost(cost: number, t: TFunction): string {
+export function formatCost(cost: number | undefined | null, t: TFunction): string {
   if (cost === undefined || cost === null) return '';
   return t('chat.cost', { amount: cost.toFixed(2) });
 }
