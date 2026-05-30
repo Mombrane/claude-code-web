@@ -22,6 +22,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const { t, locale } = useI18n();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'idle' | 'closed'>('all');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
@@ -108,12 +109,18 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   };
 
   const filteredSessions = useMemo(() => {
-    if (!searchQuery) return sessions;
-    const query = searchQuery.toLowerCase();
-    return sessions.filter(session =>
-      session.name.toLowerCase().includes(query)
-    );
-  }, [sessions, searchQuery]);
+    let result = sessions;
+    if (statusFilter !== 'all') {
+      result = result.filter(session => session.status === statusFilter);
+    }
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(session =>
+        session.name.toLowerCase().includes(query)
+      );
+    }
+    return result;
+  }, [sessions, searchQuery, statusFilter]);
 
   const groupedSessions = useMemo(() =>
     groupSessionsByTime(filteredSessions, t),
@@ -164,6 +171,26 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             className="w-full pl-8 pr-3 py-1.5 bg-gray-700/50 text-sm text-white placeholder-gray-500 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:bg-gray-700/70 transition-all"
           />
         </div>
+        {/* Status filter */}
+        <div className="flex gap-1 mt-2" role="radiogroup" aria-label={t('sidebar.statusFilter')}>
+          {(['all', 'active', 'idle', 'closed'] as const).map((status) => (
+            <button
+              key={status}
+              role="radio"
+              aria-checked={statusFilter === status}
+              onClick={() => setStatusFilter(status)}
+              className={`flex-1 px-2 py-1 text-[11px] rounded-md transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                statusFilter === status
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                  : theme === 'dark'
+                    ? 'text-gray-500 hover:text-gray-300 hover:bg-gray-700/40'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/60'
+              }`}
+            >
+              {t(`sidebar.filter.${status}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Session list */}
@@ -176,6 +203,19 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 <p className="text-sm text-center">{t('sidebar.noResults', { query: searchQuery })}</p>
+              </>
+            ) : statusFilter !== 'all' ? (
+              <>
+                <svg className="w-8 h-8 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <p className="text-sm text-center mb-1">{t('sidebar.noFilterResults', { filter: t(`sidebar.filter.${statusFilter}`) })}</p>
+                <button
+                  onClick={() => setStatusFilter('all')}
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                >
+                  {t('sidebar.clearFilter')}
+                </button>
               </>
             ) : (
               <>
@@ -234,11 +274,30 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
-                        <div
-                          className="text-sm font-medium truncate cursor-text"
-                          onDoubleClick={(e) => handleStartRename(session, e)}
-                          title={t('session.renameHint')}
-                        >{session.name}</div>
+                        <>
+                          <div
+                            className="text-sm font-medium truncate cursor-text"
+                            onDoubleClick={(e) => handleStartRename(session, e)}
+                            title={t('session.renameHint')}
+                          >{session.name}</div>
+                          {session.lastUserMessage && (
+                            <div
+                              className={`text-[11px] truncate max-w-[180px] ${
+                                currentSessionId === session.id
+                                  ? 'text-gray-400'
+                                  : theme === 'dark'
+                                    ? 'text-gray-500'
+                                    : 'text-gray-400'
+                              }`}
+                              title={session.lastUserMessage}
+                              aria-label={t('sidebar.lastMessage')}
+                            >
+                              {session.lastUserMessage.length > 50
+                                ? session.lastUserMessage.slice(0, 50) + '...'
+                                : session.lastUserMessage}
+                            </div>
+                          )}
+                        </>
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
                         <span>{formatTime(session.updatedAt, locale)}</span>

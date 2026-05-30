@@ -143,7 +143,7 @@ export class SessionStore {
     }
   }
 
-  async updateSession(sessionId: string, updates: Partial<Pick<Session, 'name' | 'cwd' | 'model' | 'status'>>): Promise<boolean> {
+  async updateSession(sessionId: string, updates: Partial<Pick<Session, 'name' | 'cwd' | 'model' | 'status' | 'lastUserMessage'>>): Promise<boolean> {
     const session = await this.getSession(sessionId);
     if (!session) return false;
 

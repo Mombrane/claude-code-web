@@ -16,6 +16,7 @@ export default {
   'sidebar.refresh': '刷新',
   'sidebar.title': '侧边栏',
   'sidebar.newSessionTooltip': '新建会话 (Ctrl+N)',
+  'sidebar.lastMessage': '最近消息',
 
   // Time groups
   'time.today': '今天',
@@ -128,6 +129,8 @@ export default {
   // Terminal
   'terminal.title': '终端',
   'terminal.clear': '清空',
+  'terminal.expand': '展开',
+  'terminal.collapse': '折叠',
   'terminal.placeholder': '输入命令...',
 
   // Settings
@@ -136,9 +139,13 @@ export default {
   'settings.theme.dark': '深色',
   'settings.theme.light': '浅色',
   'settings.model': '模型',
+  'settings.modelDefault': '默认 (mimo-v2.5-pro)',
   'settings.fontSize': '字体大小',
   'settings.tabSize': '制表符大小',
+  'settings.spaces': '{count} 个空格',
   'settings.wordWrap': '自动换行',
+  'settings.on': '开',
+  'settings.off': '关',
   'settings.minimap': '小地图',
   'settings.save': '保存',
   'settings.cancel': '取消',
@@ -267,6 +274,7 @@ export default {
   'home.noSessions': '暂无会话',
   'home.createFirst': '创建第一个会话',
   'home.projectPath': '项目目录路径',
+  'home.projectPathPlaceholder': '/home/user/my-project',
   'home.confirmRemove': '确定要移除此项目吗？',
   'home.today': '今天',
   'home.yesterday': '昨天',
@@ -278,4 +286,13 @@ export default {
 
   // Sidebar extra
   'sidebar.sessionCount': '{count} 个会话',
+
+  // Sidebar status filter
+  'sidebar.filter.all': '全部',
+  'sidebar.filter.active': '活跃',
+  'sidebar.filter.idle': '空闲',
+  'sidebar.filter.closed': '已关闭',
+  'sidebar.statusFilter': '状态筛选',
+  'sidebar.noFilterResults': '没有 {filter} 状态的会话',
+  'sidebar.clearFilter': '清除筛选',
 } as const;

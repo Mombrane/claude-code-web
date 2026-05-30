@@ -16,6 +16,7 @@ export default {
   'sidebar.refresh': 'Refresh',
   'sidebar.title': 'Sidebar',
   'sidebar.newSessionTooltip': 'New Session (Ctrl+N)',
+  'sidebar.lastMessage': 'Last message',
 
   // Time groups
   'time.today': 'Today',
@@ -128,6 +129,8 @@ export default {
   // Terminal
   'terminal.title': 'Terminal',
   'terminal.clear': 'Clear',
+  'terminal.expand': 'Expand',
+  'terminal.collapse': 'Collapse',
   'terminal.placeholder': 'Type a command...',
 
   // Settings
@@ -136,9 +139,13 @@ export default {
   'settings.theme.dark': 'Dark',
   'settings.theme.light': 'Light',
   'settings.model': 'Model',
+  'settings.modelDefault': 'Default (mimo-v2.5-pro)',
   'settings.fontSize': 'Font Size',
   'settings.tabSize': 'Tab Size',
+  'settings.spaces': '{count} spaces',
   'settings.wordWrap': 'Word Wrap',
+  'settings.on': 'On',
+  'settings.off': 'Off',
   'settings.minimap': 'Minimap',
   'settings.save': 'Save',
   'settings.cancel': 'Cancel',
@@ -267,6 +274,7 @@ export default {
   'home.noSessions': 'No sessions yet',
   'home.createFirst': 'Create your first session',
   'home.projectPath': 'Project Directory Path',
+  'home.projectPathPlaceholder': '/home/user/my-project',
   'home.confirmRemove': 'Remove this project from the list?',
   'home.today': 'Today',
   'home.yesterday': 'Yesterday',
@@ -278,4 +286,13 @@ export default {
 
   // Sidebar extra
   'sidebar.sessionCount': '{count} sessions',
+
+  // Sidebar status filter
+  'sidebar.filter.all': 'All',
+  'sidebar.filter.active': 'Active',
+  'sidebar.filter.idle': 'Idle',
+  'sidebar.filter.closed': 'Closed',
+  'sidebar.statusFilter': 'Status Filter',
+  'sidebar.noFilterResults': 'No {filter} sessions',
+  'sidebar.clearFilter': 'Clear filter',
 } as const;

@@ -359,7 +359,7 @@ export function HomePage() {
                 type="text"
                 value={newProjectPath}
                 onChange={(e) => setNewProjectPath(e.target.value)}
-                placeholder="/home/user/my-project"
+                placeholder={t('home.projectPathPlaceholder')}
                 className="w-full px-3 py-2.5 bg-gray-700/50 text-sm text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 transition-all"
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleAddProject()}

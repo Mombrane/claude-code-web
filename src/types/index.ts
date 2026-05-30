@@ -9,6 +9,7 @@ export interface Session {
   status: 'active' | 'idle' | 'closed';
   totalCostUsd: number;
   totalTokens: number;
+  lastUserMessage?: string;
 }
 
 export interface Project {

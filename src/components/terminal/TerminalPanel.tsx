@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { wsClient } from '../../api/websocket';
+import { useI18n } from '../../i18n';
 import '@xterm/xterm/css/xterm.css';
 
 interface TerminalPanelProps {
@@ -10,6 +11,7 @@ interface TerminalPanelProps {
 }
 
 export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps) {
+  const { t } = useI18n();
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalRef2 = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
@@ -133,7 +135,7 @@ export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps)
         <div className="flex items-center gap-2">
           <span className={`text-sm font-medium ${
             theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-          }`}>Terminal</span>
+          }`}>{t('terminal.title')}</span>
           {isConnected && (
             <span className={`flex items-center gap-1 text-xs ${
               theme === 'dark' ? 'text-green-400' : 'text-green-600'
@@ -141,7 +143,7 @@ export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps)
               <span className={`w-2 h-2 rounded-full animate-pulse ${
                 theme === 'dark' ? 'bg-green-400' : 'bg-green-500'
               }`} />
-              Connected
+              {t('status.connected')}
             </span>
           )}
         </div>
@@ -154,7 +156,7 @@ export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps)
                 : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
             }`}
           >
-            Clear
+            {t('terminal.clear')}
           </button>
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
@@ -164,7 +166,7 @@ export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps)
                 : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
             }`}
           >
-            {isCollapsed ? 'Expand' : 'Collapse'}
+            {isCollapsed ? t('terminal.expand') : t('terminal.collapse')}
           </button>
         </div>
       </div>

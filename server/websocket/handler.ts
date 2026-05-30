@@ -221,8 +221,6 @@ export class WebSocketHandler {
   private async handleChatMessage(ws: WebSocket, payload: { sessionId: string; message: string }) {
     const { sessionId, message: userMessage } = payload;
 
-    // No need to save user message here - Claude Code handles that in its .jsonl transcript
-
     // Check if session exists in process manager
     if (!claudeProcessManager.isSessionActive(sessionId)) {
       // Try to resume session
@@ -260,6 +258,9 @@ export class WebSocketHandler {
     } catch {
       // Non-critical: don't let rename failure break message sending
     }
+
+    // Save last user message preview for sidebar display (fire-and-forget)
+    sessionStore.updateSession(sessionId, { lastUserMessage: userMessage.slice(0, 100) }).catch(() => {});
   }
 
   private handleTerminalStart(ws: WebSocket, payload: { sessionId: string }) {

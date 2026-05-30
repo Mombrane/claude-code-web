@@ -7,7 +7,8 @@ export function formatCost(cost: number | undefined | null, t: TFunction): strin
   return t('chat.cost', { amount: cost.toFixed(2) });
 }
 
-export function formatTokens(tokens: number, t: TFunction): string {
+export function formatTokens(tokens: number | undefined | null, t: TFunction): string {
+  if (tokens === undefined || tokens === null || isNaN(tokens)) return '';
   if (tokens < 1000) return `${tokens} ${t('chat.tokens')}`;
   if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k ${t('chat.tokens')}`;
   return `${(tokens / 1000000).toFixed(1)}M ${t('chat.tokens')}`;
@@ -15,6 +16,7 @@ export function formatTokens(tokens: number, t: TFunction): string {
 
 export function formatTime(dateStr: string, locale: string): string {
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr || '';
   return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 

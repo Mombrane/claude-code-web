@@ -136,7 +136,7 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
               onChange={(e) => handleChange('model', e.target.value)}
               className="w-full px-3 py-2.5 bg-gray-700/50 text-white rounded-lg border border-gray-600/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
             >
-              <option value="">Default (mimo-v2.5-pro)</option>
+              <option value="">{t('settings.modelDefault')}</option>
               <option value="mimo-v2.5-pro">mimo-v2.5-pro</option>
             </select>
           </div>
@@ -164,9 +164,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
               onChange={(e) => handleChange('tabSize', parseInt(e.target.value))}
               className="w-full px-3 py-2.5 bg-gray-700/50 text-white rounded-lg border border-gray-600/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
             >
-              <option value="2">2 spaces</option>
-              <option value="4">4 spaces</option>
-              <option value="8">8 spaces</option>
+              <option value="2">{t('settings.spaces', { count: 2 })}</option>
+              <option value="4">{t('settings.spaces', { count: 4 })}</option>
+              <option value="8">{t('settings.spaces', { count: 8 })}</option>
             </select>
           </div>
 
@@ -182,7 +182,7 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                     : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
                 }`}
               >
-                On
+                {t('settings.on')}
               </button>
               <button
                 onClick={() => handleChange('wordWrap', 'off')}
@@ -192,7 +192,7 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                     : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
                 }`}
               >
-                Off
+                {t('settings.off')}
               </button>
             </div>
           </div>
