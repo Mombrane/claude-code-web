@@ -230,6 +230,7 @@ export default {
   'shortcuts.sendMessage': 'Send message',
   'shortcuts.newLine': 'New line in input',
   'shortcuts.close': 'Close search / Cancel',
+  'shortcuts.toggleTheme': 'Toggle theme',
 
   // Toast notifications
   'toast.copied': 'Copied!',

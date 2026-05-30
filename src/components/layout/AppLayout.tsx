@@ -164,6 +164,11 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           navigate(`/${dir}/session`);
         }
       }
+      // Ctrl+Shift+T: Toggle theme
+      if (e.ctrlKey && e.shiftKey && (e.key === 'T' || e.key === 't')) {
+        e.preventDefault();
+        setSettings(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);

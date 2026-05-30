@@ -24,7 +24,6 @@ class WebSocketClient {
     this.ws = new WebSocket(wsUrl);
 
     this.ws.onopen = () => {
-      console.log('WebSocket connected');
       this.reconnectAttempts = 0;
       this.isConnected = true;
       this.isReconnecting = false;
@@ -54,7 +53,6 @@ class WebSocketClient {
     };
 
     this.ws.onclose = () => {
-      console.log('WebSocket disconnected');
       this.isConnected = false;
       this.isReconnecting = false;
       this.fireStatusChange();
@@ -72,7 +70,6 @@ class WebSocketClient {
       this.reconnectAttempts++;
       this.isReconnecting = true;
       this.fireStatusChange();
-      console.log(`Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`);
       setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
     }
   }

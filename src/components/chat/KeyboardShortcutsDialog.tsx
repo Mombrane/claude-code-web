@@ -31,6 +31,7 @@ export function KeyboardShortcutsDialog({ onClose }: KeyboardShortcutsDialogProp
     { keys: ['Ctrl', 'F'], label: t('shortcuts.search') },
     { keys: ['Ctrl', '/'], label: t('shortcuts.showShortcuts') },
     { keys: ['Ctrl', ','], label: t('shortcuts.settings') },
+    { keys: ['Ctrl', 'Shift', 'T'], label: t('shortcuts.toggleTheme') },
     { keys: ['Enter'], label: t('shortcuts.sendMessage') },
     { keys: ['Shift', 'Enter'], label: t('shortcuts.newLine') },
     { keys: ['Escape'], label: t('shortcuts.close') },

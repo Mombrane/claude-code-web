@@ -363,6 +363,19 @@ export function ChatPanel() {
     setStreamingMessageId(null);
   }, [currentSessionId, streamingMessageId, addMessage, t]);
 
+  // Escape key to stop streaming
+  useEffect(() => {
+    if (!isStreaming) return;
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        handleStopStreaming();
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [isStreaming, handleStopStreaming]);
+
   const handleRetry = useCallback(() => {
     if (!currentSessionId || isStreaming) return;
     const lastUserMessage = [...currentMessages].reverse().find(m => m.role === 'user');
