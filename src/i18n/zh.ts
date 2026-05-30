@@ -190,6 +190,9 @@ export default {
   'tool.completed': '已完成',
   'tool.noOutput': '（无输出）',
   'tool.input': '输入',
+  'tool.groupSummary': '{count} 个工具已执行',
+  'tool.groupExpanded': '已展开',
+  'tool.groupCollapsed': '已折叠',
 
   // Step labels
   'step.label': '步骤',
@@ -258,4 +261,11 @@ export default {
   'home.today': '今天',
   'home.yesterday': '昨天',
   'home.older': '更早',
+  'home.removeProject': '移除项目',
+
+  // Common refresh
+  'common.refresh': '刷新',
+
+  // Sidebar extra
+  'sidebar.sessionCount': '{count} 个会话',
 } as const;

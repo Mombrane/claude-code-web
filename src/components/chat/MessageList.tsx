@@ -7,7 +7,7 @@ import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent,
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
 import { CopyButton } from './CopyButton';
-import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
+import { ToolCallCard, ToolResultCard, ToolExecutionCard, ToolGroupCard } from './ToolExecutionCard';
 import { ThinkingBlock } from './ThinkingBlock';
 
 // Escape special regex characters
@@ -209,6 +209,54 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
+
+  // Pre-process messages: group consecutive tool_execution and tool_use messages
+  type RenderItem =
+    | { kind: 'message'; message: Message; index: number }
+    | { kind: 'tool_group'; messages: Message[]; startIndex: number };
+
+  const renderItems = useMemo((): RenderItem[] => {
+    const items: RenderItem[] = [];
+    let i = 0;
+    while (i < messages.length) {
+      const msg = messages[i];
+      // Detect tool-related messages: tool_execution, tool_use, tool_result
+      const isToolMsg = msg.role === 'assistant' && (
+        msg.type === 'tool_execution' || msg.type === 'tool_use' || msg.type === 'tool_result'
+      );
+
+      if (isToolMsg) {
+        // Collect consecutive tool-related messages (allowing interleaved thinking)
+        const group: Message[] = [];
+        let j = i;
+        while (j < messages.length) {
+          const m = messages[j];
+          const isTool = m.role === 'assistant' && (
+            m.type === 'tool_execution' || m.type === 'tool_use' || m.type === 'tool_result'
+          );
+          const isThinking = m.role === 'assistant' && m.type === 'thinking';
+          if (isTool || isThinking) {
+            // Skip thinking blocks in the group (they're noise between tool calls)
+            if (isTool) group.push(m);
+            j++;
+          } else {
+            break;
+          }
+        }
+        if (group.length >= 2) {
+          items.push({ kind: 'tool_group', messages: group, startIndex: i });
+        } else if (group.length === 1) {
+          items.push({ kind: 'message', message: group[0], index: i });
+        }
+        // Skip all consumed messages (including thinking blocks between tools)
+        i = j;
+      } else {
+        items.push({ kind: 'message', message: messages[i], index: i });
+        i++;
+      }
+    }
+    return items;
+  }, [messages]);
 
   const toggleTool = (id: string) => {
     setExpandedTools(prev => {
@@ -622,13 +670,31 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </div>
       )}
 
-      {messages.map((message, index) => (
-        <MessageErrorBoundary key={message.id}>
-          <div className="animate-fadeIn">
-            {renderMessage(message, index)}
-          </div>
-        </MessageErrorBoundary>
-      ))}
+      {renderItems.map((item) => {
+        if (item.kind === 'tool_group') {
+          return (
+            <MessageErrorBoundary key={`group-${item.startIndex}`}>
+              <div className="animate-fadeIn">
+                <ToolGroupCard
+                  messages={item.messages}
+                  expandedTools={expandedTools}
+                  onToggleTool={toggleTool}
+                  copiedMessageId={copiedMessageId}
+                  onCopyMessage={handleCopyMessage}
+                  theme={theme}
+                />
+              </div>
+            </MessageErrorBoundary>
+          );
+        }
+        return (
+          <MessageErrorBoundary key={item.message.id}>
+            <div className="animate-fadeIn">
+              {renderMessage(item.message, item.index)}
+            </div>
+          </MessageErrorBoundary>
+        );
+      })}
 
       {/* Streaming thinking */}
       {isStreaming && streamingThinking && (

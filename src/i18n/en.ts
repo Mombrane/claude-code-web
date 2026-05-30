@@ -190,6 +190,9 @@ export default {
   'tool.completed': 'Completed',
   'tool.noOutput': '(no output)',
   'tool.input': 'Input',
+  'tool.groupSummary': '{count} tools executed',
+  'tool.groupExpanded': 'expanded',
+  'tool.groupCollapsed': 'collapsed',
 
   // Step labels
   'step.label': 'Step',
@@ -258,4 +261,11 @@ export default {
   'home.today': 'Today',
   'home.yesterday': 'Yesterday',
   'home.older': 'Older',
+  'home.removeProject': 'Remove project',
+
+  // Common refresh
+  'common.refresh': 'Refresh',
+
+  // Sidebar extra
+  'sidebar.sessionCount': '{count} sessions',
 } as const;
