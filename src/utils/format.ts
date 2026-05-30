@@ -20,6 +20,7 @@ export function formatTime(dateStr: string, locale: string): string {
 
 export function formatDate(dateStr: string, locale: string = 'en-US', t: TFunction): string {
   const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return dateStr || '';
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);

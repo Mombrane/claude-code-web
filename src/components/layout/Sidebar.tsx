@@ -232,6 +232,14 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
                         <span>{formatTime(session.updatedAt, locale)}</span>
+                        {session.model && (
+                          <>
+                            <span>·</span>
+                            <span className="truncate max-w-[80px]" title={session.model}>
+                              {session.model.split('/').pop() || session.model}
+                            </span>
+                          </>
+                        )}
                         {(session.totalCostUsd > 0 || session.totalTokens > 0) && (
                           <>
                             <span>·</span>
@@ -248,11 +256,11 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
 
                     {/* Status indicator */}
                     {streamingSessions.has(session.id) ? (
-                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                      <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" role="status" aria-label={t('status.streaming')} />
                     ) : errorSessions.has(session.id) ? (
-                      <div className="w-2 h-2 rounded-full bg-red-400" />
+                      <div className="w-2 h-2 rounded-full bg-red-400" role="status" aria-label={t('status.error')} />
                     ) : session.status === 'active' ? (
-                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                      <div className="w-2 h-2 rounded-full bg-green-400" role="status" aria-label={t('status.active')} />
                     ) : null}
 
                     {/* Actions */}

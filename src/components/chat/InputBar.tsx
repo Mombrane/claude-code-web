@@ -233,6 +233,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-200'
             }`}
             title={t('input.attachFile')}
+            aria-label={t('input.attachFile')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
@@ -265,6 +266,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
             <button
               onClick={onStop}
               className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-red-500/25"
+              aria-label={t('input.stop')}
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                 <rect x="6" y="6" width="12" height="12" rx="2" />
@@ -276,6 +278,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
               onClick={handleSend}
               disabled={disabled || !message.trim()}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-blue-500/25 disabled:hover:shadow-none"
+              aria-label={t('input.send')}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />

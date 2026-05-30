@@ -162,6 +162,9 @@ export default {
   'status.reconnecting': '重新连接中...',
   'status.reconnect': '重新连接',
   'status.defaultModel': '默认模型',
+  'status.streaming': '生成中',
+  'status.error': '错误',
+  'status.active': '活跃',
 
   // Confirmations
   'confirm.deleteSession': '确定要删除这个会话吗？',

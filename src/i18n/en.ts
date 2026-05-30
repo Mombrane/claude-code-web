@@ -162,6 +162,9 @@ export default {
   'status.reconnecting': 'Reconnecting...',
   'status.reconnect': 'Reconnect',
   'status.defaultModel': 'Default Model',
+  'status.streaming': 'Streaming',
+  'status.error': 'Error',
+  'status.active': 'Active',
 
   // Confirmations
   'confirm.deleteSession': 'Are you sure you want to delete this session?',

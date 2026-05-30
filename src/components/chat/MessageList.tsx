@@ -13,6 +13,7 @@ import { ThinkingBlock } from './ThinkingBlock';
 function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {
   const now = Date.now();
   const msgTime = new Date(timestamp).getTime();
+  if (isNaN(msgTime)) return null;
   const diffMs = now - msgTime;
   const diffMin = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
