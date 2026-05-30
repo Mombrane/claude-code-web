@@ -156,7 +156,7 @@ export function GitPanel({ cwd }: GitPanelProps) {
               <textarea
                 value={commitMessage}
                 onChange={(e) => setCommitMessage(e.target.value)}
-                placeholder="Commit message..."
+                placeholder={t('git.commitMessage')}
                 className="w-full px-3 py-2 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:outline-none focus:border-blue-500 resize-none"
                 rows={3}
               />

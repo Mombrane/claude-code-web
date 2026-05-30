@@ -198,6 +198,7 @@ export default {
   // Chat extra
   'chat.generationStopped': '[生成已停止]',
   'chat.copyMessage': '复制消息',
+  'chat.scrollToBottom': '回到底部',
 
   // Input extra
   'input.attachFile': '附加文件',

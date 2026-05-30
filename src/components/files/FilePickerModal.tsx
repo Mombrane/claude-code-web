@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
+import { useI18n } from '../../i18n';
 
 interface FilePickerModalProps {
   rootPath: string;
@@ -16,6 +17,7 @@ interface FileNode {
 }
 
 export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }: FilePickerModalProps) {
+  const { t } = useI18n();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
@@ -192,7 +194,7 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search files..."
+              placeholder={t('fileExplorer.search')}
               className={`w-full pl-10 pr-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 ${
                 theme === 'dark'
                   ? 'bg-gray-700 text-white placeholder-gray-400'

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, type JSX } from 'react';
+import { useEffect, useRef, useState, useMemo, useCallback, type JSX } from 'react';
 import { MessageErrorBoundary } from './MessageErrorBoundary';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -137,6 +137,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
 
   // Compute the index of the last assistant message for retry button
   const lastAssistantIndex = useMemo(() => {
@@ -181,12 +182,33 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     // Only auto-scroll to bottom when not searching and user is near the bottom
     if (!searchQuery && containerRef.current) {
       const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
-      if (isNearBottom) {
+      const shouldAutoScroll = scrollHeight - scrollTop - clientHeight < 150;
+      if (shouldAutoScroll) {
         bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
       }
     }
   }, [messages, streamingText, streamingThinking, searchQuery]);
+
+  // Track scroll position for "scroll to bottom" button visibility
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container;
+      setIsNearBottom(scrollHeight - scrollTop - clientHeight < 150);
+    };
+
+    container.addEventListener('scroll', handleScroll, { passive: true });
+    // Check initial state
+    handleScroll();
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Scroll to bottom handler
+  const scrollToBottom = useCallback(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   const toggleTool = (id: string) => {
     setExpandedTools(prev => {
@@ -644,6 +666,24 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       )}
 
       <div ref={bottomRef} />
+
+      {/* Scroll to bottom button */}
+      {!isNearBottom && (
+        <button
+          onClick={scrollToBottom}
+          className={`fixed bottom-24 right-8 z-50 flex items-center gap-2 px-3 py-2 rounded-full shadow-lg transition-all duration-200 animate-fadeIn ${
+            theme === 'dark'
+              ? 'bg-gray-700/90 hover:bg-gray-600 text-gray-200 border border-gray-600/50'
+              : 'bg-white/90 hover:bg-gray-100 text-gray-700 border border-gray-200'
+          }`}
+          title={t('chat.scrollToBottom') || 'Scroll to bottom'}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+          <span className="text-xs font-medium">{t('chat.scrollToBottom') || '↓'}</span>
+        </button>
+      )}
     </div>
   );
 }

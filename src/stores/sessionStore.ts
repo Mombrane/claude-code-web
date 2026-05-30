@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Session, Message } from '../types';
+import type { Session, Message, ToolExecutionContent } from '../types';
 import { api } from '../api/client';
 
 interface SessionState {
@@ -125,7 +125,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
           }
           // For tool_execution, compare toolUseId
           if (m.type === 'tool_execution' && typeof m.content === 'object' && typeof message.content === 'object') {
-            if ((m.content as any).toolUseId === (message.content as any).toolUseId) return true;
+            const mExec = m.content as ToolExecutionContent;
+            const msgExec = message.content as ToolExecutionContent;
+            if (mExec.toolUseId === msgExec.toolUseId) return true;
           }
         }
         return false;

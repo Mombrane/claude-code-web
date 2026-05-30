@@ -198,6 +198,7 @@ export default {
   // Chat extra
   'chat.generationStopped': '[Generation stopped]',
   'chat.copyMessage': 'Copy message',
+  'chat.scrollToBottom': 'Scroll to bottom',
 
   // Input extra
   'input.attachFile': 'Attach file',

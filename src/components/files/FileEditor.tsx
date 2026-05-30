@@ -159,7 +159,7 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
             <button
               onClick={handleRevert}
               className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
-              title="Revert changes"
+              title={t('editor.revert')}
             >
               {t('editor.revert')}
             </button>
