@@ -14,6 +14,7 @@ export default {
   'sidebar.rename': 'Rename',
   'sidebar.delete': 'Delete',
   'sidebar.refresh': 'Refresh',
+  'sidebar.title': 'Sidebar',
 
   // Time groups
   'time.today': 'Today',

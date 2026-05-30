@@ -65,10 +65,10 @@ export function ChatPanel() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault();
-        setSearchOpen((prev) => !prev);
-        if (!searchOpen) {
-          setCurrentMatchIndex(0);
-        }
+        setSearchOpen((prev) => {
+          if (prev) setCurrentMatchIndex(0);
+          return !prev;
+        });
       }
       if ((e.ctrlKey || e.metaKey) && e.key === '/') {
         e.preventDefault();
@@ -77,7 +77,7 @@ export function ChatPanel() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [searchOpen]);
+  }, []);
 
   const handleSearchQuery = useCallback((query: string) => {
     setSearchQuery(query);

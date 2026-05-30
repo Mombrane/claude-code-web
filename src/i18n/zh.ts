@@ -14,6 +14,7 @@ export default {
   'sidebar.rename': '重命名',
   'sidebar.delete': '删除',
   'sidebar.refresh': '刷新',
+  'sidebar.title': '侧边栏',
 
   // Time groups
   'time.today': '今天',

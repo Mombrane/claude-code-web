@@ -176,7 +176,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           {/* Logo */}
           <div className="flex items-center gap-2">
             <span className="text-xl"> </span>
-            <h1 className={`text-sm font-semibold ${settings.theme === 'dark' ? 'text-gradient' : 'text-gray-800'}`}>Claude Code Web</h1>
+            <h1 className={`text-sm font-semibold ${settings.theme === 'dark' ? 'text-gradient' : 'text-gray-800'}`}>{t('app.name')}</h1>
           </div>
 
           {/* Separator */}
@@ -199,7 +199,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
-              Sessions
+              {t('sidebar.sessions')}
             </button>
             <button
               onClick={() => setLeftPanel('files')}
@@ -216,7 +216,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
               </svg>
-              Files
+              {t('sidebar.files')}
             </button>
           </div>
         </div>
@@ -234,7 +234,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <span>Commands</span>
+            <span>{t('command.palette')}</span>
             <kbd className={`ml-1 px-1 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-600/50' : 'bg-gray-300'}`}>Ctrl+K</kbd>
           </button>
 
@@ -259,7 +259,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Git
+              {t('git.title')}
             </button>
             <button
               onClick={() => setRightPanel(prev => prev === 'terminal' ? 'none' : 'terminal')}
@@ -277,7 +277,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              Terminal
+              {t('terminal.title')}
             </button>
             <button
               onClick={() => setShowSettings(true)}
@@ -364,23 +364,23 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         <div className="flex items-center gap-4">
           <span className="flex items-center gap-1.5">
             <span className="text-base"> </span>
-            <span className="font-medium">Claude Code Web</span>
+            <span className="font-medium">{t('app.name')}</span>
             <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>v1.0.0</span>
           </span>
           <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span className="flex items-center gap-1">
             <span className="w-2 h-2 rounded-full bg-green-400" />
-            Connected
+            {t('status.connected')}
           </span>
           <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span>{settings.model || 'mimo-v2.5-pro'}</span>
         </div>
         <div className="flex items-center gap-3">
           <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+K</kbd>
-          <span>Commands</span>
+          <span>{t('command.palette')}</span>
           <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+B</kbd>
-          <span>Sidebar</span>
+          <span>{t('sidebar.title')}</span>
         </div>
       </footer>
     </div>

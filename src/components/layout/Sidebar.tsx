@@ -111,7 +111,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
 
   const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this session?')) {
+    if (confirm(t('confirm.deleteSession'))) {
       try {
         await api.deleteSession(sessionId);
         removeSession(sessionId);
@@ -214,19 +214,19 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                 <svg className="w-8 h-8 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                <p className="text-sm text-center">No sessions matching "{searchQuery}"</p>
+                <p className="text-sm text-center">{t('sidebar.noResults', { query: searchQuery })}</p>
               </>
             ) : (
               <>
                 <svg className="w-8 h-8 mb-2 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                <p className="text-sm text-center mb-3">No sessions yet</p>
+                <p className="text-sm text-center mb-3">{t('sidebar.noSessions')}</p>
                 <button
                   onClick={handleCreateSession}
                   className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Create your first session
+                  {t('sidebar.createFirst')}
                 </button>
               </>
             )}
