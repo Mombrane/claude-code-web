@@ -11,6 +11,7 @@ interface SessionState {
   error: string | null;
   streamingSessions: Set<string>;
   errorSessions: Set<string>;
+  cancelLoadMessages: (() => void) | null;
 
   // Session management
   setSessions: (sessions: Session[]) => void;
@@ -42,6 +43,7 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   error: null,
   streamingSessions: new Set(),
   errorSessions: new Set(),
+  cancelLoadMessages: null,
 
   setSessions: (sessions) => set({ sessions }),
 
@@ -65,12 +67,33 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     })),
 
   setCurrentSession: async (sessionId) => {
+    // Cancel any in-flight message loading
+    const prevCancel = get().cancelLoadMessages;
+    if (prevCancel) prevCancel();
+
     set({
       currentSessionId: sessionId,
       currentMessages: [],
+      isLoadingMessages: true,
     });
+
     if (sessionId) {
-      await get().loadMessages(sessionId);
+      let cancelled = false;
+      set({ cancelLoadMessages: () => { cancelled = true; } });
+
+      try {
+        const messages = await api.getSessionMessages(sessionId);
+        if (!cancelled && get().currentSessionId === sessionId) {
+          set({ currentMessages: messages, isLoadingMessages: false, cancelLoadMessages: null });
+        }
+      } catch (e) {
+        if (!cancelled) {
+          console.error('Failed to load messages:', e);
+          set({ isLoadingMessages: false, cancelLoadMessages: null });
+        }
+      }
+    } else {
+      set({ isLoadingMessages: false });
     }
   },
 

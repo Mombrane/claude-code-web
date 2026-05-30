@@ -260,6 +260,12 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     } else if (message.type === 'tool_execution') {
       const exec = message.content as ToolExecutionContent;
       textToCopy = `[${exec.toolName}] ${exec.status}\nInput: ${JSON.stringify(exec.input, null, 2)}${exec.output ? `\nOutput: ${exec.output}` : ''}`;
+    } else if (message.type === 'file') {
+      const file = message.content as FileContent;
+      textToCopy = file.content || '';
+    } else if (message.type === 'patch') {
+      const patch = message.content as PatchContent;
+      textToCopy = patch.diff || '';
     }
     try {
       await navigator.clipboard.writeText(textToCopy);
@@ -323,12 +329,12 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                       <>
                         <span className="mx-1">·</span>
                         {message.costUsd != null && (
-                          <span>${message.costUsd < 0.01 ? '<0.01' : message.costUsd.toFixed(2)}</span>
+                          <span>{t('chat.cost', { amount: message.costUsd < 0.01 ? '<0.01' : message.costUsd.toFixed(2) })}</span>
                         )}
                         {message.tokens != null && (
                           <>
                             {message.costUsd != null && <span> </span>}
-                            <span>{message.tokens < 1000 ? message.tokens : `${(message.tokens / 1000).toFixed(1)}k`} tokens</span>
+                            <span>{message.tokens < 1000 ? message.tokens : `${(message.tokens / 1000).toFixed(1)}k`} {t('chat.tokens')}</span>
                           </>
                         )}
                       </>
@@ -610,6 +616,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={rehypePlugins}
+                components={markdownComponents}
               >
                 {streamingText}
               </ReactMarkdown>

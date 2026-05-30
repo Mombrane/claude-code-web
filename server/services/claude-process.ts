@@ -142,6 +142,14 @@ export class ClaudeProcessManager extends EventEmitter {
         clearTimeout(t);
         this.processTimeouts.delete(sessionId);
       }
+      // Clean up pendingToolNames entries for this session to prevent leaks
+      const toolUseIds = this.sessionToolUseIds.get(sessionId);
+      if (toolUseIds) {
+        for (const toolUseId of toolUseIds) {
+          this.pendingToolNames.delete(toolUseId);
+        }
+        this.sessionToolUseIds.delete(sessionId);
+      }
       this.emit('process:closed', sessionId, code);
     });
 

@@ -41,7 +41,7 @@ export function I18nProvider(props: { children: ReactNode }) {
     let text = translations[locale][key] || translations['en'][key] || key;
     if (params) {
       Object.entries(params).forEach(([k, v]) => {
-        text = text.replace(`{${k}}`, String(v));
+        text = text.replace(`{${k}}`, () => String(v));
       });
     }
     return text;

@@ -99,7 +99,7 @@ export class WebSocketHandler {
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
       // Generate content-based dedup key from sessionId + cost + tokens
       const totalTokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
-      const resultKey = `${sessionId}-${data.costUsd}-${totalTokens}-${Date.now()}`;
+      const resultKey = `${sessionId}-${data.costUsd}-${totalTokens}-${(data.result || "").slice(0, 80)}`;
 
       if (this.processedResults.has(resultKey)) {
         // Already processed this result, skip to avoid double-counting costs
@@ -303,13 +303,22 @@ export class WebSocketHandler {
       const data = JSON.stringify(message);
       for (const client of clients) {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(data);
+          try {
+            client.send(data);
+          } catch (err) {
+            // Remove dead client from all sessions
+            this.clients.forEach((clientSet, sid) => {
+              clientSet.delete(client);
+              if (clientSet.size === 0) this.clients.delete(sid);
+            });
+          }
         }
       }
     }
   }
 
   private sendError(ws: WebSocket, error: string) {
+    if (ws.readyState !== WebSocket.OPEN) return;
     ws.send(JSON.stringify({
       type: 'error',
       payload: { error },

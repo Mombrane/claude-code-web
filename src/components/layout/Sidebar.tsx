@@ -43,15 +43,15 @@ function formatTime(dateStr: string, locale: string): string {
   return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatCost(cost: number): string {
-  if (cost < 0.01) return '<$0.01';
-  return `$${cost.toFixed(2)}`;
+function formatCost(cost: number, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (cost === undefined || cost === null) return '';
+  return t('chat.cost', { amount: cost.toFixed(2) });
 }
 
-function formatTokens(tokens: number): string {
-  if (tokens < 1000) return `${tokens} tokens`;
-  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k tokens`;
-  return `${(tokens / 1000000).toFixed(1)}M tokens`;
+function formatTokens(tokens: number, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (tokens < 1000) return `${tokens} ${t('chat.tokens')}`;
+  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k ${t('chat.tokens')}`;
+  return `${(tokens / 1000000).toFixed(1)}M ${t('chat.tokens')}`;
 }
 
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
@@ -285,10 +285,10 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           <>
                             <span>·</span>
                             {session.totalCostUsd > 0 && (
-                              <span>{formatCost(session.totalCostUsd)}</span>
+                              <span>{formatCost(session.totalCostUsd, t)}</span>
                             )}
                             {session.totalTokens > 0 && (
-                              <span>{formatTokens(session.totalTokens)}</span>
+                              <span>{formatTokens(session.totalTokens, t)}</span>
                             )}
                           </>
                         )}

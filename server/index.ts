@@ -29,7 +29,28 @@ app.get('/api/health', (req, res) => {
 // WebSocket handler
 const wsHandler = new WebSocketHandler(server);
 
+// Graceful shutdown
+const shutdown = () => {
+  console.log('Shutting down...');
+  // Close WebSocket server and all connections
+  wsHandler.getWSS().close();
+  // Close HTTP server
+  server.close(() => process.exit(0));
+  // Force exit after 5 seconds
+  setTimeout(() => process.exit(1), 5000);
+};
+process.on('SIGTERM', shutdown);
+process.on('SIGINT', shutdown);
+
 // Start server
+server.on('error', (err: NodeJS.ErrnoException) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`Port ${config.port} is already in use`);
+    process.exit(1);
+  }
+  throw err;
+});
+
 server.listen(config.port, () => {
   console.log(`Server running on http://localhost:${config.port}`);
   console.log(`WebSocket available at ws://localhost:${config.port}/ws`);

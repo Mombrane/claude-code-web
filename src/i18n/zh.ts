@@ -56,7 +56,16 @@ export default {
   'message.copied': '已复制!',
   'message.startConversation': '开始对话以开始编程',
   'message.retry': '重试',
-  'message.streaming': 'streaming...',
+  'message.streaming': '生成中...',
+
+  // Chat cost/tokens
+  'chat.cost': '¥{amount}',
+  'chat.tokens': '令牌',
+
+  // Layout tooltips
+  'layout.gitTooltip': 'Git 面板 (Ctrl+G)',
+  'layout.terminalTooltip': '终端 (Ctrl+`)',
+  'layout.settingsTooltip': '设置 (Ctrl+,)',
 
   // Tools
   'tool.read': '读取',
@@ -107,6 +116,8 @@ export default {
   'git.commitMessage': '提交信息...',
   'git.noChanges': '没有更改',
   'git.noHistory': '没有提交历史',
+  'git.noProject': '未选择项目',
+  'fileExplorer.noProject': '未选择项目',
 
   // Terminal
   'terminal.title': '终端',

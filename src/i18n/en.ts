@@ -58,6 +58,15 @@ export default {
   'message.retry': 'Retry',
   'message.streaming': 'streaming...',
 
+  // Chat cost/tokens
+  'chat.cost': '${amount}',
+  'chat.tokens': 'tokens',
+
+  // Layout tooltips
+  'layout.gitTooltip': 'Git Panel (Ctrl+G)',
+  'layout.terminalTooltip': 'Terminal (Ctrl+`)',
+  'layout.settingsTooltip': 'Settings (Ctrl+,)',
+
   // Tools
   'tool.read': 'Read',
   'tool.edit': 'Edit',
@@ -107,6 +116,8 @@ export default {
   'git.commitMessage': 'Commit message...',
   'git.noChanges': 'No changes',
   'git.noHistory': 'No commit history',
+  'git.noProject': 'No project selected',
+  'fileExplorer.noProject': 'No project selected',
 
   // Terminal
   'terminal.title': 'Terminal',

@@ -49,15 +49,15 @@ function formatDate(dateStr: string, locale: string = 'en-US'): string {
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
-function formatCost(cost: number): string {
-  if (cost < 0.01) return '<$0.01';
-  return `$${cost.toFixed(2)}`;
+function formatCost(cost: number, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (cost === undefined || cost === null) return '';
+  return t('chat.cost', { amount: cost.toFixed(2) });
 }
 
-function formatTokens(tokens: number): string {
-  if (tokens < 1000) return `${tokens} tokens`;
-  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k tokens`;
-  return `${(tokens / 1000000).toFixed(1)}M tokens`;
+function formatTokens(tokens: number, t: (key: string, params?: Record<string, string | number>) => string): string {
+  if (tokens < 1000) return `${tokens} ${t('chat.tokens')}`;
+  if (tokens < 1000000) return `${(tokens / 1000).toFixed(1)}k ${t('chat.tokens')}`;
+  return `${(tokens / 1000000).toFixed(1)}M ${t('chat.tokens')}`;
 }
 
 export function HomePage() {
@@ -311,21 +311,21 @@ export function HomePage() {
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
                 <div className="text-[11px] text-gray-500 mb-1">{t('home.totalCost')}</div>
-                <div className="text-lg font-semibold text-white">{formatCost(stats.totalCost)}</div>
+                <div className="text-lg font-semibold text-white">{formatCost(stats.totalCost, t)}</div>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
                 <div className="text-[11px] text-gray-500 mb-1">{t('home.totalTokens')}</div>
-                <div className="text-lg font-semibold text-white">{formatTokens(stats.totalTokens)}</div>
+                <div className="text-lg font-semibold text-white">{formatTokens(stats.totalTokens, t)}</div>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
                 <div className="text-[11px] text-gray-500 mb-1">{t('home.avgCost')}</div>
-                <div className="text-lg font-semibold text-white">{formatCost(stats.avgCost)}</div>
+                <div className="text-lg font-semibold text-white">{formatCost(stats.avgCost, t)}</div>
               </div>
             </div>
             {stats.mostExpensive && (stats.mostExpensive.totalCostUsd ?? 0) > 0 && (
               <div className="mt-2 text-[11px] text-gray-500">
                 {t('home.mostExpensive')} <span className="text-gray-300">"{stats.mostExpensive.name}"</span>{' '}
-                <span className="text-gray-400">({formatCost(stats.mostExpensive.totalCostUsd)})</span>
+                <span className="text-gray-400">({formatCost(stats.mostExpensive.totalCostUsd, t)})</span>
               </div>
             )}
           </div>
@@ -382,7 +382,7 @@ export function HomePage() {
                             {session.totalCostUsd > 0 && (
                               <>
                                 <span className="text-gray-600">·</span>
-                                <span>{formatCost(session.totalCostUsd)}</span>
+                                <span>{formatCost(session.totalCostUsd, t)}</span>
                               </>
                             )}
                           </div>
