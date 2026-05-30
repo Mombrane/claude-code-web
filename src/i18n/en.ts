@@ -218,4 +218,28 @@ export default {
   // Session rename
   'session.rename': 'Rename',
   'session.renameHint': 'Double-click to rename',
+
+  // Common
+  'common.cancel': 'Cancel',
+
+  // Home page
+  'home.projects': 'Projects',
+  'home.addProject': 'Add Project',
+  'home.newSession': 'New Session',
+  'home.selectProject': 'Select a project',
+  'home.searchSessions': 'Search sessions...',
+  'home.statistics': 'Statistics',
+  'home.sessions': 'Sessions',
+  'home.totalCost': 'Total Cost',
+  'home.totalTokens': 'Total Tokens',
+  'home.avgCost': 'Avg Cost',
+  'home.mostExpensive': 'Most expensive:',
+  'home.noSessionsMatch': 'No sessions matching "{query}"',
+  'home.noSessions': 'No sessions yet',
+  'home.createFirst': 'Create your first session',
+  'home.projectPath': 'Project Directory Path',
+  'home.confirmRemove': 'Remove this project from the list?',
+  'home.today': 'Today',
+  'home.yesterday': 'Yesterday',
+  'home.older': 'Older',
 } as const;

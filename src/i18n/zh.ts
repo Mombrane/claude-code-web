@@ -218,4 +218,28 @@ export default {
   // Session rename
   'session.rename': '重命名',
   'session.renameHint': '双击重命名',
+
+  // Common
+  'common.cancel': '取消',
+
+  // Home page
+  'home.projects': '项目',
+  'home.addProject': '添加项目',
+  'home.newSession': '新建会话',
+  'home.selectProject': '选择一个项目',
+  'home.searchSessions': '搜索会话...',
+  'home.statistics': '统计',
+  'home.sessions': '会话',
+  'home.totalCost': '总费用',
+  'home.totalTokens': '总 Token',
+  'home.avgCost': '平均费用',
+  'home.mostExpensive': '最贵：',
+  'home.noSessionsMatch': '没有匹配 "{query}" 的会话',
+  'home.noSessions': '暂无会话',
+  'home.createFirst': '创建第一个会话',
+  'home.projectPath': '项目目录路径',
+  'home.confirmRemove': '确定要移除此项目吗？',
+  'home.today': '今天',
+  'home.yesterday': '昨天',
+  'home.older': '更早',
 } as const;

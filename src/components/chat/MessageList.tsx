@@ -177,9 +177,13 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   }, [searchQuery, currentMatchIndex, messages, streamingText]);
 
   useEffect(() => {
-    // Only auto-scroll to bottom when not searching
-    if (!searchQuery) {
-      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Only auto-scroll to bottom when not searching and user is near the bottom
+    if (!searchQuery && containerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
+      if (isNearBottom) {
+        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }
     }
   }, [messages, streamingText, streamingThinking, searchQuery]);
 
@@ -570,7 +574,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
           theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
         }`}>
           <div className="text-6xl mb-4"> </div>
-          <h2 className="text-xl font-semibold mb-2">Claude Code Web</h2>
+          <h2 className="text-xl font-semibold mb-2">{t('app.name')}</h2>
           <p className="text-sm">{t('message.startConversation')}</p>
         </div>
       )}

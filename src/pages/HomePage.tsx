@@ -2,27 +2,32 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useSessionStore } from '../stores/sessionStore';
+import { useI18n } from '../i18n';
 import type { Project, Session } from '../types';
 
-function groupSessionsByTime(sessions: Session[]): { label: string; sessions: Session[] }[] {
+function groupSessionsByTime(sessions: Session[], t: (key: string) => string): { label: string; sessions: Session[] }[] {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const yesterday = new Date(today.getTime() - 86400000);
 
+  const todayLabel = t('home.today');
+  const yesterdayLabel = t('home.yesterday');
+  const olderLabel = t('home.older');
+
   const groups: Record<string, Session[]> = {
-    'Today': [],
-    'Yesterday': [],
-    'Older': [],
+    [todayLabel]: [],
+    [yesterdayLabel]: [],
+    [olderLabel]: [],
   };
 
   for (const session of sessions) {
     const updated = new Date(session.updatedAt);
     if (updated >= today) {
-      groups['Today'].push(session);
+      groups[todayLabel].push(session);
     } else if (updated >= yesterday) {
-      groups['Yesterday'].push(session);
+      groups[yesterdayLabel].push(session);
     } else {
-      groups['Older'].push(session);
+      groups[olderLabel].push(session);
     }
   }
 
@@ -31,7 +36,7 @@ function groupSessionsByTime(sessions: Session[]): { label: string; sessions: Se
     .map(([label, sessions]) => ({ label, sessions }));
 }
 
-function formatDate(dateStr: string): string {
+function formatDate(dateStr: string, locale: string = 'en-US'): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
@@ -41,7 +46,7 @@ function formatDate(dateStr: string): string {
   if (minutes < 1) return 'just now';
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
 function formatCost(cost: number): string {
@@ -57,6 +62,7 @@ function formatTokens(tokens: number): string {
 
 export function HomePage() {
   const navigate = useNavigate();
+  const { t, locale } = useI18n();
   const { setSessions, setCurrentSession } = useSessionStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [sessions, setSessionsState] = useState<Session[]>([]);
@@ -119,7 +125,7 @@ export function HomePage() {
 
   const handleDeleteProject = async (projectId: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Remove this project from the list?')) return;
+    if (!confirm(t('home.confirmRemove'))) return;
     try {
       await api.deleteProject(projectId);
       setProjects(prev => prev.filter(p => p.id !== projectId));
@@ -175,8 +181,8 @@ export function HomePage() {
   }, [sessions, searchQuery]);
 
   const groupedSessions = useMemo(() =>
-    groupSessionsByTime(filteredSessions),
-    [filteredSessions]
+    groupSessionsByTime(filteredSessions, t),
+    [filteredSessions, t]
   );
 
   const selectedProjectData = projects.find(p => p.worktree === selectedProject);
@@ -189,14 +195,14 @@ export function HomePage() {
         <div className="p-4 border-b border-gray-700/50">
           <div className="flex items-center gap-2">
             <span className="text-xl"> </span>
-            <h1 className="text-sm font-semibold text-gradient">Claude Code Web</h1>
+            <h1 className="text-sm font-semibold text-gradient">{t('app.name')}</h1>
           </div>
         </div>
 
         {/* Project list */}
         <div className="flex-1 overflow-y-auto py-2">
           <div className="px-3 py-1.5 text-[10px] font-medium text-gray-500 uppercase tracking-wider">
-            Projects
+            {t('home.projects')}
           </div>
           {projects.map(project => (
             <div
@@ -249,7 +255,7 @@ export function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <span className="text-sm">Add Project</span>
+            <span className="text-sm">{t('home.addProject')}</span>
           </button>
         </div>
       </div>
@@ -261,7 +267,7 @@ export function HomePage() {
           <div className="flex items-center justify-between mb-3">
             <div>
               <h2 className="text-lg font-semibold">
-                {selectedProjectData?.name || 'Select a project'}
+                {selectedProjectData?.name || t('home.selectProject')}
               </h2>
               {selectedProjectData && (
                 <p className="text-xs text-gray-500 mt-0.5">{selectedProjectData.worktree}</p>
@@ -275,7 +281,7 @@ export function HomePage() {
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
-              New Session
+              {t('home.newSession')}
             </button>
           </div>
 
@@ -288,7 +294,7 @@ export function HomePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search sessions..."
+              placeholder={t('home.searchSessions')}
               className="w-full pl-10 pr-4 py-2.5 bg-gray-700/50 text-sm text-white placeholder-gray-500 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500/50 focus:bg-gray-700/70 transition-all"
             />
           </div>
@@ -297,28 +303,28 @@ export function HomePage() {
         {/* Statistics */}
         {!isLoading && sessions.length > 0 && (
           <div className="px-6 py-4 border-b border-gray-700/50">
-            <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-3">Statistics</h3>
+            <h3 className="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-3">{t('home.statistics')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-                <div className="text-[11px] text-gray-500 mb-1">Sessions</div>
+                <div className="text-[11px] text-gray-500 mb-1">{t('home.sessions')}</div>
                 <div className="text-lg font-semibold text-white">{stats.totalSessions}</div>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-                <div className="text-[11px] text-gray-500 mb-1">Total Cost</div>
+                <div className="text-[11px] text-gray-500 mb-1">{t('home.totalCost')}</div>
                 <div className="text-lg font-semibold text-white">{formatCost(stats.totalCost)}</div>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-                <div className="text-[11px] text-gray-500 mb-1">Total Tokens</div>
+                <div className="text-[11px] text-gray-500 mb-1">{t('home.totalTokens')}</div>
                 <div className="text-lg font-semibold text-white">{formatTokens(stats.totalTokens)}</div>
               </div>
               <div className="bg-gray-800/60 rounded-lg px-4 py-3">
-                <div className="text-[11px] text-gray-500 mb-1">Avg Cost</div>
+                <div className="text-[11px] text-gray-500 mb-1">{t('home.avgCost')}</div>
                 <div className="text-lg font-semibold text-white">{formatCost(stats.avgCost)}</div>
               </div>
             </div>
             {stats.mostExpensive && (stats.mostExpensive.totalCostUsd ?? 0) > 0 && (
               <div className="mt-2 text-[11px] text-gray-500">
-                Most expensive: <span className="text-gray-300">"{stats.mostExpensive.name}"</span>{' '}
+                {t('home.mostExpensive')} <span className="text-gray-300">"{stats.mostExpensive.name}"</span>{' '}
                 <span className="text-gray-400">({formatCost(stats.mostExpensive.totalCostUsd)})</span>
               </div>
             )}
@@ -337,14 +343,14 @@ export function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
               <p className="text-sm mb-2">
-                {searchQuery ? `No sessions matching "${searchQuery}"` : 'No sessions yet'}
+                {searchQuery ? t('home.noSessionsMatch', { query: searchQuery }) : t('home.noSessions')}
               </p>
               {!searchQuery && selectedProject && (
                 <button
                   onClick={handleNewSession}
                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
                 >
-                  Create your first session
+                  {t('home.createFirst')}
                 </button>
               )}
             </div>
@@ -372,7 +378,7 @@ export function HomePage() {
                             {session.name}
                           </div>
                           <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            <span>{formatDate(session.updatedAt)}</span>
+                            <span>{formatDate(session.updatedAt, locale)}</span>
                             {session.totalCostUsd > 0 && (
                               <>
                                 <span className="text-gray-600">·</span>
@@ -399,10 +405,10 @@ export function HomePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowAddProject(false)}>
           <div className="w-full max-w-md bg-gray-800 border border-gray-700 rounded-xl shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
             <div className="px-4 py-3 border-b border-gray-700">
-              <h3 className="text-sm font-semibold text-white">Add Project</h3>
+              <h3 className="text-sm font-semibold text-white">{t('home.addProject')}</h3>
             </div>
             <div className="p-4">
-              <label className="block text-xs text-gray-400 mb-2">Project Directory Path</label>
+              <label className="block text-xs text-gray-400 mb-2">{t('home.projectPath')}</label>
               <input
                 type="text"
                 value={newProjectPath}
@@ -418,14 +424,14 @@ export function HomePage() {
                 onClick={() => setShowAddProject(false)}
                 className="px-4 py-2 text-sm text-gray-400 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 onClick={handleAddProject}
                 disabled={!newProjectPath.trim()}
                 className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg transition-colors"
               >
-                Add Project
+                {t('home.addProject')}
               </button>
             </div>
           </div>

@@ -99,7 +99,7 @@ export class WebSocketHandler {
     claudeProcessManager.on('result:complete', async (sessionId, data) => {
       // Generate content-based dedup key from sessionId + cost + tokens
       const totalTokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
-      const resultKey = `${sessionId}-${data.costUsd}-${totalTokens}`;
+      const resultKey = `${sessionId}-${data.costUsd}-${totalTokens}-${Date.now()}`;
 
       if (this.processedResults.has(resultKey)) {
         // Already processed this result, skip to avoid double-counting costs
