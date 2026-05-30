@@ -234,12 +234,13 @@ function EditResult({ output, input, theme }: { output: string; input: Record<st
 }
 
 function GrepGlobResult({ output, theme }: { output: string; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
   const lines = output.split('\n').filter(l => l.trim());
   return (
     <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
       <div className="p-3 space-y-0.5">
         {lines.length === 0 ? (
-          <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(no results)</span>
+          <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('tool.noResults')}</span>
         ) : lines.map((line, idx) => {
           // Highlight file paths (before the colon) differently from match content
           const colonIdx = line.indexOf(':');

@@ -36,16 +36,16 @@ function groupSessionsByTime(sessions: Session[], t: (key: string) => string): {
     .map(([label, sessions]) => ({ label, sessions }));
 }
 
-function formatDate(dateStr: string, locale: string = 'en-US'): string {
+function formatDate(dateStr: string, locale: string = 'en-US', t: (key: string, params?: Record<string, string | number>) => string): string {
   const date = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(diff / 3600000);
 
-  if (minutes < 1) return 'just now';
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
+  if (minutes < 1) return t('time.justNow');
+  if (minutes < 60) return t('time.minutesAgo', { n: minutes });
+  if (hours < 24) return t('time.hoursAgo', { n: hours });
   return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 }
 
@@ -378,7 +378,7 @@ export function HomePage() {
                             {session.name}
                           </div>
                           <div className="flex items-center gap-2 text-[11px] text-gray-500">
-                            <span>{formatDate(session.updatedAt, locale)}</span>
+                            <span>{formatDate(session.updatedAt, locale, t)}</span>
                             {session.totalCostUsd > 0 && (
                               <>
                                 <span className="text-gray-600">·</span>

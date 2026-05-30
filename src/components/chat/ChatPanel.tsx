@@ -425,6 +425,16 @@ export function ChatPanel() {
           <span className="text-xs text-gray-600">
             {t('chat.messages', { count: currentMessages.length })}
           </span>
+          {currentSession?.totalCostUsd != null && currentSession.totalCostUsd > 0 && (
+            <span className="text-xs text-gray-600">
+              · {t('chat.cost', { amount: currentSession.totalCostUsd.toFixed(2) })}
+            </span>
+          )}
+          {currentSession?.totalTokens != null && currentSession.totalTokens > 0 && (
+            <span className="text-xs text-gray-600">
+              · {currentSession.totalTokens < 1000 ? currentSession.totalTokens : `${(currentSession.totalTokens / 1000).toFixed(1)}k`} {t('chat.tokens')}
+            </span>
+          )}
         </div>
       </div>
 

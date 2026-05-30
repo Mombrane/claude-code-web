@@ -22,6 +22,9 @@ export default {
   'time.thisWeek': '本周',
   'time.thisMonth': '本月',
   'time.older': '更早',
+  'time.justNow': '刚刚',
+  'time.minutesAgo': '{n}分钟前',
+  'time.hoursAgo': '{n}小时前',
 
   // Sidebar groups
   'sidebar.group.today': '今天',
@@ -77,6 +80,7 @@ export default {
   'tool.agent': '代理',
   'tool.webFetch': '网页获取',
   'tool.webSearch': '网页搜索',
+  'tool.noResults': '无结果',
 
   // Tool status
   'tool.status.pending': '等待中',

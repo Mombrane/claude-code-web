@@ -130,7 +130,7 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
 }
 
 export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry }: MessageListProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -294,7 +294,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     {searchQuery ? highlightPlainText(message.content as string, searchQuery) : message.content as string}
                   </p>
                   <div className="text-xs opacity-70 mt-2 text-right">
-                    {new Date(message.timestamp).toLocaleTimeString()}
+                    {new Date(message.timestamp).toLocaleTimeString(locale)}
                   </div>
                 </div>
               </div>
@@ -324,7 +324,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   <div className={`text-xs mt-3 ${
                     theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
                   }`}>
-                    {new Date(message.timestamp).toLocaleTimeString()}
+                    {new Date(message.timestamp).toLocaleTimeString(locale)}
                     {(message.costUsd || message.tokens) && (
                       <>
                         <span className="mx-1">·</span>

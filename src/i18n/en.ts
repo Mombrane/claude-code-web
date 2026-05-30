@@ -22,6 +22,9 @@ export default {
   'time.thisWeek': 'This Week',
   'time.thisMonth': 'This Month',
   'time.older': 'Older',
+  'time.justNow': 'just now',
+  'time.minutesAgo': '{n}m ago',
+  'time.hoursAgo': '{n}h ago',
 
   // Sidebar groups
   'sidebar.group.today': 'Today',
@@ -77,6 +80,7 @@ export default {
   'tool.agent': 'Agent',
   'tool.webFetch': 'WebFetch',
   'tool.webSearch': 'WebSearch',
+  'tool.noResults': 'No results',
 
   // Tool status
   'tool.status.pending': 'Pending',
