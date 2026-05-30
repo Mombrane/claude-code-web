@@ -16,8 +16,10 @@ export function ChatPanel() {
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
+  const [streamingThinking, setStreamingThinking] = useState('');
   const currentSession = sessions.find((s) => s.id === currentSessionId);
   const streamingTextRef = useRef<string>('');
+  const streamingThinkingRef = useRef<string>('');
   // Maps for tool_use / tool_result pairing
   const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
   const pendingResults = useRef<Map<string, { output: string; isError: boolean }>>(new Map()); // toolUseId → result
@@ -100,6 +102,7 @@ export function ChatPanel() {
 
   // Sync streamingText to ref so closures always read the latest value
   useEffect(() => { streamingTextRef.current = streamingText; }, [streamingText]);
+  useEffect(() => { streamingThinkingRef.current = streamingThinking; }, [streamingThinking]);
 
   // Timeout cleanup for unpaired tool entries (memory leak prevention)
   useEffect(() => {
@@ -127,6 +130,8 @@ export function ChatPanel() {
     setStreamingText('');
     setIsStreaming(false);
     setStreamingMessageId(null);
+    setStreamingThinking('');
+    streamingThinkingRef.current = '';
   }, [currentSessionId]);
 
   useEffect(() => {
@@ -209,14 +214,7 @@ export function ChatPanel() {
           }
 
           case 'thinking':
-            addMessage({
-              id: uuidv4(),
-              role: 'assistant',
-              type: 'thinking',
-              content: event.data.text,
-              timestamp: new Date().toISOString(),
-              sessionId: currentSessionId,
-            });
+            setStreamingThinking((prev) => prev + (event.data.text || ''));
             break;
         }
       }),
@@ -228,6 +226,21 @@ export function ChatPanel() {
         const costUsd = message.payload.costUsd as number | undefined;
         const usage = message.payload.usage as Record<string, number> | undefined;
         const tokens = usage ? (usage.input_tokens || 0) + (usage.output_tokens || 0) : undefined;
+
+        // Add accumulated thinking as a message if present
+        const thinkingText = streamingThinkingRef.current;
+        if (thinkingText) {
+          addMessage({
+            id: uuidv4(),
+            role: 'assistant',
+            type: 'thinking',
+            content: thinkingText,
+            timestamp: new Date().toISOString(),
+            sessionId: currentSessionId,
+          });
+          streamingThinkingRef.current = '';
+          setStreamingThinking('');
+        }
 
         // Add final assistant message if there's streaming text
         const text = streamingTextRef.current;
@@ -272,6 +285,8 @@ export function ChatPanel() {
         setIsStreaming(false);
         streamingTextRef.current = '';
         setStreamingText('');
+        streamingThinkingRef.current = '';
+        setStreamingThinking('');
         setStreamingMessageId(null);
       }),
     ];
@@ -316,6 +331,21 @@ export function ChatPanel() {
     }
     setIsStreaming(false);
 
+    // Save accumulated thinking as a message
+    const thinkingText = streamingThinkingRef.current;
+    if (thinkingText && currentSessionId) {
+      addMessage({
+        id: uuidv4(),
+        role: 'assistant',
+        type: 'thinking',
+        content: thinkingText,
+        timestamp: new Date().toISOString(),
+        sessionId: currentSessionId,
+      });
+      streamingThinkingRef.current = '';
+    }
+    setStreamingThinking('');
+
     // Save any partial streaming text
     const text = streamingTextRef.current;
     if (text && currentSessionId) {
@@ -331,7 +361,24 @@ export function ChatPanel() {
     }
     setStreamingText('');
     setStreamingMessageId(null);
-  }, [currentSessionId, streamingMessageId, addMessage]);
+  }, [currentSessionId, streamingMessageId, addMessage, t]);
+
+  const handleRetry = useCallback(() => {
+    if (!currentSessionId || isStreaming) return;
+    const lastUserMessage = [...currentMessages].reverse().find(m => m.role === 'user');
+    if (lastUserMessage && typeof lastUserMessage.content === 'string') {
+      // Clear thinking state
+      setStreamingThinking('');
+      streamingThinkingRef.current = '';
+      // Send via WebSocket
+      wsClient.sendChat(currentSessionId, lastUserMessage.content);
+      setIsStreaming(true);
+      setStreamingText('');
+      streamingTextRef.current = '';
+      const assistantMessageId = uuidv4();
+      setStreamingMessageId(assistantMessageId);
+    }
+  }, [currentSessionId, currentMessages, isStreaming]);
 
   if (!currentSessionId) {
     return (
@@ -399,8 +446,10 @@ export function ChatPanel() {
           messages={currentMessages}
           streamingText={streamingText}
           isStreaming={isStreaming}
+          streamingThinking={streamingThinking}
           searchQuery={searchQuery || undefined}
           currentMatchIndex={searchQuery ? currentMatchIndex : undefined}
+          onRetry={handleRetry}
         />
       </div>
 
@@ -410,6 +459,7 @@ export function ChatPanel() {
         disabled={!currentSessionId}
         isStreaming={isStreaming}
         onStop={handleStopStreaming}
+        model={currentSession?.model}
       />
 
       {/* Keyboard shortcuts dialog */}

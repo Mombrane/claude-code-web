@@ -72,7 +72,6 @@ export class ClaudeProcessManager extends EventEmitter {
     // Add the prompt as the last argument
     args.push(prompt);
 
-    console.log(`Sending message to Claude session ${sessionId}`);
 
     const proc = spawn(config.claudePath, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -128,7 +127,7 @@ export class ClaudeProcessManager extends EventEmitter {
         this.handleClaudeEvent(sessionId, event);
       } catch (e) {
         // Non-JSON output, might be debug info
-        console.log(`[${sessionId}] stdout:`, line);
+        if (process.env.DEBUG) console.log(`[${sessionId}] stdout:`, line);
       }
     });
 
@@ -137,7 +136,6 @@ export class ClaudeProcessManager extends EventEmitter {
     });
 
     proc.on('close', (code) => {
-      console.log(`[${sessionId}] process closed with code ${code}`);
       this.activeProcesses.delete(sessionId);
       const t = this.processTimeouts.get(sessionId);
       if (t) {
@@ -245,9 +243,10 @@ export class ClaudeProcessManager extends EventEmitter {
         break;
 
       default:
-        console.log(`[${sessionId}] Event type:`, event.type);
+        // Ignore unknown event types
+        break;
     }
-  }
+}
 
   async stopProcess(sessionId: string): Promise<void> {
     await this.killProcess(sessionId);

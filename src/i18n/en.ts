@@ -54,6 +54,8 @@ export default {
   'message.copy': 'Copy',
   'message.copied': 'Copied!',
   'message.startConversation': 'Start a conversation to begin coding',
+  'message.retry': 'Retry',
+  'message.streaming': 'streaming...',
 
   // Tools
   'tool.read': 'Read',
@@ -181,6 +183,7 @@ export default {
   // Input extra
   'input.attachFile': 'Attach file',
   'input.processing': '⏳ Processing...',
+  'input.modelLabel': 'Claude Code',
 
   // Render errors
   'error.renderMessage': 'This message could not be rendered',

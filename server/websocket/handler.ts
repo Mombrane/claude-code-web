@@ -19,7 +19,6 @@ export class WebSocketHandler {
 
   private setupWebSocket() {
     this.wss.on('connection', (ws: WebSocket) => {
-      console.log('Client connected');
 
       ws.on('message', (data: Buffer) => {
         try {
@@ -32,7 +31,6 @@ export class WebSocketHandler {
       });
 
       ws.on('close', () => {
-        console.log('Client disconnected');
         this.removeClientFromAll(ws);
       });
 

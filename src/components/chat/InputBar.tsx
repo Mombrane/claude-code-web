@@ -9,9 +9,10 @@ interface InputBarProps {
   onStop?: () => void;
   theme?: 'dark' | 'light';
   rootPath?: string;
+  model?: string;
 }
 
-export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath }: InputBarProps) {
+export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath, model }: InputBarProps) {
   const { t } = useI18n();
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -153,9 +154,13 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
         theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
       }`}>
         <span> </span>
-        <span>Claude Code</span>
-        <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}>|</span>
-        <span>mimo-v2.5-pro</span>
+        <span>{t('input.modelLabel')}</span>
+        {model && (
+          <>
+            <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}>|</span>
+            <span>{model}</span>
+          </>
+        )}
         {disabled && (
           <>
             <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}>|</span>

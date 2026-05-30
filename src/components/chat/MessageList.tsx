@@ -100,6 +100,7 @@ interface MessageListProps {
   theme?: 'dark' | 'light';
   searchQuery?: string;
   currentMatchIndex?: number;
+  onRetry?: () => void;
 }
 
 // Tool icon mapping
@@ -514,7 +515,7 @@ function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: stri
         </span>
         {isStreaming && (
           <span className={`text-xs ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
-            streaming...
+            {t('message.streaming')}
           </span>
         )}
         <svg
@@ -579,12 +580,20 @@ function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | '
   );
 }
 
-export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex }: MessageListProps) {
+export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry }: MessageListProps) {
   const { t } = useI18n();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+
+  // Compute the index of the last assistant message for retry button
+  const lastAssistantIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'assistant' && messages[i].type === 'text') return i;
+    }
+    return -1;
+  }, [messages]);
 
   // Build rehype plugins array — include search highlight plugin when searching
   const rehypePlugins = useMemo(() => {
@@ -715,7 +724,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     }
   };
 
-  const renderMessage = (message: Message) => {
+  const renderMessage = (message: Message, index: number) => {
     const messageContent = (() => {
       switch (message.type) {
         case 'text':
@@ -989,6 +998,21 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
           >
             {copiedMessageId === message.id ? '✓' : ' '}
           </button>
+          {message.role === 'assistant' && index === lastAssistantIndex && !isStreaming && onRetry && (
+            <button
+              onClick={onRetry}
+              className={`p-1.5 rounded-md text-xs transition-colors ${
+                theme === 'dark'
+                  ? 'bg-gray-700/80 hover:bg-gray-600 text-gray-300'
+                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+              }`}
+              title={t('message.retry')}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -1008,10 +1032,10 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </div>
       )}
 
-      {messages.map((message) => (
+      {messages.map((message, index) => (
         <MessageErrorBoundary key={message.id}>
           <div className="animate-fadeIn">
-            {renderMessage(message)}
+            {renderMessage(message, index)}
           </div>
         </MessageErrorBoundary>
       ))}

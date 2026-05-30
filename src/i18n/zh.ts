@@ -54,6 +54,8 @@ export default {
   'message.copy': '复制',
   'message.copied': '已复制!',
   'message.startConversation': '开始对话以开始编程',
+  'message.retry': '重试',
+  'message.streaming': 'streaming...',
 
   // Tools
   'tool.read': '读取',
@@ -181,6 +183,7 @@ export default {
   // Input extra
   'input.attachFile': '附加文件',
   'input.processing': '⏳ 处理中...',
+  'input.modelLabel': 'Claude Code',
 
   // Render errors
   'error.renderMessage': '此消息无法渲染',
