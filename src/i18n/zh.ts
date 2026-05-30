@@ -15,6 +15,7 @@ export default {
   'sidebar.delete': '删除',
   'sidebar.refresh': '刷新',
   'sidebar.title': '侧边栏',
+  'sidebar.newSessionTooltip': '新建会话 (Ctrl+N)',
 
   // Time groups
   'time.today': '今天',
@@ -216,6 +217,8 @@ export default {
   'search.matches': '{current} / {total}',
   'search.noResults': '无结果',
   'search.close': '关闭',
+  'search.previous': '上一个 (Shift+Enter)',
+  'search.next': '下一个 (Enter)',
 
   // Keyboard shortcuts
   'shortcuts.title': '键盘快捷键',

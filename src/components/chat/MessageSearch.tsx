@@ -70,7 +70,7 @@ export function MessageSearch({
           onClick={onPrevious}
           disabled={totalMatches === 0}
           className="p-1 rounded hover:bg-gray-700 disabled:opacity-30 text-gray-400 hover:text-gray-200 transition-colors"
-          title="Previous (Shift+Enter)"
+          title={t('search.previous')}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -80,7 +80,7 @@ export function MessageSearch({
           onClick={onNext}
           disabled={totalMatches === 0}
           className="p-1 rounded hover:bg-gray-700 disabled:opacity-30 text-gray-400 hover:text-gray-200 transition-colors"
-          title="Next (Enter)"
+          title={t('search.next')}
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />

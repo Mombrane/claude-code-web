@@ -84,7 +84,8 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
     wsClient.connect();
     setWsStatus(wsClient.getStatus());
     const unsubscribe = wsClient.onStatusChange(setWsStatus);
-    return () => { unsubscribe(); wsClient.disconnect(); };
+    // Don't disconnect - WebSocket is a singleton, persists across HMR reloads
+    return () => { unsubscribe(); };
   }, []);
 
   // Command palette commands

@@ -15,6 +15,7 @@ export default {
   'sidebar.delete': 'Delete',
   'sidebar.refresh': 'Refresh',
   'sidebar.title': 'Sidebar',
+  'sidebar.newSessionTooltip': 'New Session (Ctrl+N)',
 
   // Time groups
   'time.today': 'Today',
@@ -216,6 +217,8 @@ export default {
   'search.matches': '{current} of {total}',
   'search.noResults': 'No results',
   'search.close': 'Close',
+  'search.previous': 'Previous (Shift+Enter)',
+  'search.next': 'Next (Enter)',
 
   // Keyboard shortcuts
   'shortcuts.title': 'Keyboard Shortcuts',

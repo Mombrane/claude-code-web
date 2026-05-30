@@ -248,12 +248,17 @@ export class WebSocketHandler {
     }
 
     // Auto-name session from first user message if it still has the default name
-    const session = await sessionStore.getSession(sessionId);
-    if (session && session.name.startsWith('Session ')) {
-      const autoName = userMessage.length > 50
-        ? userMessage.slice(0, 50).trim() + '...'
-        : userMessage.trim();
-      await sessionStore.updateSessionName(sessionId, autoName);
+    // Matches both "Session 2026/5/30 ..." (zh locale) and "Session 5/30/2026 ..." (en locale)
+    try {
+      const sessionForRename = await sessionStore.getSession(sessionId);
+      if (sessionForRename && /^Session \d/.test(sessionForRename.name)) {
+        const newName = userMessage.split('\n')[0].slice(0, 50).trim() || sessionForRename.name;
+        if (newName !== sessionForRename.name) {
+          await sessionStore.updateSession(sessionId, { name: newName });
+        }
+      }
+    } catch {
+      // Non-critical: don't let rename failure break message sending
     }
   }
 

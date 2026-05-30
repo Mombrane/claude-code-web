@@ -181,7 +181,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             onClick={handleCreateSession}
             disabled={isCreating}
             className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-all duration-200"
-            title="New Session (Ctrl+N)"
+            title={t('sidebar.newSessionTooltip')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
