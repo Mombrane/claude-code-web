@@ -160,6 +160,27 @@ export default {
 
   // Export
   'export.markdown': 'Export as Markdown',
+  'export.button': 'Export',
+
+  // Tool execution UI
+  'tool.error': 'Error',
+  'tool.executing': 'Executing...',
+  'tool.running': 'Running',
+  'tool.completed': 'Completed',
+  'tool.noOutput': '(no output)',
+  'tool.input': 'Input',
+
+  // Step labels
+  'step.label': 'Step',
+  'step.complete': 'Step Complete',
+
+  // Chat extra
+  'chat.generationStopped': '[Generation stopped]',
+  'chat.copyMessage': 'Copy message',
+
+  // Input extra
+  'input.attachFile': 'Attach file',
+  'input.processing': '⏳ Processing...',
 
   // Render errors
   'error.renderMessage': 'This message could not be rendered',
@@ -169,4 +190,15 @@ export default {
   'search.matches': '{current} of {total}',
   'search.noResults': 'No results',
   'search.close': 'Close',
+
+  // Keyboard shortcuts
+  'shortcuts.title': 'Keyboard Shortcuts',
+  'shortcuts.newSession': 'New Session',
+  'shortcuts.commandPalette': 'Command Palette',
+  'shortcuts.search': 'Search in conversation',
+  'shortcuts.showShortcuts': 'Show keyboard shortcuts',
+  'shortcuts.settings': 'Settings',
+  'shortcuts.sendMessage': 'Send message',
+  'shortcuts.newLine': 'New line in input',
+  'shortcuts.close': 'Close search / Cancel',
 } as const;

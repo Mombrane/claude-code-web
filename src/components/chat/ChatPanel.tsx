@@ -5,6 +5,7 @@ import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { ExportButton } from './ExportButton';
 import { MessageSearch } from './MessageSearch';
+import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
@@ -20,11 +21,14 @@ export function ChatPanel() {
   // Maps for tool_use / tool_result pairing
   const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
   const pendingResults = useRef<Map<string, { output: string; isError: boolean }>>(new Map()); // toolUseId → result
+  // Track creation timestamps for selective pruning
+  const entryTimestamps = useRef<Map<string, number>>(new Map());
 
   // Search state
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
 
   // Extract text from message content for search
   const getMessageText = useCallback((msg: typeof currentMessages[number]): string => {
@@ -64,6 +68,10 @@ export function ChatPanel() {
           setCurrentMatchIndex(0);
         }
       }
+      if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -96,38 +104,22 @@ export function ChatPanel() {
   // Timeout cleanup for unpaired tool entries (memory leak prevention)
   useEffect(() => {
     const FIVE_MINUTES = 5 * 60 * 1000;
-    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
-
-    const scheduleCleanup = () => {
-      // Check current refs and schedule removal for unpaired entries
+    const cleanupInterval = setInterval(() => {
       const now = Date.now();
-      for (const [toolUseId] of toolExecutionIdMap.current) {
-        const tid = setTimeout(() => {
-          if (toolExecutionIdMap.current.has(toolUseId)) {
-            console.warn(`Tool execution pairing timeout for toolUseId: ${toolUseId}`);
-            toolExecutionIdMap.current.delete(toolUseId);
-          }
-        }, FIVE_MINUTES);
-        timeoutIds.push(tid);
-      }
-      for (const [toolUseId] of pendingResults.current) {
-        const tid = setTimeout(() => {
-          if (pendingResults.current.has(toolUseId)) {
-            console.warn(`Pending tool result timeout for toolUseId: ${toolUseId}`);
+      for (const [key, timestamp] of entryTimestamps.current) {
+        if (now - timestamp > FIVE_MINUTES) {
+          if (key.startsWith('pending_')) {
+            const toolUseId = key.slice(8);
             pendingResults.current.delete(toolUseId);
+          } else {
+            toolExecutionIdMap.current.delete(key);
           }
-        }, FIVE_MINUTES);
-        timeoutIds.push(tid);
+          entryTimestamps.current.delete(key);
+        }
       }
-    };
+    }, 60_000);
 
-    // Run cleanup check periodically (every minute)
-    const interval = setInterval(scheduleCleanup, 60_000);
-
-    return () => {
-      clearInterval(interval);
-      timeoutIds.forEach(clearTimeout);
-    };
+    return () => clearInterval(cleanupInterval);
   }, [currentSessionId]);
 
   // Clear streaming state when session changes
@@ -171,10 +163,12 @@ export function ChatPanel() {
             };
             if (pending) {
               pendingResults.current.delete(toolUseId);
+              entryTimestamps.current.delete('pending_' + toolUseId);
             }
 
             // Record mapping: toolUseId → { msgId, content }
             toolExecutionIdMap.current.set(toolUseId, { msgId, content });
+            entryTimestamps.current.set(toolUseId, Date.now());
 
             addMessage({
               id: msgId,
@@ -202,12 +196,14 @@ export function ChatPanel() {
               updateMessage(existing.msgId, { content: mergedContent });
               // Clean up
               toolExecutionIdMap.current.delete(toolUseId);
+              entryTimestamps.current.delete(toolUseId);
             } else {
               // tool_result arrived before tool_use — cache it
               pendingResults.current.set(toolUseId, {
                 output: event.data.output,
                 isError: event.data.isError,
               });
+              entryTimestamps.current.set('pending_' + toolUseId, Date.now());
             }
             break;
           }
@@ -327,7 +323,7 @@ export function ChatPanel() {
         id: streamingMessageId || uuidv4(),
         role: 'assistant',
         type: 'text',
-        content: text + '\n\n[Generation stopped]',
+        content: text + '\n\n' + t('chat.generationStopped'),
         timestamp: new Date().toISOString(),
         sessionId: currentSessionId,
       });
@@ -354,6 +350,10 @@ export function ChatPanel() {
             <span className="flex items-center gap-2">
               <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+K</kbd>
               {t('chat.welcome.commands')}
+            </span>
+            <span className="flex items-center gap-2">
+              <kbd className="px-2 py-1 bg-gray-800 rounded text-xs">Ctrl+/</kbd>
+              {t('shortcuts.title')}
             </span>
           </div>
         </div>
@@ -411,6 +411,11 @@ export function ChatPanel() {
         isStreaming={isStreaming}
         onStop={handleStopStreaming}
       />
+
+      {/* Keyboard shortcuts dialog */}
+      {shortcutsOpen && (
+        <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} />
+      )}
     </div>
   );
 }

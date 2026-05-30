@@ -96,7 +96,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
     // Close Claude process if active
-    claudeProcessManager.closeSession(id);
+    await claudeProcessManager.closeSession(id);
 
     // Delete session metadata
     const success = await sessionStore.deleteSession(id);

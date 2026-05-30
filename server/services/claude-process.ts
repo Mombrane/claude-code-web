@@ -48,7 +48,7 @@ export class ClaudeProcessManager extends EventEmitter {
     const existingProc = this.activeProcesses.get(sessionId);
     if (existingProc && !existingProc.killed) {
       // Kill existing process before starting new one
-      this.killProcess(sessionId);
+      await this.killProcess(sessionId);
     }
 
     const args = [
@@ -83,10 +83,10 @@ export class ClaudeProcessManager extends EventEmitter {
     this.activeProcesses.set(sessionId, proc);
     session.lastActivity = new Date().toISOString();
 
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       if (this.activeProcesses.has(sessionId)) {
         console.error(`[${sessionId}] Process timeout after 5 minutes`);
-        this.killProcess(sessionId);
+        await this.killProcess(sessionId);
         this.emit('process:closed', sessionId, -1);
       }
     }, 5 * 60 * 1000);
@@ -97,12 +97,26 @@ export class ClaudeProcessManager extends EventEmitter {
     return true;
   }
 
-  private killProcess(sessionId: string) {
-    const proc = this.activeProcesses.get(sessionId);
-    if (proc) {
+  private killProcess(sessionId: string): Promise<void> {
+    return new Promise((resolve) => {
+      const proc = this.activeProcesses.get(sessionId);
+      if (!proc || proc.killed) {
+        resolve();
+        return;
+      }
+      const onClose = () => {
+        this.activeProcesses.delete(sessionId);
+        resolve();
+      };
+      proc.once('close', onClose);
       proc.kill();
-      this.activeProcesses.delete(sessionId);
-    }
+      // Safety timeout — don't wait forever
+      setTimeout(() => {
+        proc.removeListener('close', onClose);
+        this.activeProcesses.delete(sessionId);
+        resolve();
+      }, 3000);
+    });
   }
 
   private setupProcessHandlers(sessionId: string, proc: ChildProcess) {
@@ -235,8 +249,18 @@ export class ClaudeProcessManager extends EventEmitter {
     }
   }
 
-  closeSession(sessionId: string): void {
-    this.killProcess(sessionId);
+  async stopProcess(sessionId: string): Promise<void> {
+    await this.killProcess(sessionId);
+    const t = this.processTimeouts.get(sessionId);
+    if (t) {
+      clearTimeout(t);
+      this.processTimeouts.delete(sessionId);
+    }
+    // Don't delete from this.sessions — keep session alive
+  }
+
+  async closeSession(sessionId: string): Promise<void> {
+    await this.killProcess(sessionId);
     const t = this.processTimeouts.get(sessionId);
     if (t) {
       clearTimeout(t);

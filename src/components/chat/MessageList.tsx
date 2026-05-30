@@ -229,7 +229,7 @@ function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultContent;
           <span className={`text-xs px-2 py-0.5 rounded-full ${
             theme === 'dark' ? 'text-red-400 bg-red-500/20' : 'text-red-600 bg-red-100'
           }`}>
-            Error
+            {t('tool.error')}
           </span>
         )}
         {hasLongContent && (
@@ -266,6 +266,7 @@ function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultContent;
 // ---- Differentiated result renderers for ToolExecutionCard ----
 
 function BashResult({ output, isError, theme }: { output: string; isError?: boolean; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
   return (
     <div className={`rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-900'}`}>
       <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 border-b border-gray-700">
@@ -277,7 +278,7 @@ function BashResult({ output, isError, theme }: { output: string; isError?: bool
         )}
       </div>
       <pre className="p-3 text-sm font-mono text-green-300 overflow-x-auto whitespace-pre-wrap break-words">
-        {output || '(no output)'}
+        {output || t('tool.noOutput')}
       </pre>
     </div>
   );
@@ -301,6 +302,7 @@ function ReadResult({ output, input, theme }: { output: string; input: Record<st
 }
 
 function EditResult({ output, input, theme }: { output: string; input: Record<string, unknown>; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
   const filePath = input.file_path as string || '';
   return (
     <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
@@ -324,7 +326,7 @@ function EditResult({ output, input, theme }: { output: string; input: Record<st
             })}
           </pre>
         ) : (
-          <pre className={`text-sm font-mono ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(no output)</pre>
+          <pre className={`text-sm font-mono ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('tool.noOutput')}</pre>
         )}
       </div>
     </div>
@@ -362,9 +364,10 @@ function GrepGlobResult({ output, theme }: { output: string; theme: 'dark' | 'li
 }
 
 function PlainTextResult({ output, theme }: { output: string; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
   return (
     <pre className={`text-sm font-mono whitespace-pre-wrap break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-      {output || '(no output)'}
+      {output || t('tool.noOutput')}
     </pre>
   );
 }
@@ -377,6 +380,7 @@ function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: 
   onToggle: () => void;
   theme?: 'dark' | 'light';
 }) {
+  const { t } = useI18n();
   const icon = getToolIcon(execution.toolName);
 
   const getKeyInfo = () => {
@@ -398,11 +402,11 @@ function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: 
   const statusIndicator = () => {
     switch (execution.status) {
       case 'running':
-        return <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" title="Running" />;
+        return <span className="inline-block w-2 h-2 rounded-full bg-blue-400 animate-pulse" title={t('tool.running')} />;
       case 'completed':
-        return <span className="inline-block w-2 h-2 rounded-full bg-green-400" title="Completed" />;
+        return <span className="inline-block w-2 h-2 rounded-full bg-green-400" title={t('tool.completed')} />;
       case 'error':
-        return <span className="inline-block w-2 h-2 rounded-full bg-red-400" title="Error" />;
+        return <span className="inline-block w-2 h-2 rounded-full bg-red-400" title={t('tool.error')} />;
     }
   };
 
@@ -411,12 +415,12 @@ function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: 
       return (
         <div className="flex items-center gap-2 text-sm text-gray-400">
           <span className="inline-block w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-          <span>Executing...</span>
+          <span>{t('tool.executing')}</span>
         </div>
       );
     }
     if (!execution.output) {
-      return <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>(no output)</span>;
+      return <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('tool.noOutput')}</span>;
     }
 
     switch (execution.toolName) {
@@ -469,7 +473,7 @@ function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: 
         <div className={`border-t p-3 ${theme === 'dark' ? 'border-gray-700/50 bg-gray-900/50' : 'border-gray-200 bg-white'}`}>
           {/* Input summary */}
           <details className="mb-3">
-            <summary className={`text-xs cursor-pointer ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Input</summary>
+            <summary className={`text-xs cursor-pointer ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('tool.input')}</summary>
             <pre className={`text-sm mt-1 overflow-x-auto font-mono ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               {JSON.stringify(execution.input, null, 2)}
             </pre>
@@ -644,8 +648,13 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </div>
       );
     },
-    code: ({ inline, className, children, ...props }: any) => {
-      if (inline) {
+    code: ({ className, children, node, ...props }: any) => {
+      // In react-markdown v9+, inline code has no className.
+      // Fenced code blocks without a language also have no className.
+      // Distinguish by checking if content has newlines (block) or not (inline).
+      const content = String(children);
+      const isInline = !className && !content.includes('\n');
+      if (isInline) {
         return (
           <code className={`px-1.5 py-0.5 rounded text-sm ${
             theme === 'dark'
@@ -827,7 +836,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                 <span className="text-red-400">⚠️</span>
                 <span className={`font-medium text-sm ${
                   theme === 'dark' ? 'text-red-400' : 'text-red-600'
-                }`}>Error</span>
+                }`}>{t('tool.error')}</span>
               </div>
               <p className={`text-sm ${theme === 'dark' ? 'text-red-300' : 'text-red-700'}`}>
                 {message.content as string}
@@ -843,7 +852,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
               }`}>
                 <div className={`flex-1 h-px ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
                 <span className="text-xs font-medium">
-                  {(message.content as string) || 'Step'}
+                  {(message.content as string) || t('step.label')}
                 </span>
                 <div className={`flex-1 h-px ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
               </div>
@@ -859,7 +868,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                 <div className={`flex-1 h-px ${theme === 'dark' ? 'bg-green-700/30' : 'bg-green-300'}`} />
                 <span className="text-xs font-medium flex items-center gap-1">
                   <span>✓</span>
-                  {(message.content as string) || 'Step Complete'}
+                  {(message.content as string) || t('step.complete')}
                 </span>
                 <div className={`flex-1 h-px ${theme === 'dark' ? 'bg-green-700/30' : 'bg-green-300'}`} />
               </div>
@@ -976,7 +985,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                 ? 'bg-gray-700/80 hover:bg-gray-600 text-gray-300'
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
             }`}
-            title="Copy message"
+            title={t('chat.copyMessage')}
           >
             {copiedMessageId === message.id ? '✓' : ' '}
           </button>

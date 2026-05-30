@@ -202,7 +202,7 @@ export class WebSocketHandler {
 
       case 'stop': {
         const { sessionId } = message.payload;
-        claudeProcessManager.closeSession(sessionId);
+        await claudeProcessManager.stopProcess(sessionId);
         this.broadcastToSession(sessionId, {
           type: 'result',
           payload: {

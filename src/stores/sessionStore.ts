@@ -11,11 +11,7 @@ interface SessionState {
   error: string | null;
   streamingSessions: Set<string>;
   errorSessions: Set<string>;
-  
-  // Streaming state
-  streamingText: string;
-  isStreaming: boolean;
-  streamingMessageId: string | null;
+
   // Session management
   setSessions: (sessions: Session[]) => void;
   addSession: (session: Session) => void;
@@ -23,12 +19,6 @@ interface SessionState {
   removeSession: (sessionId: string) => void;
   setCurrentSession: (sessionId: string | null) => Promise<void>;
 
-  // Streaming management
-  setStreamingText: (text: string) => void;
-  appendStreamingText: (text: string) => void;
-  setIsStreaming: (streaming: boolean) => void;
-  setStreamingMessageId: (id: string | null) => void;
-  clearStreamingState: () => void;
   // Message management (fetched from Claude Code's .jsonl transcripts)
   loadMessages: (sessionId: string) => Promise<void>;
   addMessage: (message: Message) => void;
@@ -52,11 +42,6 @@ export const useSessionStore = create<SessionState>((set, get) => ({
   error: null,
   streamingSessions: new Set(),
   errorSessions: new Set(),
-  
-  // Streaming state
-  streamingText: '',
-  isStreaming: false,
-  streamingMessageId: null,
 
   setSessions: (sessions) => set({ sessions }),
 
@@ -80,13 +65,9 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     })),
 
   setCurrentSession: async (sessionId) => {
-    set({ 
-      currentSessionId: sessionId, 
+    set({
+      currentSessionId: sessionId,
       currentMessages: [],
-      // 清空流式状态，防止跨会话状态泄漏
-      streamingText: '',
-      isStreaming: false,
-      streamingMessageId: null,
     });
     if (sessionId) {
       await get().loadMessages(sessionId);
@@ -146,22 +127,5 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       const newErrorSet = new Set(state.errorSessions);
       newErrorSet.add(sessionId);
       return { streamingSessions: newSet, errorSessions: newErrorSet };
-    }),
-
-  // Streaming state management
-  setStreamingText: (text) => set({ streamingText: text }),
-  
-  appendStreamingText: (text) =>
-    set((state) => ({ streamingText: state.streamingText + text })),
-  
-  setIsStreaming: (streaming) => set({ isStreaming: streaming }),
-  
-  setStreamingMessageId: (id) => set({ streamingMessageId: id }),
-  
-  clearStreamingState: () =>
-    set({
-      streamingText: '',
-      isStreaming: false,
-      streamingMessageId: null,
     }),
 }));

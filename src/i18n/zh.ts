@@ -160,6 +160,27 @@ export default {
 
   // Export
   'export.markdown': '导出为 Markdown',
+  'export.button': '导出',
+
+  // Tool execution UI
+  'tool.error': '错误',
+  'tool.executing': '执行中...',
+  'tool.running': '运行中',
+  'tool.completed': '已完成',
+  'tool.noOutput': '（无输出）',
+  'tool.input': '输入',
+
+  // Step labels
+  'step.label': '步骤',
+  'step.complete': '步骤完成',
+
+  // Chat extra
+  'chat.generationStopped': '[生成已停止]',
+  'chat.copyMessage': '复制消息',
+
+  // Input extra
+  'input.attachFile': '附加文件',
+  'input.processing': '⏳ 处理中...',
 
   // Render errors
   'error.renderMessage': '此消息无法渲染',
@@ -169,4 +190,15 @@ export default {
   'search.matches': '{current} / {total}',
   'search.noResults': '无结果',
   'search.close': '关闭',
+
+  // Keyboard shortcuts
+  'shortcuts.title': '键盘快捷键',
+  'shortcuts.newSession': '新建会话',
+  'shortcuts.commandPalette': '命令面板',
+  'shortcuts.search': '搜索对话',
+  'shortcuts.showShortcuts': '显示键盘快捷键',
+  'shortcuts.settings': '设置',
+  'shortcuts.sendMessage': '发送消息',
+  'shortcuts.newLine': '输入中换行',
+  'shortcuts.close': '关闭搜索 / 取消',
 } as const;
