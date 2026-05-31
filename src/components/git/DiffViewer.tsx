@@ -247,14 +247,14 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch, theme = 'dark' }
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-              {mode === 'staged' ? 'Staged Changes' : mode === 'branch' ? 'Branch Diff' : 'Working Changes'}
+              {mode === 'staged' ? t('diff.stagedChanges') : mode === 'branch' ? t('diff.branchDiff') : t('diff.workingChanges')}
             </span>
             <span className="flex items-center gap-1 text-xs">
               <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>+{totalAdditions}</span>
               <span className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>-{totalDeletions}</span>
             </span>
             <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
-              {files.length} file{files.length !== 1 ? 's' : ''}
+              {t('diff.fileCount', { count: files.length })}
             </span>
           </div>
           <div className="flex items-center gap-2">

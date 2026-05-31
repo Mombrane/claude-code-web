@@ -355,9 +355,9 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       await navigator.clipboard.writeText(textToCopy);
       setCopiedMessageId(message.id);
       setTimeout(() => setCopiedMessageId(null), 2000);
-      toast.success(t('toast.copied') || 'Copied!');
+      toast.success(t('toast.copied'));
     } catch (err) {
-      toast.error(t('toast.copyFailed') || 'Copy failed');
+      toast.error(t('toast.copyFailed'));
     }
   };
 
@@ -658,7 +658,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   };
 
   return (
-    <div ref={containerRef} role="log" aria-label="Chat messages" className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
+    <div ref={containerRef} role="log" aria-live="polite" aria-label="Chat messages" className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
       {messages.length === 0 && !isStreaming && isLoading && (
@@ -763,7 +763,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
               ? 'bg-gray-700/90 hover:bg-gray-600 text-gray-200 border border-gray-600/50'
               : 'bg-white/90 hover:bg-gray-100 text-gray-700 border border-gray-200'
           }`}
-          title={t('chat.scrollToBottom') || 'Scroll to bottom'}
+          title={t('chat.scrollToBottom')}
           aria-label={t('message.scrollToBottom')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

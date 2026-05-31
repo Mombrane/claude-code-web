@@ -152,9 +152,9 @@ export function ExportButton({ messages, sessionTitle, theme = 'dark' }: ExportB
       const date = new Date().toISOString().split('T')[0];
       const filename = `session-${safeTitle}-${date}.md`;
       downloadMarkdown(markdown, filename);
-      toast.success(t('toast.exportSuccess') || 'Exported!');
+      toast.success(t('toast.exportSuccess'));
     } catch (err) {
-      toast.error(t('toast.exportFailed') || 'Export failed');
+      toast.error(t('toast.exportFailed'));
     }
   };
 

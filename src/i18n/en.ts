@@ -254,6 +254,12 @@ export default {
   'shortcuts.nextSession': 'Next session',
   'shortcuts.focusInput': 'Focus input',
 
+  'shortcuts.toggleSidebar': 'Toggle sidebar',
+  'diff.stagedChanges': 'Staged Changes',
+  'diff.branchDiff': 'Branch Diff',
+  'diff.workingChanges': 'Working Changes',
+  'diff.fileCount': '{count} file{{s}}',
+
   // Toast notifications
   'toast.copied': 'Copied!',
   'toast.copyFailed': 'Copy failed',

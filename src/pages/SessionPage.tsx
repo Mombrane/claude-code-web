@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
 import { useSessionStore } from '../stores/sessionStore';
+import { decodePath } from '../utils/format';
 
 export function SessionPage() {
   const { dir, id } = useParams<{ dir: string; id?: string }>();
@@ -14,8 +15,8 @@ export function SessionPage() {
     }
   }, [id, setCurrentSession]);
 
-  // Decode project path from base64
-  const projectPath = dir ? atob(dir) : undefined;
+  // Decode project path from URL-safe encoding
+  const projectPath = dir ? decodePath(dir) : undefined;
 
   return <AppLayout projectPath={projectPath} />;
 }

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
-import { formatCost, formatTokens, formatTime, groupSessionsByTime } from '../../utils/format';
+import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
 import type { Session } from '../../types';
 
@@ -78,7 +78,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       const session = await api.createSession(undefined, projectPath, projectPath);
       addSession(session);
       setCurrentSession(session.id);
-      const dir = btoa(projectPath || session.cwd);
+      const dir = encodePath(projectPath || session.cwd);
       navigate(`/${dir}/session/${session.id}`);
     } catch (e) {
       console.error('Failed to create session:', e);
@@ -161,7 +161,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const handleSessionClick = (session: Session) => {
     if (editingSessionId === session.id) return;
     setCurrentSession(session.id);
-    const dir = btoa(session.projectPath || session.cwd);
+    const dir = encodePath(session.projectPath || session.cwd);
     navigate(`/${dir}/session/${session.id}`);
   };
 
@@ -335,15 +335,23 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                     onClick={() => handleSessionClick(session)}
                     className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       currentSessionId === session.id
-                        ? 'bg-gray-700/80 text-white shadow-sm'
-                        : 'text-gray-400 hover:bg-gray-700/40 hover:text-white'
+                        ? theme === 'dark'
+                          ? 'bg-gray-700/80 text-white shadow-sm'
+                          : 'bg-blue-100 text-blue-900 shadow-sm'
+                        : theme === 'dark'
+                          ? 'text-gray-400 hover:bg-gray-700/40 hover:text-white'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
                     {/* Session icon */}
                     <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
                       currentSessionId === session.id
-                        ? 'bg-blue-500/20 text-blue-400'
-                        : 'bg-gray-700/50 text-gray-500'
+                        ? theme === 'dark'
+                          ? 'bg-blue-500/20 text-blue-400'
+                          : 'bg-blue-200 text-blue-700'
+                        : theme === 'dark'
+                          ? 'bg-gray-700/50 text-gray-500'
+                          : 'bg-gray-200 text-gray-500'
                     }`}>
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />

@@ -11,6 +11,7 @@ import { wsClient } from '../../api/websocket';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../ui/ThemeProvider';
+import { encodePath } from '../../utils/format';
 
 type LeftPanel = 'sessions' | 'files';
 type RightPanel = 'git' | 'terminal' | 'none';
@@ -93,7 +94,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
       shortcut: 'Ctrl+N',
       action: () => {
         if (projectPath) {
-          const dir = btoa(projectPath);
+          const dir = encodePath(projectPath);
           navigate(`/${dir}/session`);
         }
       }
@@ -157,7 +158,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
       if (e.ctrlKey && e.key === 'n') {
         e.preventDefault();
         if (projectPath) {
-          const dir = btoa(projectPath);
+          const dir = encodePath(projectPath);
           navigate(`/${dir}/session`);
         }
       }
@@ -202,7 +203,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         const nextSession = sorted[nextIndex];
         if (nextSession) {
           state.setCurrentSession(nextSession.id);
-          const dir = btoa(nextSession.projectPath || nextSession.cwd);
+          const dir = encodePath(nextSession.projectPath || nextSession.cwd);
           navigate(`/${dir}/session/${nextSession.id}`);
         }
       }

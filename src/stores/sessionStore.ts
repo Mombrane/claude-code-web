@@ -101,7 +101,13 @@ export const useSessionStore = create<SessionState>((set, get) => ({
     set({ isLoadingMessages: true });
     try {
       const messages = await api.getSessionMessages(sessionId);
-      set({ currentMessages: messages, isLoadingMessages: false });
+      // Guard against race condition: only update if sessionId still matches
+      const currentState = get();
+      if (currentState.currentSessionId === sessionId) {
+        set({ currentMessages: messages, isLoadingMessages: false });
+      } else {
+        set({ isLoadingMessages: false });
+      }
     } catch (e) {
       console.error('Failed to load messages:', e);
       set({ isLoadingMessages: false });

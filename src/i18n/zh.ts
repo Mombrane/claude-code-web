@@ -254,6 +254,12 @@ export default {
   'shortcuts.nextSession': '下一个会话',
   'shortcuts.focusInput': '聚焦输入框',
 
+  'shortcuts.toggleSidebar': '切换侧边栏',
+  'diff.stagedChanges': '暂存更改',
+  'diff.branchDiff': '分支差异',
+  'diff.workingChanges': '工作更改',
+  'diff.fileCount': '{count} 个文件',
+
   // Toast notifications
   'toast.copied': '已复制！',
   'toast.copyFailed': '复制失败',

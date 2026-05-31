@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { useSessionStore } from '../stores/sessionStore';
 import { useI18n } from '../i18n';
 import { useTheme } from '../components/ui/ThemeProvider';
-import { formatCost, formatTokens, formatDate, groupSessionsByTime } from '../utils/format';
+import { formatCost, formatTokens, formatDate, groupSessionsByTime, encodePath } from '../utils/format';
 import type { Project, Session } from '../types';
 
 export function HomePage() {
@@ -87,7 +87,7 @@ export function HomePage() {
 
   const handleOpenSession = (session: Session) => {
     setCurrentSession(session.id);
-    const dir = btoa(session.projectPath || session.cwd);
+    const dir = encodePath(session.projectPath || session.cwd);
     navigate(`/${dir}/session/${session.id}`);
   };
 
@@ -96,7 +96,7 @@ export function HomePage() {
     try {
       const session = await api.createSession(undefined, selectedProject, selectedProject);
       setCurrentSession(session.id);
-      const dir = btoa(selectedProject);
+      const dir = encodePath(selectedProject);
       navigate(`/${dir}/session/${session.id}`);
     } catch (e) {
       console.error('Failed to create session:', e);

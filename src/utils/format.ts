@@ -74,3 +74,23 @@ export function groupSessionsByTime(
     .filter(([, sessions]) => sessions.length > 0)
     .map(([key, sessions]) => ({ label: labelMap[key] || key, sessions }));
 }
+
+/**
+ * Encode a filesystem path for use in a single URL segment.
+ * Handles non-ASCII paths (Chinese, Japanese, etc.) unlike btoa().
+ * Uses ~ as segment separator to avoid / in URL which breaks routing.
+ * Example: /home/user/项目 → home~user~%E9%A1%B9%E7%9B%AE
+ */
+export function encodePath(path: string): string {
+  // Strip leading /, split by /, encode each segment, join with ~
+  const clean = path.startsWith('/') ? path.slice(1) : path;
+  return clean.split('/').map(s => encodeURIComponent(s)).join('~');
+}
+
+/**
+ * Decode a URL-encoded path back to a filesystem path.
+ * Reverses the encodePath transformation.
+ */
+export function decodePath(encoded: string): string {
+  return '/' + encoded.split('~').map(s => decodeURIComponent(s)).join('/');
+}
