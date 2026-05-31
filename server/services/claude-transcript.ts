@@ -277,6 +277,78 @@ export async function transcriptExists(
   }
 }
 
+
+/**
+ * Search through a transcript file for matching text.
+ * Returns matching snippets with context.
+ */
+export async function searchTranscript(
+  sessionId: string,
+  projectPath: string,
+  query: string
+): Promise<Array<{ text: string; role: string; timestamp: string }>> {
+  const filePath = getTranscriptPath(sessionId, projectPath);
+  const queryLower = query.toLowerCase();
+  const matches: Array<{ text: string; role: string; timestamp: string }> = [];
+
+  try {
+    const content = await fs.readFile(filePath, 'utf-8');
+    const lines = content.split('\n').filter(line => line.trim());
+
+    for (const line of lines) {
+      try {
+        const entry = JSON.parse(line);
+        let textContent = '';
+
+        // Extract text content from different entry types
+        if (entry.type === 'user' && entry.message?.content) {
+          if (typeof entry.message.content === 'string') {
+            textContent = entry.message.content;
+          } else if (Array.isArray(entry.message.content)) {
+            textContent = entry.message.content
+              .filter((block: any) => block.type === 'text')
+              .map((block: any) => block.text)
+              .join(' ');
+          }
+        } else if (entry.type === 'assistant' && entry.message?.content) {
+          if (Array.isArray(entry.message.content)) {
+            textContent = entry.message.content
+              .filter((block: any) => block.type === 'text')
+              .map((block: any) => block.text)
+              .join(' ');
+          }
+        }
+
+        // Check if query matches
+        if (textContent && textContent.toLowerCase().includes(queryLower)) {
+          // Extract a snippet around the match
+          const idx = textContent.toLowerCase().indexOf(queryLower);
+          const start = Math.max(0, idx - 50);
+          const end = Math.min(textContent.length, idx + query.length + 50);
+          const snippet = (start > 0 ? '...' : '') + 
+                         textContent.slice(start, end) + 
+                         (end < textContent.length ? '...' : '');
+
+          matches.push({
+            text: snippet,
+            role: entry.type === 'user' ? 'user' : 'assistant',
+            timestamp: entry.timestamp || '',
+          });
+
+          // Limit to 3 matches per session
+          if (matches.length >= 3) break;
+        }
+      } catch {
+        // Skip invalid JSON lines
+      }
+    }
+  } catch {
+    // File doesn't exist or can't be read
+  }
+
+  return matches;
+}
+
 /**
  * List all transcript files for a project.
  * Returns session IDs that have transcripts.

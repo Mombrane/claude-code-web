@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { config } from '../config';
+import { searchTranscript } from './claude-transcript';
 import type { Session } from '../types';
 
 /**
@@ -60,6 +61,7 @@ export class SessionStore {
   async getAllSessions(options?: {
     projectPath?: string;
     search?: string;
+    searchContent?: boolean;
     tag?: string;
     limit?: number;
     offset?: number;
@@ -85,12 +87,41 @@ export class SessionStore {
         );
       }
 
-      // Filter by search query (name only, since messages are no longer stored here)
+      // Filter by search query
       if (options?.search) {
         const query = options.search.toLowerCase();
-        sessions = sessions.filter(s =>
+        
+        // First filter by session name
+        let nameMatches = sessions.filter(s =>
           s.name.toLowerCase().includes(query)
         );
+
+        // If searchContent is enabled, also search through transcript messages
+        if (options.searchContent) {
+          const contentMatches: Session[] = [];
+          
+          for (const session of sessions) {
+            // Skip sessions already matched by name
+            if (nameMatches.some(s => s.id === session.id)) continue;
+            
+            try {
+              const projectPath = session.projectPath || session.cwd;
+              const matches = await searchTranscript(session.id, projectPath, options.search);
+              if (matches.length > 0) {
+                // Add match snippet to session
+                (session as any).matchSnippet = matches[0].text;
+                contentMatches.push(session);
+              }
+            } catch {
+              // Skip sessions with transcript errors
+            }
+          }
+          
+          // Combine name matches and content matches
+          sessions = [...nameMatches, ...contentMatches];
+        } else {
+          sessions = nameMatches;
+        }
       }
 
       // Filter by tag

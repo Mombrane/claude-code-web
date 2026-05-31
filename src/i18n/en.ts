@@ -43,6 +43,7 @@ export default {
   'chat.welcome.subtitle': 'Select a session or create a new one to start coding with Claude',
   'chat.welcome.newSession': 'New Session',
   'chat.welcome.commands': 'Commands',
+  'chat.ariaMessages': 'Chat messages',
 
   // Input
   'input.placeholder': 'Type a message... (Shift+Enter for new line)',
@@ -321,6 +322,7 @@ export default {
   'sidebar.filter.closed': 'Closed',
   'sidebar.statusFilter': 'Status Filter',
   'sidebar.noFilterResults': 'No {filter} sessions',
+  'sidebar.deepSearch': 'Search in messages',
   'sidebar.clearFilter': 'Clear filter',
 
   // Tags

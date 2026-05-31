@@ -35,6 +35,7 @@ export const api = {
   async getSessions(options?: {
     projectPath?: string;
     search?: string;
+    searchContent?: boolean;
     tag?: string;
     limit?: number;
     offset?: number;
@@ -42,6 +43,7 @@ export const api = {
     const params = new URLSearchParams();
     if (options?.projectPath) params.set('projectPath', options.projectPath);
     if (options?.search) params.set('search', options.search);
+    if (options?.searchContent) params.set('searchContent', 'true');
     if (options?.tag) params.set('tag', options.tag);
     if (options?.limit) params.set('limit', options.limit.toString());
     if (options?.offset) params.set('offset', options.offset.toString());

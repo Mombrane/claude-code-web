@@ -390,6 +390,15 @@ export function HomePage() {
                           }`}>
                             {session.name}
                           </div>
+                          {session.matchSnippet && (
+                            <div className={`text-[11px] truncate max-w-[250px] ${
+                              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                            }`} title={session.matchSnippet}>
+                                {session.matchSnippet.length > 80
+                                ? session.matchSnippet.slice(0, 80) + '...'
+                                : session.matchSnippet}
+                            </div>
+                          )}
                           <div className={`flex items-center gap-2 text-[11px] ${'text-gray-500'}`}>
                             <span>{formatDate(session.updatedAt, locale, t)}</span>
                             {session.totalCostUsd > 0 && (

@@ -18,10 +18,11 @@ router.get('/tags', async (req: Request, res: Response) => {
 // Get all sessions
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { projectPath, search, tag, limit, offset } = req.query;
+    const { projectPath, search, searchContent, tag, limit, offset } = req.query;
     const sessions = await sessionStore.getAllSessions({
       projectPath: projectPath as string,
       search: search as string,
+      searchContent: searchContent === 'true',
       tag: tag as string,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined,

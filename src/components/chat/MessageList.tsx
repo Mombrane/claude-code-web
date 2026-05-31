@@ -668,7 +668,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   };
 
   return (
-    <div ref={containerRef} role="log" aria-live="polite" aria-label="Chat messages" className={`h-full flex flex-col overflow-hidden ${
+    <div ref={containerRef} role="log" aria-live="polite" aria-label={t('chat.ariaMessages')} className={`h-full flex flex-col overflow-hidden ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
       {messages.length === 0 && !isStreaming && isLoading && (

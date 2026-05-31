@@ -43,6 +43,7 @@ export default {
   'chat.welcome.subtitle': '选择或创建一个会话，开始与 Claude 一起编程',
   'chat.welcome.newSession': '新建会话',
   'chat.welcome.commands': '命令',
+  'chat.ariaMessages': '聊天消息',
 
   // Input
   'input.placeholder': '输入消息... (Shift+Enter 换行)',
@@ -321,6 +322,7 @@ export default {
   'sidebar.filter.closed': '已关闭',
   'sidebar.statusFilter': '状态筛选',
   'sidebar.noFilterResults': '没有 {filter} 状态的会话',
+  'sidebar.deepSearch': '搜索消息内容',
   'sidebar.clearFilter': '清除筛选',
 
   // Tags

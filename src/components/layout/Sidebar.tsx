@@ -25,6 +25,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [deepSearch, setDeepSearch] = useState(false);
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'idle' | 'closed'>('all');
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -38,6 +39,28 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   useEffect(() => {
     loadSessions();
   }, [projectPath]);
+
+  // Deep search effect: reload sessions from server when deepSearch is enabled
+  useEffect(() => {
+    if (deepSearch && searchQuery.trim()) {
+      const timer = setTimeout(async () => {
+        try {
+          const data = await api.getSessions({ 
+            projectPath, 
+            search: searchQuery, 
+            searchContent: true 
+          });
+          setSessions(data);
+        } catch (e) {
+          console.error('Failed to deep search:', e);
+        }
+      }, 500); // Debounce 500ms
+      return () => clearTimeout(timer);
+    } else if (!deepSearch) {
+      // Reload normal sessions when deep search is disabled
+      loadSessions();
+    }
+  }, [deepSearch, searchQuery]);
 
   useEffect(() => {
     loadTags();
@@ -264,6 +287,24 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             }`}
           />
         </div>
+        {/* Deep search toggle */}
+        {searchQuery && (
+          <div className="flex items-center gap-2 mt-2">
+            <label className="flex items-center gap-1.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={deepSearch}
+                onChange={(e) => setDeepSearch(e.target.checked)}
+                className="w-3.5 h-3.5 rounded border-gray-500 text-blue-500 focus:ring-blue-500/50"
+              />
+              <span className={`text-[11px] ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
+                {t('sidebar.deepSearch')}
+              </span>
+            </label>
+          </div>
+        )}
         {/* Status filter */}
         <div className="flex gap-1 mt-2" role="radiogroup" aria-label={t('sidebar.statusFilter')}>
           {(['all', 'active', 'idle', 'closed'] as const).map((status) => (
@@ -421,6 +462,18 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                               {session.lastUserMessage.length > 50
                                 ? session.lastUserMessage.slice(0, 50) + '...'
                                 : session.lastUserMessage}
+                            </div>
+                          )}
+                          {session.matchSnippet && (
+                            <div
+                              className={`text-[11px] truncate max-w-[180px] ${
+                                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                              }`}
+                              title={session.matchSnippet}
+                            >
+                                {session.matchSnippet.length > 60
+                                ? session.matchSnippet.slice(0, 60) + '...'
+                                : session.matchSnippet}
                             </div>
                           )}
                           {/* Tags display */}
