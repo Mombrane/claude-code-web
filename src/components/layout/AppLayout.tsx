@@ -178,6 +178,15 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         return;
       }
 
+      // Ctrl+R: Retry last message
+      if (e.ctrlKey && e.key === 'r') {
+        const retryTarget = e.target as HTMLElement;
+        if (retryTarget.tagName === 'INPUT' || retryTarget.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('retry-last-message'));
+        return;
+      }
+
       // Ctrl+Up/Down: Session quick-switch
       if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         // Don't trigger when input/textarea is focused

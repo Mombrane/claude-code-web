@@ -262,6 +262,7 @@ export default {
   'shortcuts.prevSession': 'Previous session',
   'shortcuts.nextSession': 'Next session',
   'shortcuts.focusInput': 'Focus input',
+  'shortcuts.retry': 'Retry last message',
 
   'shortcuts.toggleSidebar': 'Toggle sidebar',
   'diff.stagedChanges': 'Staged Changes',

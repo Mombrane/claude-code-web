@@ -10,9 +10,10 @@ interface InputBarProps {
   theme?: 'dark' | 'light';
   rootPath?: string;
   model?: string;
+  sessionId?: string;
 }
 
-export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath, model }: InputBarProps) {
+export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath, model, sessionId }: InputBarProps) {
   const { t } = useI18n();
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -21,6 +22,77 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [messageHistory, setMessageHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const draftSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const messageRef = useRef(message);
+
+  // Keep messageRef in sync with message state
+  useEffect(() => {
+    messageRef.current = message;
+  }, [message]);
+
+  // Draft localStorage key
+  const draftKey = sessionId ? `input-draft-${sessionId}` : null;
+
+  // Restore draft from localStorage when sessionId changes
+  useEffect(() => {
+    if (!draftKey) return;
+    try {
+      const saved = localStorage.getItem(draftKey);
+      if (saved) {
+        setMessage(saved);
+        // Adjust textarea height
+        setTimeout(() => {
+          const textarea = textareaRef.current;
+          if (textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+          }
+        }, 0);
+      } else {
+        setMessage('');
+      }
+    } catch {
+      // ignore localStorage errors
+    }
+    setHistoryIndex(-1);
+  }, [draftKey]);
+
+  // Debounced save draft to localStorage on message change
+  useEffect(() => {
+    if (!draftKey) return;
+    if (draftSaveTimerRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+    }
+    draftSaveTimerRef.current = setTimeout(() => {
+      try {
+        if (message) {
+          localStorage.setItem(draftKey, message);
+        } else {
+          localStorage.removeItem(draftKey);
+        }
+      } catch {
+        // ignore localStorage errors
+      }
+    }, 500);
+    return () => {
+      if (draftSaveTimerRef.current) {
+        clearTimeout(draftSaveTimerRef.current);
+      }
+    };
+  }, [message, draftKey]);
+
+  // Save draft on unmount
+  useEffect(() => {
+    return () => {
+      if (draftKey && messageRef.current) {
+        try {
+          localStorage.setItem(draftKey, messageRef.current);
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [draftKey]);
 
   // Auto-focus on mount
   useEffect(() => {
@@ -67,6 +139,10 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
       setMessage('');
       setAttachedFiles([]);
       setHistoryIndex(-1);
+      // Clear draft from localStorage
+      if (draftKey) {
+        try { localStorage.removeItem(draftKey); } catch { /* ignore */ }
+      }
       if (textareaRef.current) {
         textareaRef.current.style.height = 'auto';
       }

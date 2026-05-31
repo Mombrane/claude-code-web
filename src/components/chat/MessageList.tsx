@@ -130,6 +130,12 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
   const preRef = useRef<HTMLPreElement>(null);
   const [codeText, setCodeText] = useState('');
 
+  // Extract language from className (e.g., "language-typescript" → "typescript")
+  const langMatch = typeof props.className === 'string'
+    ? props.className.match(/language-(\S+)/)
+    : null;
+  const language = langMatch ? langMatch[1] : null;
+
   useEffect(() => {
     if (preRef.current) {
       setCodeText(preRef.current.textContent || '');
@@ -138,6 +144,13 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
 
   return (
     <div className="relative group/code">
+      {language && (
+        <span className={`absolute top-2 right-12 text-[10px] px-1.5 py-0.5 rounded ${
+          theme === 'dark' ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-500'
+        }`}>
+          {language}
+        </span>
+      )}
       <pre ref={preRef} {...props} className="rounded-lg p-4 overflow-x-auto">
         {children}
       </pre>

@@ -436,6 +436,17 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
     }
   }, [currentSessionId, currentMessages, isStreaming]);
 
+  // Listen for retry-last-message event (triggered by Ctrl+R)
+  useEffect(() => {
+    const handleRetryEvent = () => {
+      if (!isStreaming && currentSessionId) {
+        handleRetry();
+      }
+    };
+    window.addEventListener('retry-last-message', handleRetryEvent);
+    return () => window.removeEventListener('retry-last-message', handleRetryEvent);
+  }, [isStreaming, currentSessionId, handleRetry]);
+
   if (!currentSessionId) {
     return (
       <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -547,6 +558,7 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
         model={currentSession?.model}
         theme={theme}
         rootPath={currentSession?.cwd}
+        sessionId={currentSessionId ?? undefined}
       />
 
       {/* Keyboard shortcuts dialog */}

@@ -262,6 +262,7 @@ export default {
   'shortcuts.prevSession': '上一个会话',
   'shortcuts.nextSession': '下一个会话',
   'shortcuts.focusInput': '聚焦输入框',
+  'shortcuts.retry': '重试上一条消息',
 
   'shortcuts.toggleSidebar': '切换侧边栏',
   'diff.stagedChanges': '暂存更改',
