@@ -1,17 +1,19 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '../chat/ChatPanel';
 import { FileExplorer } from '../files/FileExplorer';
-import { FileEditor } from '../files/FileEditor';
-import { GitPanel } from '../git/GitPanel';
-import { TerminalPanel } from '../terminal/TerminalPanel';
-import { SettingsPanel } from '../settings/SettingsPanel';
 import { wsClient } from '../../api/websocket';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useI18n } from '../../i18n';
 import { useTheme } from '../ui/ThemeProvider';
 import { encodePath } from '../../utils/format';
+
+// Lazy-load heavy panels to reduce initial bundle size
+const FileEditor = lazy(() => import('../files/FileEditor').then(m => ({ default: m.FileEditor })));
+const GitPanel = lazy(() => import('../git/GitPanel').then(m => ({ default: m.GitPanel })));
+const TerminalPanel = lazy(() => import('../terminal/TerminalPanel').then(m => ({ default: m.TerminalPanel })));
+const SettingsPanel = lazy(() => import('../settings/SettingsPanel').then(m => ({ default: m.SettingsPanel })));
 
 type LeftPanel = 'sessions' | 'files';
 type RightPanel = 'git' | 'terminal' | 'none';
@@ -70,7 +72,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { currentSessionId, currentMessages } = useSessionStore();
+  const { currentSessionId, currentMessages, sessions } = useSessionStore();
   const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false });
 
   // Persist non-theme settings
@@ -381,22 +383,26 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         {/* Center Panel */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedFile ? (
-            <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} theme={theme} />
+            <Suspense fallback={<LoadingPanel theme={theme} />}>
+              <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} theme={theme} />
+            </Suspense>
           ) : (
             <ChatPanel theme={theme} />
           )}
           {rightPanel === 'terminal' && currentSessionId && (
-            <TerminalPanel
-              sessionId={currentSessionId}
-              theme={theme}
-            />
+            <Suspense fallback={<LoadingPanel theme={theme} />}>
+              <TerminalPanel
+                sessionId={currentSessionId}
+                theme={theme}
+              />
+            </Suspense>
           )}
         </div>
 
         {/* Right Panel */}
         {rightPanel === 'git' && (
           <div className={`w-80 border-l animate-slideIn ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
-            {cwd ? <GitPanel cwd={cwd} theme={theme} /> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
+            {cwd ? <Suspense fallback={<LoadingPanel theme={theme} />}><GitPanel cwd={cwd} theme={theme} /></Suspense> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
           </div>
         )}
       </div>
@@ -413,12 +419,14 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 
       {/* Settings Modal */}
       {showSettings && (
-        <SettingsPanel
-          settings={settings}
-          onSave={setSettings}
-          onClose={() => setShowSettings(false)}
-          theme={theme}
-        />
+        <Suspense fallback={<LoadingPanel theme={theme} />}>
+          <SettingsPanel
+            settings={settings}
+            onSave={setSettings}
+            onClose={() => setShowSettings(false)}
+            theme={theme}
+          />
+        </Suspense>
       )}
 
       {/* Status Bar */}
@@ -439,7 +447,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
             {wsStatus.connected ? t('status.connected') : wsStatus.reconnecting ? t('status.reconnecting') : t('status.disconnected')}
           </span>
           <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
-          <span>{settings.model || t('status.defaultModel')}</span>
+          <span>{sessions.find(s => s.id === currentSessionId)?.model?.split('/').pop() || settings.model || t('status.defaultModel')}</span>
           <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span>{t('status.messages', { count: currentMessages.length })}</span>
         </div>
@@ -451,6 +459,18 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           <span>{t('sidebar.title')}</span>
         </div>
       </footer>
+    </div>
+  );
+}
+
+// Loading fallback for lazy-loaded panels
+function LoadingPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
+  return (
+    <div className={`flex items-center justify-center h-full ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
+      <div className="flex flex-col items-center gap-3">
+        <div className={`w-6 h-6 border-2 rounded-full animate-spin ${theme === 'dark' ? 'border-gray-600 border-t-blue-400' : 'border-gray-300 border-t-blue-500'}`} />
+        <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Loading...</span>
+      </div>
     </div>
   );
 }
