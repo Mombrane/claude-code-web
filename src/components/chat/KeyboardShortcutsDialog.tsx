@@ -30,6 +30,7 @@ export function KeyboardShortcutsDialog({ onClose, theme = 'dark' }: KeyboardSho
     { keys: ['Ctrl', 'N'], label: t('shortcuts.newSession') },
     { keys: ['Ctrl', 'K'], label: t('shortcuts.commandPalette') },
     { keys: ['Ctrl', 'F'], label: t('shortcuts.search') },
+    { keys: ['Ctrl', 'L'], label: t('shortcuts.focusInput') },
     { keys: ['Ctrl', '/'], label: t('shortcuts.showShortcuts') },
     { keys: ['Ctrl', ','], label: t('shortcuts.settings') },
     { keys: ['Ctrl', 'Shift', 'T'], label: t('shortcuts.toggleTheme') },

@@ -69,7 +69,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [showCommandPalette, setShowCommandPalette] = useState(false);
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const { currentSessionId } = useSessionStore();
+  const { currentSessionId, currentMessages } = useSessionStore();
   const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false });
 
   // Persist non-theme settings
@@ -165,6 +165,14 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
       if (e.ctrlKey && e.shiftKey && (e.key === 'T' || e.key === 't')) {
         e.preventDefault();
         toggleTheme();
+      }
+
+      // Ctrl+L: Focus chat input
+      if (e.ctrlKey && e.key === 'l') {
+        e.preventDefault();
+        // Dispatch custom event that InputBar listens for
+        window.dispatchEvent(new CustomEvent('focus-chat-input'));
+        return;
       }
 
       // Ctrl+Up/Down: Session quick-switch
@@ -431,6 +439,8 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           </span>
           <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span>{settings.model || t('status.defaultModel')}</span>
+          <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
+          <span>{t('status.messages', { count: currentMessages.length })}</span>
         </div>
         <div className="flex items-center gap-3">
           <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+K</kbd>

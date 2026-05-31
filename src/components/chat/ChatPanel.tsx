@@ -90,6 +90,17 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Prevent accidental tab close during streaming
+  useEffect(() => {
+    if (!isStreaming) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [isStreaming]);
+
   const handleSearchQuery = useCallback((query: string) => {
     setSearchQuery(query);
     setCurrentMatchIndex(0);

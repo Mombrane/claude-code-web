@@ -172,6 +172,7 @@ export default {
   'status.reconnecting': '重新连接中...',
   'status.reconnect': '重新连接',
   'status.defaultModel': '默认模型',
+  'status.messages': '{count} 条消息',
   'status.streaming': '生成中',
   'status.error': '错误',
   'status.active': '活跃',
@@ -251,6 +252,7 @@ export default {
   'shortcuts.toggleTheme': '切换主题',
   'shortcuts.prevSession': '上一个会话',
   'shortcuts.nextSession': '下一个会话',
+  'shortcuts.focusInput': '聚焦输入框',
 
   // Toast notifications
   'toast.copied': '已复制！',

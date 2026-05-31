@@ -172,6 +172,7 @@ export default {
   'status.reconnecting': 'Reconnecting...',
   'status.reconnect': 'Reconnect',
   'status.defaultModel': 'Default Model',
+  'status.messages': '{count} messages',
   'status.streaming': 'Streaming',
   'status.error': 'Error',
   'status.active': 'Active',
@@ -251,6 +252,7 @@ export default {
   'shortcuts.toggleTheme': 'Toggle theme',
   'shortcuts.prevSession': 'Previous session',
   'shortcuts.nextSession': 'Next session',
+  'shortcuts.focusInput': 'Focus input',
 
   // Toast notifications
   'toast.copied': 'Copied!',

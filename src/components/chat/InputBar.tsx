@@ -27,6 +27,15 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     textareaRef.current?.focus();
   }, []);
 
+  // Listen for focus-chat-input event (triggered by Ctrl+L)
+  useEffect(() => {
+    const handleFocus = () => {
+      textareaRef.current?.focus();
+    };
+    window.addEventListener('focus-chat-input', handleFocus);
+    return () => window.removeEventListener('focus-chat-input', handleFocus);
+  }, []);
+
   // Reset height when message is cleared
   useEffect(() => {
     if (!message && textareaRef.current) {
