@@ -117,6 +117,7 @@ export default {
   'editor.language': '语言',
   'editor.encoding': 'UTF-8',
   'editor.spaces': '空格: 2',
+  'editor.loading': '加载编辑器...',
 
   // Git Panel
   'git.title': 'Git',
@@ -327,4 +328,16 @@ export default {
   'tags.none': '无标签',
   'tags.edit': '编辑标签',
   'tags.placeholder': '输入标签名称...',
+
+  // Common loading
+  'common.loading': '加载中...',
+
+  // Session tooltip
+  'session.tooltip.name': '名称',
+  'session.tooltip.created': '创建时间',
+  'session.tooltip.lastActive': '最后活跃',
+  'session.tooltip.cost': '费用',
+  'session.tooltip.tokens': '令牌',
+  'session.tooltip.model': '模型',
+  'session.tooltip.status': '状态',
 } as const;

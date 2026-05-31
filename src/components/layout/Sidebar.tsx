@@ -165,6 +165,29 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     navigate(`/${dir}/session/${session.id}`);
   };
 
+  // Build tooltip text for session items
+  const getSessionTooltip = (session: Session): string => {
+    const lines: string[] = [];
+    lines.push(`${t('session.tooltip.name')}: ${session.name}`);
+    if (session.createdAt) {
+      lines.push(`${t('session.tooltip.created')}: ${new Date(session.createdAt).toLocaleString(locale)}`);
+    }
+    if (session.updatedAt) {
+      lines.push(`${t('session.tooltip.lastActive')}: ${new Date(session.updatedAt).toLocaleString(locale)}`);
+    }
+    if (session.totalCostUsd != null && session.totalCostUsd > 0) {
+      lines.push(`${t('session.tooltip.cost')}: $${session.totalCostUsd.toFixed(4)}`);
+    }
+    if (session.totalTokens != null && session.totalTokens > 0) {
+      lines.push(`${t('session.tooltip.tokens')}: ${session.totalTokens.toLocaleString()}`);
+    }
+    if (session.model) {
+      lines.push(`${t('session.tooltip.model')}: ${session.model.split('/').pop()}`);
+    }
+    lines.push(`${t('session.tooltip.status')}: ${t(`sidebar.filter.${session.status}`)}`);
+    return lines.join('\n');
+  };
+
   const filteredSessions = useMemo(() => {
     let result = sessions;
     if (statusFilter !== 'all') {
@@ -333,6 +356,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                   <div
                     key={session.id}
                     onClick={() => handleSessionClick(session)}
+                    title={getSessionTooltip(session)}
                     className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       currentSessionId === session.id
                         ? theme === 'dark'

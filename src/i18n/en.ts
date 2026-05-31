@@ -117,6 +117,7 @@ export default {
   'editor.language': 'Language',
   'editor.encoding': 'UTF-8',
   'editor.spaces': 'Spaces: 2',
+  'editor.loading': 'Loading editor...',
 
   // Git Panel
   'git.title': 'Git',
@@ -327,4 +328,16 @@ export default {
   'tags.none': 'No tags',
   'tags.edit': 'Edit tags',
   'tags.placeholder': 'Enter tag name...',
+
+  // Common loading
+  'common.loading': 'Loading...',
+
+  // Session tooltip
+  'session.tooltip.name': 'Name',
+  'session.tooltip.created': 'Created',
+  'session.tooltip.lastActive': 'Last active',
+  'session.tooltip.cost': 'Cost',
+  'session.tooltip.tokens': 'Tokens',
+  'session.tooltip.model': 'Model',
+  'session.tooltip.status': 'Status',
 } as const;

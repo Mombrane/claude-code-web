@@ -465,11 +465,12 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 
 // Loading fallback for lazy-loaded panels
 function LoadingPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
+  const { t } = useI18n();
   return (
     <div className={`flex items-center justify-center h-full ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
       <div className="flex flex-col items-center gap-3">
         <div className={`w-6 h-6 border-2 rounded-full animate-spin ${theme === 'dark' ? 'border-gray-600 border-t-blue-400' : 'border-gray-300 border-t-blue-500'}`} />
-        <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>Loading...</span>
+        <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('common.loading')}</span>
       </div>
     </div>
   );
