@@ -298,29 +298,48 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
         </div>
       </div>
 
-      {/* Bottom hints */}
+      {/* Bottom hints — context-aware based on state */}
       <div className={`flex items-center justify-between mt-2 text-xs ${
         theme === 'dark' ? 'text-gray-600' : 'text-gray-400'
       }`}>
         <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-            <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
-              theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
-            }`}>Enter</kbd>
-            <span>{t('input.hint.enter')}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
-              theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
-            }`}>Shift+Enter</kbd>
-            <span>{t('input.hint.shiftEnter')}</span>
-          </span>
-          <span className="flex items-center gap-1">
-            <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
-              theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
-            }`}>Esc</kbd>
-            <span>{t('input.hint.esc')}</span>
-          </span>
+          {isStreaming ? (
+            <span className="flex items-center gap-1">
+              <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
+                theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
+              }`}>Esc</kbd>
+              <span>{t('input.hint.escStop')}</span>
+            </span>
+          ) : (
+            <>
+              <span className="flex items-center gap-1">
+                <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
+                }`}>Enter</kbd>
+                <span>{t('input.hint.enter')}</span>
+              </span>
+              <span className="flex items-center gap-1">
+                <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
+                }`}>Shift+Enter</kbd>
+                <span>{t('input.hint.shiftEnter')}</span>
+              </span>
+              {messageHistory.length > 0 && (
+                <span className="flex items-center gap-1">
+                  <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
+                    theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
+                  }`}>↑↓</kbd>
+                  <span>{t('input.hint.history')}</span>
+                </span>
+              )}
+              <span className="flex items-center gap-1">
+                <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${
+                  theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'
+                }`}>Esc</kbd>
+                <span>{t('input.hint.esc')}</span>
+              </span>
+            </>
+          )}
         </div>
         {charCount > 0 && (
           <span className={isNearLimit ? 'text-yellow-500' : ''}>

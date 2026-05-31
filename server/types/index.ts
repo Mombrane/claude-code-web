@@ -96,7 +96,7 @@ export interface SpawnOptions {
 
 export interface WebSocketMessage {
   type: string;
-  payload: any;
+  payload: Record<string, unknown>;
 }
 
 export interface StreamEvent {
@@ -110,13 +110,13 @@ export interface StreamEvent {
   };
   message?: {
     role: string;
-    content: any[];
+    content: Record<string, unknown>[];
   };
   content_block?: {
     type: string;
     id?: string;
     name?: string;
-    input?: any;
+    input?: Record<string, unknown>;
     text?: string;
   };
   result?: {

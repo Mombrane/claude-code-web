@@ -53,6 +53,8 @@ export default {
   'input.hint.enter': 'Send',
   'input.hint.shiftEnter': 'New line',
   'input.hint.esc': 'Clear',
+  'input.hint.escStop': 'Stop generation',
+  'input.hint.history': 'History',
 
   // Messages
   'message.toolCall': 'tool call',

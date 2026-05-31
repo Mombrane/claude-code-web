@@ -77,13 +77,50 @@ export interface PatchContent {
   deletions: number;
 }
 
-export interface WebSocketMessage {
-  type: string;
-  payload: any;
+// Stream event data types
+export interface StreamTextData {
+  text: string;
 }
 
-export interface StreamEvent {
-  sessionId: string;
-  event: string;
-  data: any;
+export interface StreamToolUseData {
+  toolName: string;
+  toolUseId: string;
+  input: Record<string, unknown>;
 }
+
+export interface StreamToolResultData {
+  toolUseId: string;
+  toolName: string;
+  output: string;
+  isError: boolean;
+}
+
+// Typed payloads for incoming WebSocket messages
+export interface StreamEventData {
+  sessionId: string;
+  event: 'assistant_text' | 'tool_use' | 'tool_result' | 'thinking' | 'init';
+  data: StreamTextData | StreamToolUseData | StreamToolResultData | Record<string, unknown>;
+}
+
+export interface ResultPayload {
+  sessionId: string;
+  result: string;
+  costUsd: number;
+  usage?: { input_tokens: number; output_tokens: number };
+}
+
+export interface ErrorPayload {
+  sessionId?: string;
+  error: string;
+}
+
+// WebSocketMessage payload can be any structured data (incoming typed, outgoing flexible)
+export type WebSocketPayload = StreamEventData | ResultPayload | ErrorPayload | Record<string, unknown>;
+
+export interface WebSocketMessage {
+  type: string;
+  payload: WebSocketPayload;
+}
+
+// Legacy alias — prefer StreamEventData
+export type StreamEvent = StreamEventData;

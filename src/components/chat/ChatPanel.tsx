@@ -6,7 +6,7 @@ import { InputBar } from './InputBar';
 import { ExportButton } from './ExportButton';
 import { MessageSearch } from './MessageSearch';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
-import type { StreamEvent, ToolExecutionContent } from '../../types';
+import type { StreamEvent, StreamTextData, StreamToolUseData, StreamToolResultData, ResultPayload, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
 import { formatTokens } from '../../utils/format';
@@ -175,21 +175,24 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
         if (event.sessionId !== currentSessionId) return;
 
         switch (event.event) {
-          case 'assistant_text':
-            setStreamingText((prev) => prev + (event.data.text || ''));
+          case 'assistant_text': {
+            const data = event.data as StreamTextData;
+            setStreamingText((prev) => prev + (data.text || ''));
             setIsStreaming(true);
             break;
+          }
 
           case 'tool_use': {
-            const toolUseId = event.data.toolUseId;
+            const data = event.data as StreamToolUseData;
+            const toolUseId = data.toolUseId;
             const msgId = uuidv4();
 
             // Check if a pending result already arrived for this toolUseId
             const pending = pendingResults.current.get(toolUseId);
             const content: ToolExecutionContent = {
-              toolName: event.data.toolName,
+              toolName: data.toolName,
               toolUseId,
-              input: event.data.input,
+              input: data.input,
               output: pending?.output,
               isError: pending?.isError,
               status: pending ? (pending.isError ? 'error' : 'completed') : 'running',
@@ -215,16 +218,17 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
           }
 
           case 'tool_result': {
-            const toolUseId = event.data.toolUseId;
+            const data = event.data as StreamToolResultData;
+            const toolUseId = data.toolUseId;
             const existing = toolExecutionIdMap.current.get(toolUseId);
 
             if (existing) {
               // Found the paired tool_execution — update it in-place with merged content
               const mergedContent: ToolExecutionContent = {
                 ...existing.content,
-                output: event.data.output,
-                isError: event.data.isError,
-                status: event.data.isError ? 'error' : 'completed',
+                output: data.output,
+                isError: data.isError,
+                status: data.isError ? 'error' : 'completed',
               };
               updateMessage(existing.msgId, { content: mergedContent });
               // Clean up
@@ -233,27 +237,30 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
             } else {
               // tool_result arrived before tool_use — cache it
               pendingResults.current.set(toolUseId, {
-                output: event.data.output,
-                isError: event.data.isError,
+                output: data.output,
+                isError: data.isError,
               });
               entryTimestamps.current.set('pending_' + toolUseId, Date.now());
             }
             break;
           }
 
-          case 'thinking':
-            setStreamingThinking((prev) => prev + (event.data.text || ''));
+          case 'thinking': {
+            const data = event.data as StreamTextData;
+            setStreamingThinking((prev) => prev + (data.text || ''));
             setIsStreaming(true);
             break;
+          }
         }
       }),
 
       wsClient.on('result', (message) => {
-        if (message.payload.sessionId !== currentSessionId) return;
+        const payload = message.payload as ResultPayload;
+        if (payload.sessionId !== currentSessionId) return;
 
         // Extract cost/usage data from result
-        const costUsd = message.payload.costUsd as number | undefined;
-        const usage = message.payload.usage as Record<string, number> | undefined;
+        const costUsd = payload.costUsd as number | undefined;
+        const usage = payload.usage as Record<string, number> | undefined;
         const tokens = usage ? (usage.input_tokens || 0) + (usage.output_tokens || 0) : undefined;
         const inputTokens = usage?.input_tokens ?? undefined;
         const outputTokens = usage?.output_tokens ?? undefined;
@@ -307,13 +314,14 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
       }),
 
       wsClient.on('error', (message) => {
-        if (message.payload.sessionId !== currentSessionId) return;
+        const payload = message.payload as { sessionId?: string; error: string };
+        if (payload.sessionId !== currentSessionId) return;
 
         addMessage({
           id: uuidv4(),
           role: 'system',
           type: 'error',
-          content: message.payload.error,
+          content: payload.error,
           timestamp: new Date().toISOString(),
           sessionId: currentSessionId,
         });

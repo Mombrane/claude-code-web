@@ -53,6 +53,8 @@ export default {
   'input.hint.enter': '发送',
   'input.hint.shiftEnter': '换行',
   'input.hint.esc': '清空',
+  'input.hint.escStop': '停止生成',
+  'input.hint.history': '历史',
 
   // Messages
   'message.toolCall': '工具调用',
