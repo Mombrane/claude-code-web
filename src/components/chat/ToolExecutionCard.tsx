@@ -54,6 +54,7 @@ export function ToolCallCard({ toolCall, isExpanded, onToggle, theme = 'dark' }:
     }`}>
       <button
         onClick={onToggle}
+        aria-expanded={isExpanded}
         className={`w-full flex items-center gap-3 p-3 text-left transition-colors ${
           theme === 'dark' ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
         }`}
@@ -119,6 +120,7 @@ export function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultC
     }`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-expanded={isExpanded}
         className={`w-full flex items-center gap-2 p-3 text-left transition-colors ${
           theme === 'dark' ? 'hover:bg-gray-700/20' : 'hover:bg-gray-100'
         }`}
@@ -406,6 +408,7 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
     }`}>
       <button
         onClick={onToggle}
+        aria-expanded={isExpanded}
         className={`w-full flex items-center gap-3 p-3 text-left transition-colors ${
           theme === 'dark' ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
         }`}

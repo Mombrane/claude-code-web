@@ -61,6 +61,8 @@ export default {
   'message.error': 'Error',
   'message.copy': 'Copy',
   'message.copied': 'Copied!',
+  'message.copyFailed': 'Copy failed',
+  'message.delete': 'Delete',
   'message.startConversation': 'Start a conversation to begin coding',
   'message.retry': 'Retry',
   'message.scrollToBottom': 'Scroll to bottom',

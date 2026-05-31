@@ -176,7 +176,11 @@ export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: File
           <button
             onClick={handleSave}
             disabled={!isModified || isSaving}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-blue-600/80 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 ${
+              theme === 'dark'
+                ? 'bg-blue-600/80 hover:bg-blue-600'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             {isSaving ? (
               <>

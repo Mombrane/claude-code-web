@@ -6,10 +6,12 @@ import rehypeHighlight from 'rehype-highlight';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent, FileContent, PatchContent } from '../../types';
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
+import { useSessionStore } from '../../stores/sessionStore';
 import { CopyButton } from './CopyButton';
 import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
 import { ToolGroupCard } from './ToolGroupCard';
 import { ThinkingBlock } from './ThinkingBlock';
+import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 
 function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {
   const now = Date.now();
@@ -149,6 +151,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
@@ -192,42 +195,19 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     }
   }, [searchQuery, currentMatchIndex, messages, streamingText]);
 
-  useEffect(() => {
-    // Only auto-scroll to bottom when not searching and user is near the bottom
-    if (!searchQuery && containerRef.current) {
-      const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
-      const shouldAutoScroll = scrollHeight - scrollTop - clientHeight < 150;
-      if (shouldAutoScroll) {
-        bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }
-    }
-  }, [messages, streamingText, streamingThinking, searchQuery]);
-
-  // Track scroll position for "scroll to bottom" button visibility
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = container;
-      setIsNearBottom(scrollHeight - scrollTop - clientHeight < 150);
-    };
-
-    container.addEventListener('scroll', handleScroll, { passive: true });
-    // Check initial state
-    handleScroll();
-    return () => container.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // Scroll to bottom handler
+  // Scroll to bottom handler — uses Virtuoso API
   const scrollToBottom = useCallback(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (virtuosoRef.current) {
+      virtuosoRef.current.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'smooth' });
+    }
   }, []);
 
   // Pre-process messages: group consecutive tool_execution and tool_use messages
   type RenderItem =
     | { kind: 'message'; message: Message; index: number }
-    | { kind: 'tool_group'; messages: Message[]; startIndex: number };
+    | { kind: 'tool_group'; messages: Message[]; startIndex: number }
+    | { kind: 'streaming_thinking'; content: string }
+    | { kind: 'streaming_text'; content: string };
 
   const renderItems = useMemo((): RenderItem[] => {
     const items: RenderItem[] = [];
@@ -653,17 +633,33 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
               </svg>
             </button>
           )}
+          {message.role === 'user' && (
+            <button
+              onClick={() => useSessionStore.getState().deleteMessage(message.id)}
+              className={`p-1.5 rounded-md text-xs transition-colors ${
+                theme === 'dark'
+                  ? 'bg-gray-700/80 hover:bg-red-600/80 text-gray-300 hover:text-white'
+                  : 'bg-gray-200 hover:bg-red-500/80 text-gray-700 hover:text-white'
+              }`}
+              title={t('message.delete')}
+              aria-label={t('message.delete')}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     );
   };
 
   return (
-    <div ref={containerRef} role="log" aria-live="polite" aria-label="Chat messages" className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
+    <div ref={containerRef} role="log" aria-live="polite" aria-label="Chat messages" className={`h-full flex flex-col overflow-hidden ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
       {messages.length === 0 && !isStreaming && isLoading && (
-        <div className="space-y-4 p-4">
+        <div className="space-y-4 p-6">
           {[1, 2, 3, 4].map(i => (
             <div key={i} className="flex gap-3">
               <div className={`w-8 h-8 rounded-full animate-pulse ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300/50'}`} />
@@ -677,7 +673,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       )}
 
       {messages.length === 0 && !isStreaming && !isLoading && (
-        <div className={`flex flex-col items-center justify-center h-full ${
+        <div className={`flex flex-col items-center justify-center h-full p-6 ${
           theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
         }`}>
           <div className="text-6xl mb-4"> </div>
@@ -692,66 +688,90 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </div>
       )}
 
-      {renderItems.map((item) => {
-        if (item.kind === 'tool_group') {
-          return (
-            <MessageErrorBoundary key={`group-${item.startIndex}`}>
-              <div className="animate-fadeIn">
-                <ToolGroupCard
-                  messages={item.messages}
-                  expandedTools={expandedTools}
-                  onToggleTool={toggleTool}
-                  copiedMessageId={copiedMessageId}
-                  onCopyMessage={handleCopyMessage}
-                  theme={theme}
-                />
+      {/* Virtuoso virtualized message list — includes streaming items */}
+      {(renderItems.length > 0 || isStreaming) ? (
+        <Virtuoso
+          ref={virtuosoRef}
+          data={[
+            ...renderItems,
+            ...(isStreaming && streamingThinking ? [{ kind: 'streaming_thinking' as const, content: streamingThinking }] : []),
+            ...(isStreaming && streamingText ? [{ kind: 'streaming_text' as const, content: streamingText }] : []),
+          ]}
+          followOutput="smooth"
+          atBottomStateChange={(atBottom) => setIsNearBottom(atBottom)}
+          computeItemKey={(index, item) => {
+            if (item.kind === 'tool_group') return `group-${item.startIndex}`;
+            if (item.kind === 'streaming_thinking') return 'streaming-thinking';
+            if (item.kind === 'streaming_text') return 'streaming-text';
+            return item.message.id;
+          }}
+          className="flex-1"
+          itemContent={(index, item) => {
+            if (item.kind === 'tool_group') {
+              return (
+                <div className="px-6 py-2">
+                  <MessageErrorBoundary>
+                    <div className="animate-fadeIn">
+                      <ToolGroupCard
+                        messages={item.messages}
+                        expandedTools={expandedTools}
+                        onToggleTool={toggleTool}
+                        copiedMessageId={copiedMessageId}
+                        onCopyMessage={handleCopyMessage}
+                        theme={theme}
+                      />
+                    </div>
+                  </MessageErrorBoundary>
+                </div>
+              );
+            }
+            if (item.kind === 'streaming_thinking') {
+              return (
+                <div className="px-6 py-2 animate-fadeIn">
+                  <ThinkingBlock content={item.content} isStreaming={true} theme={theme} />
+                </div>
+              );
+            }
+            if (item.kind === 'streaming_text') {
+              return (
+                <div className="px-6 py-2 animate-fadeIn">
+                  <div className={`rounded-lg p-4 ${
+                    theme === 'dark'
+                      ? 'bg-gray-800/80 border border-gray-700/50'
+                      : 'bg-white border border-gray-200'
+                  }`}>
+                    <div className={`prose max-w-none ${
+                      theme === 'dark'
+                        ? 'prose-invert prose-pre:bg-gray-900/80 prose-pre:border prose-pre:border-gray-700/50 prose-code:text-emerald-400'
+                        : 'prose-pre:bg-gray-100 prose-pre:border prose-pre:border-gray-200 prose-code:text-emerald-600'
+                    }`}>
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        rehypePlugins={rehypePlugins}
+                        components={markdownComponents}
+                      >
+                        {item.content}
+                      </ReactMarkdown>
+                    </div>
+                    <span className={`inline-block w-2 h-4 animate-pulse ml-1 rounded-sm ${
+                      theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'
+                    }`} />
+                  </div>
+                </div>
+              );
+            }
+            return (
+              <div className="px-6 py-2">
+                <MessageErrorBoundary>
+                  <div className="animate-fadeIn">
+                    {renderMessage(item.message, item.index)}
+                  </div>
+                </MessageErrorBoundary>
               </div>
-            </MessageErrorBoundary>
-          );
-        }
-        return (
-          <MessageErrorBoundary key={item.message.id}>
-            <div className="animate-fadeIn">
-              {renderMessage(item.message, item.index)}
-            </div>
-          </MessageErrorBoundary>
-        );
-      })}
-
-      {/* Streaming thinking */}
-      {isStreaming && streamingThinking && (
-        <div className="w-full animate-fadeIn">
-          <ThinkingBlock content={streamingThinking} isStreaming={true} theme={theme} />
-        </div>
-      )}
-
-      {/* Streaming text */}
-      {isStreaming && streamingText && (
-        <div className="w-full animate-fadeIn">
-          <div className={`rounded-lg p-4 ${
-            theme === 'dark'
-              ? 'bg-gray-800/80 border border-gray-700/50'
-              : 'bg-white border border-gray-200'
-          }`}>
-            <div className={`prose max-w-none ${
-              theme === 'dark'
-                ? 'prose-invert prose-pre:bg-gray-900/80 prose-pre:border prose-pre:border-gray-700/50 prose-code:text-emerald-400'
-                : 'prose-pre:bg-gray-100 prose-pre:border prose-pre:border-gray-200 prose-code:text-emerald-600'
-            }`}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={rehypePlugins}
-                components={markdownComponents}
-              >
-                {streamingText}
-              </ReactMarkdown>
-            </div>
-            <span className={`inline-block w-2 h-4 animate-pulse ml-1 rounded-sm ${
-              theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'
-            }`} />
-          </div>
-        </div>
-      )}
+            );
+          }}
+        />
+      ) : null}
 
       <div ref={bottomRef} />
 

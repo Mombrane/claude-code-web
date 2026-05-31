@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useI18n } from '../../i18n';
+import { useToast } from '../ui/ToastProvider';
 
 // Copy button for code blocks
 export function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
+  const toast = useToast();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -12,7 +14,7 @@ export function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'da
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.warn('Copy failed:', err);
+      toast.error(t('message.copyFailed'));
     }
   };
 

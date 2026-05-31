@@ -24,6 +24,7 @@ interface SessionState {
   loadMessages: (sessionId: string) => Promise<void>;
   addMessage: (message: Message) => void;
   updateMessage: (messageId: string, updates: Partial<Message>) => void;
+  deleteMessage: (messageId: string) => void;
   clearMessages: () => void;
 
   // State management
@@ -147,6 +148,11 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       currentMessages: state.currentMessages.map((m) =>
         m.id === messageId ? { ...m, ...updates } : m
       ),
+    })),
+
+  deleteMessage: (messageId) =>
+    set((state) => ({
+      currentMessages: state.currentMessages.filter((m) => m.id !== messageId),
     })),
 
   clearMessages: () => set({ currentMessages: [] }),

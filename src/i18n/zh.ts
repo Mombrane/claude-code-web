@@ -61,6 +61,8 @@ export default {
   'message.error': '错误',
   'message.copy': '复制',
   'message.copied': '已复制!',
+  'message.copyFailed': '复制失败',
+  'message.delete': '删除',
   'message.startConversation': '开始对话以开始编程',
   'message.retry': '重试',
   'message.scrollToBottom': '回到底部',
