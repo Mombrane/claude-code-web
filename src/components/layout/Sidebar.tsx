@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
+import { useToast } from '../ui/ToastProvider';
 import type { Session } from '../../types';
 
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
@@ -21,6 +22,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     errorSessions,
   } = useSessionStore();
   const { t, locale } = useI18n();
+  const toast = useToast();
   const [isCreating, setIsCreating] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'idle' | 'closed'>('all');
@@ -78,6 +80,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       const session = await api.createSession(undefined, projectPath, projectPath);
       addSession(session);
       setCurrentSession(session.id);
+      toast.success(t('toast.sessionCreated'));
       const dir = encodePath(projectPath || session.cwd);
       navigate(`/${dir}/session/${session.id}`);
     } catch (e) {
@@ -93,6 +96,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     try {
       await api.deleteSession(sessionId);
       removeSession(sessionId);
+      toast.success(t('toast.sessionDeleted'));
     } catch (e) {
       console.error('Failed to delete session:', e);
     }

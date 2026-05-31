@@ -275,6 +275,8 @@ export default {
   'toast.copyFailed': '复制失败',
   'toast.exportSuccess': '已导出！',
   'toast.exportFailed': '导出失败',
+  'toast.sessionCreated': '会话已创建',
+  'toast.sessionDeleted': '会话已删除',
 
   // Session rename
   'session.rename': '重命名',

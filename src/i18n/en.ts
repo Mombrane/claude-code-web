@@ -275,6 +275,8 @@ export default {
   'toast.copyFailed': 'Copy failed',
   'toast.exportSuccess': 'Exported!',
   'toast.exportFailed': 'Export failed',
+  'toast.sessionCreated': 'Session created',
+  'toast.sessionDeleted': 'Session deleted',
 
   // Session rename
   'session.rename': 'Rename',

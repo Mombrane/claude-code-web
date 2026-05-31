@@ -287,7 +287,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
         {model && (
           <>
             <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}>|</span>
-            <span>{model}</span>
+            <span>{model.split('/').pop()}</span>
           </>
         )}
         {disabled && (
