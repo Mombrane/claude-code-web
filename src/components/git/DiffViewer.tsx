@@ -6,6 +6,7 @@ interface DiffViewerProps {
   cwd: string;
   mode?: 'working' | 'staged' | 'branch';
   baseBranch?: string;
+  theme?: 'dark' | 'light';
 }
 
 interface DiffLine {
@@ -79,21 +80,21 @@ function parseDiff(diffText: string): DiffFile[] {
   return files;
 }
 
-function DiffLineComponent({ line }: { line: DiffLine }) {
+function DiffLineComponent({ line, theme }: { line: DiffLine; theme: 'dark' | 'light' }) {
   const bgColor = {
-    add: 'bg-green-900/20',
-    delete: 'bg-red-900/20',
+    add: theme === 'dark' ? 'bg-green-900/20' : 'bg-green-100',
+    delete: theme === 'dark' ? 'bg-red-900/20' : 'bg-red-100',
     context: '',
-    header: 'bg-gray-800/50',
-    hunk: 'bg-blue-900/10',
+    header: theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-100',
+    hunk: theme === 'dark' ? 'bg-blue-900/10' : 'bg-blue-50',
   }[line.type];
 
   const textColor = {
-    add: 'text-green-400',
-    delete: 'text-red-400',
-    context: 'text-gray-300',
-    header: 'text-gray-500',
-    hunk: 'text-blue-400',
+    add: theme === 'dark' ? 'text-green-400' : 'text-green-600',
+    delete: theme === 'dark' ? 'text-red-400' : 'text-red-600',
+    context: theme === 'dark' ? 'text-gray-300' : 'text-gray-700',
+    header: theme === 'dark' ? 'text-gray-500' : 'text-gray-500',
+    hunk: theme === 'dark' ? 'text-blue-400' : 'text-blue-600',
   }[line.type];
 
   const prefix = {
@@ -108,10 +109,10 @@ function DiffLineComponent({ line }: { line: DiffLine }) {
     <div className={`flex ${bgColor}`}>
       {line.type !== 'hunk' && line.type !== 'header' && (
         <>
-          <span className="w-12 text-right pr-2 text-gray-600 text-xs select-none shrink-0">
+          <span className={`w-12 text-right pr-2 text-xs select-none shrink-0 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
             {line.oldLine || ''}
           </span>
-          <span className="w-12 text-right pr-2 text-gray-600 text-xs select-none shrink-0">
+          <span className={`w-12 text-right pr-2 text-xs select-none shrink-0 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
             {line.newLine || ''}
           </span>
         </>
@@ -126,35 +127,40 @@ function DiffLineComponent({ line }: { line: DiffLine }) {
   );
 }
 
-function DiffFileComponent({ file, isExpanded, onToggle }: {
+function DiffFileComponent({ file, isExpanded, onToggle, theme }: {
   file: DiffFile;
   isExpanded: boolean;
   onToggle: () => void;
+  theme: 'dark' | 'light';
 }) {
   return (
-    <div className="border border-gray-700/50 rounded-lg overflow-hidden">
+    <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3 bg-gray-800/50 hover:bg-gray-800/80 transition-colors text-left"
+        className={`w-full flex items-center gap-3 px-4 py-3 transition-colors text-left ${
+          theme === 'dark'
+            ? 'bg-gray-800/50 hover:bg-gray-800/80'
+            : 'bg-gray-50 hover:bg-gray-100'
+        }`}
       >
         <svg
-          className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+          className={`w-4 h-4 transition-transform ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'} ${isExpanded ? 'rotate-90' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        <span className="text-sm font-mono text-gray-300 flex-1 truncate">{file.path}</span>
+        <span className={`text-sm font-mono flex-1 truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{file.path}</span>
         <span className="flex items-center gap-2 text-xs">
-          <span className="text-green-400">+{file.additions}</span>
-          <span className="text-red-400">-{file.deletions}</span>
+          <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>+{file.additions}</span>
+          <span className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>-{file.deletions}</span>
         </span>
       </button>
       {isExpanded && (
-        <div className="border-t border-gray-700/50 overflow-x-auto">
+        <div className={`border-t overflow-x-auto ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
           {file.lines.map((line, i) => (
-            <DiffLineComponent key={i} line={line} />
+            <DiffLineComponent key={i} line={line} theme={theme} />
           ))}
         </div>
       )}
@@ -162,7 +168,7 @@ function DiffFileComponent({ file, isExpanded, onToggle }: {
   );
 }
 
-export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProps) {
+export function DiffViewer({ cwd, mode = 'working', baseBranch, theme = 'dark' }: DiffViewerProps) {
   const { t } = useI18n();
   const [diffText, setDiffText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -225,8 +231,8 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProp
 
   if (files.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-500">
-        <svg className="w-12 h-12 mb-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className={`flex flex-col items-center justify-center h-full ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+        <svg className={`w-12 h-12 mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <p className="text-sm">{t('diff.noChanges')}</p>
@@ -237,36 +243,48 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProp
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-700/50 bg-gray-800/30">
+      <div className={`px-4 py-3 border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200 bg-gray-50'}`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-gray-300">
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {mode === 'staged' ? 'Staged Changes' : mode === 'branch' ? 'Branch Diff' : 'Working Changes'}
             </span>
             <span className="flex items-center gap-1 text-xs">
-              <span className="text-green-400">+{totalAdditions}</span>
-              <span className="text-red-400">-{totalDeletions}</span>
+              <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>+{totalAdditions}</span>
+              <span className={theme === 'dark' ? 'text-red-400' : 'text-red-600'}>-{totalDeletions}</span>
             </span>
-            <span className="text-xs text-gray-500">
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
               {files.length} file{files.length !== 1 ? 's' : ''}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={expandAll}
-              className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+              }`}
             >
               {t('diff.expandAll')}
             </button>
             <button
               onClick={collapseAll}
-              className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+              }`}
             >
               {t('diff.collapseAll')}
             </button>
             <button
               onClick={loadDiff}
-              className="p-1 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
+              className={`p-1 rounded transition-colors ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
+              }`}
               title={t('common.refresh')}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -285,6 +303,7 @@ export function DiffViewer({ cwd, mode = 'working', baseBranch }: DiffViewerProp
             file={file}
             isExpanded={expandedFiles.has(file.path)}
             onToggle={() => toggleFile(file.path)}
+            theme={theme}
           />
         ))}
       </div>

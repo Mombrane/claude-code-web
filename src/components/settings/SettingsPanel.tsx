@@ -15,9 +15,10 @@ interface SettingsPanelProps {
   settings: Settings;
   onSave: (settings: Settings) => void;
   onClose: () => void;
+  theme?: 'dark' | 'light';
 }
 
-export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps) {
+export function SettingsPanel({ settings, onSave, onClose, theme = 'dark' }: SettingsPanelProps) {
   const { t, locale, setLocale } = useI18n();
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
 
@@ -36,19 +37,31 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fadeIn">
-      <div className="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className={`border rounded-xl shadow-2xl w-full max-w-md overflow-hidden ${
+        theme === 'dark'
+          ? 'bg-gray-800 border-gray-700'
+          : 'bg-white border-gray-200'
+      }`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700/50 bg-gray-800/50">
+        <div className={`flex items-center justify-between p-4 border-b ${
+          theme === 'dark'
+            ? 'border-gray-700/50 bg-gray-800/50'
+            : 'border-gray-200 bg-gray-50'
+        }`}>
           <div className="flex items-center gap-2">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <h2 className="text-lg font-semibold text-white">{t('settings.title')}</h2>
+            <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{t('settings.title')}</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors"
+            className={`p-1 rounded-md transition-colors ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+            }`}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -60,9 +73,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
         <div className="p-4 space-y-5 max-h-[60vh] overflow-y-auto">
           {/* Language */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               <span className="flex items-center gap-2">
-                <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                 </svg>
                 Language / 语言
@@ -74,7 +87,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                 className={`flex-1 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                   locale === 'en'
                     ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 English
@@ -84,7 +99,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                 className={`flex-1 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                   locale === 'zh'
                     ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 中文
@@ -93,18 +110,20 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
           </div>
 
           {/* Separator */}
-          <div className="border-t border-gray-700/50" />
+          <div className={`border-t ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`} />
 
           {/* Theme */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">{t('settings.theme')}</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('settings.theme')}</label>
             <div className="flex gap-2">
               <button
                 onClick={() => handleChange('theme', 'dark')}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ${
                   localSettings.theme === 'dark'
                     ? 'bg-gray-600/80 text-white border border-gray-500/50'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -117,7 +136,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ${
                   localSettings.theme === 'light'
                     ? 'bg-gray-200 text-gray-900 border border-gray-300'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,11 +151,15 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
 
           {/* Model */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">{t('settings.model')}</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('settings.model')}</label>
             <select
               value={localSettings.model}
               onChange={(e) => handleChange('model', e.target.value)}
-              className="w-full px-3 py-2.5 bg-gray-700/50 text-white rounded-lg border border-gray-600/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
+              className={`w-full px-3 py-2.5 rounded-lg border focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all ${
+                theme === 'dark'
+                  ? 'bg-gray-700/50 text-white border-gray-600/50'
+                  : 'bg-gray-100 text-gray-900 border-gray-200'
+              }`}
             >
               <option value="">{t('settings.modelDefault')}</option>
               <option value="mimo-v2.5-pro">mimo-v2.5-pro</option>
@@ -143,7 +168,7 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
 
           {/* Font Size */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('settings.fontSize')}: <span className="text-blue-400">{localSettings.fontSize}px</span>
             </label>
             <input
@@ -152,17 +177,23 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
               max="24"
               value={localSettings.fontSize}
               onChange={(e) => handleChange('fontSize', parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+              className={`w-full h-2 rounded-lg appearance-none cursor-pointer accent-blue-500 ${
+                theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
+              }`}
             />
           </div>
 
           {/* Tab Size */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">{t('settings.tabSize')}</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('settings.tabSize')}</label>
             <select
               value={localSettings.tabSize}
               onChange={(e) => handleChange('tabSize', parseInt(e.target.value))}
-              className="w-full px-3 py-2.5 bg-gray-700/50 text-white rounded-lg border border-gray-600/50 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all"
+              className={`w-full px-3 py-2.5 rounded-lg border focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 transition-all ${
+                theme === 'dark'
+                  ? 'bg-gray-700/50 text-white border-gray-600/50'
+                  : 'bg-gray-100 text-gray-900 border-gray-200'
+              }`}
             >
               <option value="2">{t('settings.spaces', { count: 2 })}</option>
               <option value="4">{t('settings.spaces', { count: 4 })}</option>
@@ -172,14 +203,16 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
 
           {/* Word Wrap */}
           <div>
-            <label className="block text-sm font-medium text-gray-300 mb-2">{t('settings.wordWrap')}</label>
+            <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('settings.wordWrap')}</label>
             <div className="flex gap-2">
               <button
                 onClick={() => handleChange('wordWrap', 'on')}
                 className={`flex-1 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                   localSettings.wordWrap === 'on'
                     ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 {t('settings.on')}
@@ -189,7 +222,9 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
                 className={`flex-1 px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                   localSettings.wordWrap === 'off'
                     ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
-                    : 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                    : theme === 'dark'
+                      ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
+                      : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
                 }`}
               >
                 {t('settings.off')}
@@ -198,14 +233,16 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
           </div>
 
           {/* Minimap */}
-          <div className="flex items-center justify-between p-3 bg-gray-700/30 rounded-lg">
-            <label htmlFor="minimap" className="text-sm text-gray-300 cursor-pointer">
+          <div className={`flex items-center justify-between p-3 rounded-lg ${
+            theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-100'
+          }`}>
+            <label htmlFor="minimap" className={`text-sm cursor-pointer ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
               {t('settings.minimap')}
             </label>
             <button
               onClick={() => handleChange('minimap', !localSettings.minimap)}
               className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
-                localSettings.minimap ? 'bg-blue-600' : 'bg-gray-600'
+                localSettings.minimap ? 'bg-blue-600' : theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
               }`}
             >
               <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${
@@ -216,16 +253,28 @@ export function SettingsPanel({ settings, onSave, onClose }: SettingsPanelProps)
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-2 p-4 border-t border-gray-700/50 bg-gray-800/30">
+        <div className={`flex justify-end gap-2 p-4 border-t ${
+          theme === 'dark'
+            ? 'border-gray-700/50 bg-gray-800/30'
+            : 'border-gray-200 bg-gray-50'
+        }`}>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-lg transition-colors"
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+            }`}
           >
             {t('settings.cancel')}
           </button>
           <button
             onClick={handleSave}
-            className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg hover:shadow-blue-500/25"
+            className={`px-4 py-2 text-sm text-white rounded-lg transition-colors shadow-lg hover:shadow-blue-500/25 ${
+              theme === 'dark'
+                ? 'bg-blue-600 hover:bg-blue-700'
+                : 'bg-blue-500 hover:bg-blue-600'
+            }`}
           >
             {t('settings.save')}
           </button>

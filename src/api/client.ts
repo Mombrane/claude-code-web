@@ -35,12 +35,14 @@ export const api = {
   async getSessions(options?: {
     projectPath?: string;
     search?: string;
+    tag?: string;
     limit?: number;
     offset?: number;
   }): Promise<Session[]> {
     const params = new URLSearchParams();
     if (options?.projectPath) params.set('projectPath', options.projectPath);
     if (options?.search) params.set('search', options.search);
+    if (options?.tag) params.set('tag', options.tag);
     if (options?.limit) params.set('limit', options.limit.toString());
     if (options?.offset) params.set('offset', options.offset.toString());
     const query = params.toString();
@@ -87,6 +89,20 @@ export const api = {
 
   async deleteSession(id: string): Promise<void> {
     await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
+  },
+
+  async updateSessionTags(id: string, tags: string[]): Promise<Session> {
+    const res = await fetch(`${API_BASE}/sessions/${id}/tags`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tags }),
+    });
+    return res.json();
+  },
+
+  async getAllTags(): Promise<string[]> {
+    const res = await fetch(`${API_BASE}/sessions/tags`);
+    return res.json();
   },
 
   // Files

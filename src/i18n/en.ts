@@ -299,4 +299,13 @@ export default {
   'sidebar.statusFilter': 'Status Filter',
   'sidebar.noFilterResults': 'No {filter} sessions',
   'sidebar.clearFilter': 'Clear filter',
+
+  // Tags
+  'tags.label': 'Tags',
+  'tags.add': 'Add tag',
+  'tags.filter': 'Filter by tag',
+  'tags.all': 'All tags',
+  'tags.none': 'No tags',
+  'tags.edit': 'Edit tags',
+  'tags.placeholder': 'Enter tag name...',
 } as const;

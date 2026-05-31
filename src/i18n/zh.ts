@@ -299,4 +299,13 @@ export default {
   'sidebar.statusFilter': '状态筛选',
   'sidebar.noFilterResults': '没有 {filter} 状态的会话',
   'sidebar.clearFilter': '清除筛选',
+
+  // Tags
+  'tags.label': '标签',
+  'tags.add': '添加标签',
+  'tags.filter': '按标签筛选',
+  'tags.all': '全部标签',
+  'tags.none': '无标签',
+  'tags.edit': '编辑标签',
+  'tags.placeholder': '输入标签名称...',
 } as const;

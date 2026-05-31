@@ -4,6 +4,7 @@ import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 import { formatCost, formatTokens, formatTime, groupSessionsByTime } from '../../utils/format';
+import { TagChip } from '../ui/TagChip';
 import type { Session } from '../../types';
 
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
@@ -26,10 +27,19 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const editInputRef = useRef<HTMLInputElement>(null);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [editingTagsSessionId, setEditingTagsSessionId] = useState<string | null>(null);
+  const [newTagInput, setNewTagInput] = useState('');
+  const tagInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadSessions();
   }, [projectPath]);
+
+  useEffect(() => {
+    loadTags();
+  }, []);
 
   useEffect(() => {
     if (editingSessionId && editInputRef.current) {
@@ -38,12 +48,27 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     }
   }, [editingSessionId]);
 
+  useEffect(() => {
+    if (editingTagsSessionId && tagInputRef.current) {
+      tagInputRef.current.focus();
+    }
+  }, [editingTagsSessionId]);
+
   const loadSessions = async () => {
     try {
       const data = await api.getSessions({ projectPath });
       setSessions(data);
     } catch (e) {
       console.error('Failed to load sessions:', e);
+    }
+  };
+
+  const loadTags = async () => {
+    try {
+      const tags = await api.getAllTags();
+      setAllTags(tags);
+    } catch (e) {
+      console.error('Failed to load tags:', e);
     }
   };
 
@@ -102,6 +127,28 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     }
   };
 
+  const handleUpdateTags = async (sessionId: string, tags: string[]) => {
+    try {
+      await api.updateSessionTags(sessionId, tags);
+      updateSession(sessionId, { tags });
+      loadTags();
+    } catch (e) {
+      console.error('Failed to update tags:', e);
+    }
+  };
+
+  const handleAddTag = (sessionId: string, tag: string, currentTags: string[]) => {
+    const trimmed = tag.trim().toLowerCase();
+    if (trimmed && !currentTags.includes(trimmed)) {
+      handleUpdateTags(sessionId, [...currentTags, trimmed]);
+    }
+    setNewTagInput('');
+  };
+
+  const handleRemoveTag = (sessionId: string, tag: string, currentTags: string[]) => {
+    handleUpdateTags(sessionId, currentTags.filter(t => t !== tag));
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
     if (e.key === 'Enter') {
       handleRenameSession(sessionId);
@@ -129,8 +176,13 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
         session.name.toLowerCase().includes(query)
       );
     }
+    if (tagFilter) {
+      result = result.filter(session =>
+        session.tags && session.tags.includes(tagFilter)
+      );
+    }
     return result;
-  }, [sessions, searchQuery, statusFilter]);
+  }, [sessions, searchQuery, statusFilter, tagFilter]);
 
   const groupedSessions = useMemo(() =>
     groupSessionsByTime(filteredSessions, t),
@@ -205,6 +257,29 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             </button>
           ))}
         </div>
+        {/* Tag filter */}
+        {allTags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            <button
+              onClick={() => setTagFilter(null)}
+              className={`text-[10px] px-1.5 py-0.5 rounded-full transition-all ${
+                tagFilter === null
+                  ? 'bg-gray-600 text-gray-300'
+                  : 'text-gray-500 hover:text-gray-400'
+              }`}
+            >
+              {t('tags.all')}
+            </button>
+            {allTags.map((tag) => (
+              <TagChip
+                key={tag}
+                tag={tag}
+                active={tagFilter === tag}
+                onClick={(tag) => setTagFilter(tagFilter === tag ? null : tag)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Session list */}
@@ -311,7 +386,55 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                                 : session.lastUserMessage}
                             </div>
                           )}
+                          {/* Tags display */}
+                          {session.tags && session.tags.length > 0 && (
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {session.tags.map((tag) => (
+                                <TagChip key={tag} tag={tag} />
+                              ))}
+                            </div>
+                          )}
                         </>
+                      )}
+                      {/* Inline tag editor */}
+                      {editingTagsSessionId === session.id && (
+                        <div className="mt-1" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex flex-wrap gap-1 mb-1">
+                            {(session.tags || []).map((tag) => (
+                              <TagChip
+                                key={tag}
+                                tag={tag}
+                                onRemove={(t) => handleRemoveTag(session.id, t, session.tags || [])}
+                              />
+                            ))}
+                          </div>
+                          <input
+                            ref={tagInputRef}
+                            type="text"
+                            value={newTagInput}
+                            onChange={(e) => setNewTagInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && newTagInput.trim()) {
+                                handleAddTag(session.id, newTagInput, session.tags || []);
+                              } else if (e.key === 'Escape') {
+                                setEditingTagsSessionId(null);
+                                setNewTagInput('');
+                              }
+                            }}
+                            onBlur={() => {
+                              setTimeout(() => {
+                                setEditingTagsSessionId(null);
+                                setNewTagInput('');
+                              }, 150);
+                            }}
+                            placeholder={t('tags.placeholder')}
+                            className={`w-full text-[11px] px-1.5 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${
+                              theme === 'dark'
+                                ? 'bg-gray-600 text-white placeholder-gray-400'
+                                : 'bg-gray-200 text-gray-800 placeholder-gray-500'
+                            }`}
+                          />
+                        </div>
                       )}
                       <div className="flex items-center gap-2 text-[11px] text-gray-500">
                         <span>{formatTime(session.updatedAt, locale)}</span>
@@ -378,6 +501,22 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingTagsSessionId(editingTagsSessionId === session.id ? null : session.id);
+                          }}
+                          className={`p-1 rounded transition-colors ${
+                            editingTagsSessionId === session.id
+                              ? 'text-blue-400 bg-blue-500/10'
+                              : 'text-gray-500 hover:text-white hover:bg-gray-600/50'
+                          }`}
+                          title={t('tags.edit')}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                           </svg>
                         </button>
                         <button

@@ -60,6 +60,7 @@ export class SessionStore {
   async getAllSessions(options?: {
     projectPath?: string;
     search?: string;
+    tag?: string;
     limit?: number;
     offset?: number;
   }): Promise<Session[]> {
@@ -89,6 +90,13 @@ export class SessionStore {
         const query = options.search.toLowerCase();
         sessions = sessions.filter(s =>
           s.name.toLowerCase().includes(query)
+        );
+      }
+
+      // Filter by tag
+      if (options?.tag) {
+        sessions = sessions.filter(s =>
+          s.tags && s.tags.includes(options.tag!)
         );
       }
 
@@ -162,6 +170,28 @@ export class SessionStore {
     session.name = name;
     await this.saveSession(session);
     return true;
+  }
+
+  async updateSessionTags(sessionId: string, tags: string[]): Promise<boolean> {
+    const session = await this.getSession(sessionId);
+    if (!session) return false;
+
+    session.tags = tags;
+    await this.saveSession(session);
+    return true;
+  }
+
+  async getAllTags(): Promise<string[]> {
+    const sessions = await this.getAllSessions();
+    const tagSet = new Set<string>();
+    for (const session of sessions) {
+      if (session.tags) {
+        for (const tag of session.tags) {
+          tagSet.add(tag);
+        }
+      }
+    }
+    return Array.from(tagSet).sort();
   }
 
   async resetActiveSessions(): Promise<void> {

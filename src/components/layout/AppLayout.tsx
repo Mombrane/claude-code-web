@@ -412,6 +412,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           settings={settings}
           onSave={setSettings}
           onClose={() => setShowSettings(false)}
+          theme={settings.theme}
         />
       )}
 

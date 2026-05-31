@@ -11,6 +11,7 @@ export interface Session {
   totalTokens: number;
   lastUserMessage?: string;
   pinned?: boolean;
+  tags?: string[];
 }
 
 export interface Project {

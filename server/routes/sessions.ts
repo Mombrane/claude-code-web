@@ -5,13 +5,24 @@ import { readTranscript } from '../services/claude-transcript';
 
 const router = Router();
 
+// Get all tags (must be before /:id to avoid being caught by the parameter route)
+router.get('/tags', async (req: Request, res: Response) => {
+  try {
+    const tags = await sessionStore.getAllTags();
+    res.json(tags);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to get tags' });
+  }
+});
+
 // Get all sessions
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const { projectPath, search, limit, offset } = req.query;
+    const { projectPath, search, tag, limit, offset } = req.query;
     const sessions = await sessionStore.getAllSessions({
       projectPath: projectPath as string,
       search: search as string,
+      tag: tag as string,
       limit: limit ? parseInt(limit as string) : undefined,
       offset: offset ? parseInt(offset as string) : undefined,
     });
@@ -120,6 +131,25 @@ router.patch('/:id/pin', async (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to toggle pin' });
+  }
+});
+
+// Update session tags
+router.patch('/:id/tags', async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const { tags } = req.body;
+    if (!Array.isArray(tags)) {
+      return res.status(400).json({ error: 'tags must be an array of strings' });
+    }
+    const success = await sessionStore.updateSessionTags(id, tags);
+    if (!success) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    const session = await sessionStore.getSession(id);
+    res.json(session);
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to update tags' });
   }
 });
 
