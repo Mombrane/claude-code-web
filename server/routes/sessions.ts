@@ -53,6 +53,38 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
+// Duplicate a session (must be before /:id to avoid route conflicts)
+router.post('/:id/duplicate', async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const source = await sessionStore.getSession(id);
+    if (!source) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    const now = new Date().toISOString();
+    const newSession = {
+      id: crypto.randomUUID(),
+      name: `${source.name} (copy)`,
+      cwd: source.cwd,
+      projectPath: source.projectPath,
+      model: source.model,
+      createdAt: now,
+      updatedAt: now,
+      status: 'idle' as const,
+      totalCostUsd: 0,
+      totalTokens: 0,
+      pinned: false,
+      tags: source.tags ? [...source.tags] : undefined,
+      notes: source.notes ? source.notes : undefined,
+    };
+    await sessionStore.saveSession(newSession);
+    res.status(201).json(newSession);
+  } catch (e) {
+    console.error('Failed to duplicate session:', e);
+    res.status(500).json({ error: 'Failed to duplicate session' });
+  }
+});
+
 // Get single session
 router.get('/:id', async (req: Request, res: Response) => {
   try {

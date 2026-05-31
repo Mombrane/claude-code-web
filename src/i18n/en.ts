@@ -13,6 +13,7 @@ export default {
   'sidebar.createFirst': 'Create your first session',
   'sidebar.rename': 'Rename',
   'sidebar.delete': 'Delete',
+  'sidebar.duplicate': 'Duplicate',
   'sidebar.pin': 'Pin',
   'sidebar.unpin': 'Unpin',
   'sidebar.refresh': 'Refresh',
@@ -174,6 +175,7 @@ export default {
   'command.toggleGit': 'Toggle Git Panel',
   'command.openSettings': 'Open Settings',
   'command.toggleSidebar': 'Toggle Sidebar',
+  'command.duplicateSession': 'Duplicate Session',
 
   // Status bar
   'status.connected': 'Connected',
@@ -266,6 +268,7 @@ export default {
   'shortcuts.retry': 'Retry last message',
 
   'shortcuts.toggleSidebar': 'Toggle sidebar',
+  'shortcuts.duplicateSession': 'Duplicate current session',
   'diff.stagedChanges': 'Staged Changes',
   'diff.branchDiff': 'Branch Diff',
   'diff.workingChanges': 'Working Changes',
@@ -278,6 +281,7 @@ export default {
   'toast.exportFailed': 'Export failed',
   'toast.sessionCreated': 'Session created',
   'toast.sessionDeleted': 'Session deleted',
+  'toast.sessionDuplicated': 'Session duplicated',
 
   // Session rename
   'session.rename': 'Rename',
@@ -352,4 +356,9 @@ export default {
   'session.notes.placeholder': 'Add notes...',
   'session.notes.hasNotes': 'Has notes',
   'session.notes.updated': 'Notes updated',
+
+  // Session context info
+  'chat.sessionModel': 'Model',
+  'chat.sessionPath': 'Path',
+  'chat.sessionAge': 'Session age',
 } as const;

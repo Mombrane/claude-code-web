@@ -22,6 +22,32 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const streamingTextRef = useRef<string>('');
   const streamingThinkingRef = useRef<string>('');
 
+  // Compute session context info for header display
+  const sessionModelDisplay = useMemo(() => {
+    if (!currentSession?.model) return null;
+    return currentSession.model.split('/').pop() ?? currentSession.model;
+  }, [currentSession?.model]);
+
+  const sessionPathDisplay = useMemo(() => {
+    if (!currentSession?.cwd) return null;
+    const parts = currentSession.cwd.split('/').filter(Boolean);
+    return parts.slice(-2).join('/');
+  }, [currentSession?.cwd]);
+
+  const sessionAgeDisplay = useMemo(() => {
+    if (!currentSession?.createdAt) return null;
+    const now = Date.now();
+    const created = new Date(currentSession.createdAt).getTime();
+    if (isNaN(created)) return null;
+    const diffMs = now - created;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    if (diffMin < 60) return `${diffMin}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    return `${diffDays}d`;
+  }, [currentSession?.createdAt]);
+
   // Compute last assistant message cost and token breakdown for header display
   const lastAssistantStats = useMemo(() => {
     for (let i = currentMessages.length - 1; i >= 0; i--) {
@@ -482,6 +508,22 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
         theme === 'dark' ? 'border-gray-700/50 bg-gray-800/30' : 'border-gray-200 bg-white/50'
       }`}>
         <div className="flex items-center gap-3">
+          {sessionModelDisplay && (
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+              🤖 {sessionModelDisplay}
+            </span>
+          )}
+          {sessionPathDisplay && (
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+              📁 {sessionPathDisplay}
+            </span>
+          )}
+          {sessionAgeDisplay && (
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+              ⏱ {sessionAgeDisplay}
+            </span>
+          )}
+          {sessionModelDisplay && <span className={`text-xs ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`}>·</span>}
           <div className="flex items-center gap-2">
             <div className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-blue-400 animate-pulse' : 'bg-green-400'}`} />
             <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>

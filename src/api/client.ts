@@ -93,6 +93,13 @@ export const api = {
     await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
   },
 
+  async duplicateSession(id: string): Promise<Session> {
+    const res = await fetch(`${API_BASE}/sessions/${id}/duplicate`, {
+      method: 'POST',
+    });
+    return res.json();
+  },
+
   async updateSessionTags(id: string, tags: string[]): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions/${id}/tags`, {
       method: 'PATCH',

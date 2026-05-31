@@ -13,6 +13,7 @@ export default {
   'sidebar.createFirst': '创建第一个会话',
   'sidebar.rename': '重命名',
   'sidebar.delete': '删除',
+  'sidebar.duplicate': '复制会话',
   'sidebar.pin': '置顶',
   'sidebar.unpin': '取消置顶',
   'sidebar.refresh': '刷新',
@@ -174,6 +175,7 @@ export default {
   'command.toggleGit': '切换 Git 面板',
   'command.openSettings': '打开设置',
   'command.toggleSidebar': '切换侧边栏',
+  'command.duplicateSession': '复制当前会话',
 
   // Status bar
   'status.connected': '已连接',
@@ -266,6 +268,7 @@ export default {
   'shortcuts.retry': '重试上一条消息',
 
   'shortcuts.toggleSidebar': '切换侧边栏',
+  'shortcuts.duplicateSession': '复制当前会话',
   'diff.stagedChanges': '暂存更改',
   'diff.branchDiff': '分支差异',
   'diff.workingChanges': '工作更改',
@@ -278,6 +281,7 @@ export default {
   'toast.exportFailed': '导出失败',
   'toast.sessionCreated': '会话已创建',
   'toast.sessionDeleted': '会话已删除',
+  'toast.sessionDuplicated': '会话已复制',
 
   // Session rename
   'session.rename': '重命名',
@@ -352,4 +356,9 @@ export default {
   'session.notes.placeholder': '添加备注...',
   'session.notes.hasNotes': '有备注',
   'session.notes.updated': '备注已更新',
+
+  // Session context info
+  'chat.sessionModel': '模型',
+  'chat.sessionPath': '路径',
+  'chat.sessionAge': '会话时长',
 } as const;

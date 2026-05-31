@@ -106,6 +106,20 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
     { id: 'toggle-git', label: t('command.toggleGit'), shortcut: 'Ctrl+G', action: () => setRightPanel(prev => prev === 'git' ? 'none' : 'git') },
     { id: 'open-settings', label: t('command.openSettings'), shortcut: 'Ctrl+,', action: () => setShowSettings(true) },
     { id: 'toggle-sidebar', label: t('command.toggleSidebar'), shortcut: 'Ctrl+B', action: () => setSidebarCollapsed(prev => !prev) },
+    { id: 'duplicate-session', label: t('command.duplicateSession'), shortcut: 'Ctrl+D', action: async () => {
+        const state = useSessionStore.getState();
+        const { currentSessionId } = state;
+        if (!currentSessionId) return;
+        const { api } = await import('../../api/client');
+        const current = state.sessions.find(s => s.id === currentSessionId);
+        if (!current) return;
+        const newSession = await api.duplicateSession(currentSessionId);
+        state.addSession(newSession);
+        state.setCurrentSession(newSession.id);
+        const dir = encodePath(newSession.projectPath || newSession.cwd);
+        navigate(`/${dir}/session/${newSession.id}`);
+      }
+    },
   ];
 
   const handleCommandSelect = useCallback((commandId: string) => {
@@ -163,6 +177,25 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           const dir = encodePath(projectPath);
           navigate(`/${dir}/session`);
         }
+      }
+      // Ctrl+D: Duplicate session
+      if (e.ctrlKey && e.key === 'd') {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        const state = useSessionStore.getState();
+        const { currentSessionId } = state;
+        if (!currentSessionId) return;
+        (async () => {
+          const { api } = await import('../../api/client');
+          const current = state.sessions.find(s => s.id === currentSessionId);
+          if (!current) return;
+          const newSession = await api.duplicateSession(currentSessionId);
+          state.addSession(newSession);
+          state.setCurrentSession(newSession.id);
+          const dir = encodePath(newSession.projectPath || newSession.cwd);
+          navigate(`/${dir}/session/${newSession.id}`);
+        })();
       }
       // Ctrl+Shift+T: Toggle theme
       if (e.ctrlKey && e.shiftKey && (e.key === 'T' || e.key === 't')) {
