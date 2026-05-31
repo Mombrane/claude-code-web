@@ -345,4 +345,11 @@ export default {
   'session.tooltip.tokens': 'Tokens',
   'session.tooltip.model': 'Model',
   'session.tooltip.status': 'Status',
+
+  // Session notes
+  'session.notes': 'Notes',
+  'session.notes.edit': 'Edit Notes',
+  'session.notes.placeholder': 'Add notes...',
+  'session.notes.hasNotes': 'Has notes',
+  'session.notes.updated': 'Notes updated',
 } as const;

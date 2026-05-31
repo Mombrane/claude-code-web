@@ -5,6 +5,7 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
+import { SessionNotesDialog } from '../ui/SessionNotesDialog';
 import { useToast } from '../ui/ToastProvider';
 import type { Session } from '../../types';
 
@@ -35,6 +36,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const [editingTagsSessionId, setEditingTagsSessionId] = useState<string | null>(null);
   const [newTagInput, setNewTagInput] = useState('');
   const tagInputRef = useRef<HTMLInputElement>(null);
+  const [editingNotesSessionId, setEditingNotesSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     loadSessions();
@@ -176,6 +178,16 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     handleUpdateTags(sessionId, currentTags.filter(t => t !== tag));
   };
 
+  const handleSaveNotes = async (sessionId: string, notes: string) => {
+    try {
+      await api.updateSession(sessionId, { notes });
+      updateSession(sessionId, { notes });
+      toast.success(t('session.notes.updated'));
+    } catch (e) {
+      console.error('Failed to save notes:', e);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent, sessionId: string) => {
     if (e.key === 'Enter') {
       handleRenameSession(sessionId);
@@ -212,6 +224,9 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       lines.push(`${t('session.tooltip.model')}: ${session.model.split('/').pop()}`);
     }
     lines.push(`${t('session.tooltip.status')}: ${t(`sidebar.filter.${session.status}`)}`);
+    if (session.notes) {
+      lines.push(`${t('session.notes')}: ${session.notes}`);
+    }
     return lines.join('\n');
   };
 
@@ -477,6 +492,21 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                             </div>
                           )}
                           {/* Tags display */}
+                          {session.notes && (
+                            <div
+                              className={`inline-flex items-center gap-1 mt-1 text-[11px] cursor-pointer transition-colors ${
+                                theme === 'dark' ? 'text-yellow-400/70 hover:text-yellow-300' : 'text-yellow-600 hover:text-yellow-700'
+                              }`}
+                              title={session.notes}
+                              onDoubleClick={(e) => {
+                                e.stopPropagation();
+                                setEditingNotesSessionId(session.id);
+                              }}
+                            >
+                              <span> </span>
+                              <span className="truncate max-w-[160px]">{session.notes.length > 30 ? session.notes.slice(0, 30) + '...' : session.notes}</span>
+                            </div>
+                          )}
                           {session.tags && session.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {session.tags.map((tag) => (
@@ -614,6 +644,22 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           </svg>
                         </button>
                         <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingNotesSessionId(session.id);
+                          }}
+                          className={`p-1 rounded transition-colors ${
+                            editingNotesSessionId === session.id
+                              ? 'text-yellow-400 bg-yellow-500/10'
+                              : `text-gray-500 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-600/50' : 'hover:text-gray-900 hover:bg-gray-200'}`
+                          }`}
+                          title={t('session.notes.edit')}
+                        >
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
                           onClick={(e) => handleDeleteSession(session.id, e)}
                           className="p-1 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors"
                           title={t('sidebar.delete')}
@@ -647,6 +693,17 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
           </button>
         </div>
       </div>
+
+      {/* Notes edit dialog */}
+      {editingNotesSessionId && (
+        <SessionNotesDialog
+          sessionId={editingNotesSessionId}
+          initialNotes={sessions.find(s => s.id === editingNotesSessionId)?.notes || ''}
+          theme={theme}
+          onSave={handleSaveNotes}
+          onClose={() => setEditingNotesSessionId(null)}
+        />
+      )}
     </div>
   );
 }

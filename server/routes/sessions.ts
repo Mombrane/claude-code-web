@@ -88,9 +88,15 @@ router.get('/:id/messages', async (req: Request, res: Response) => {
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
     const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-    const { name } = req.body;
-    if (name) {
-      const success = await sessionStore.updateSessionName(id, name);
+    const allowedFields = ['name', 'notes', 'model', 'cwd', 'status', 'lastUserMessage', 'pinned', 'tags'] as const;
+    const updates: Record<string, unknown> = {};
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    }
+    if (Object.keys(updates).length > 0) {
+      const success = await sessionStore.updateSession(id, updates as Parameters<typeof sessionStore.updateSession>[1]);
       if (!success) {
         return res.status(404).json({ error: 'Session not found' });
       }

@@ -345,4 +345,11 @@ export default {
   'session.tooltip.tokens': '令牌',
   'session.tooltip.model': '模型',
   'session.tooltip.status': '状态',
+
+  // Session notes
+  'session.notes': '备注',
+  'session.notes.edit': '编辑备注',
+  'session.notes.placeholder': '添加备注...',
+  'session.notes.hasNotes': '有备注',
+  'session.notes.updated': '备注已更新',
 } as const;

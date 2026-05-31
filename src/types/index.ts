@@ -12,6 +12,7 @@ export interface Session {
   lastUserMessage?: string;
   pinned?: boolean;
   tags?: string[];
+  notes?: string;
   matchSnippet?: string;
 }
 
