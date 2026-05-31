@@ -9,6 +9,7 @@ import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import type { StreamEvent, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
+import { formatTokens } from '../../utils/format';
 
 export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
@@ -21,15 +22,20 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const streamingTextRef = useRef<string>('');
   const streamingThinkingRef = useRef<string>('');
 
-  // Compute last assistant message cost for header display
-  const lastAssistantCost = useMemo(() => {
+  // Compute last assistant message cost and token breakdown for header display
+  const lastAssistantStats = useMemo(() => {
     for (let i = currentMessages.length - 1; i >= 0; i--) {
       const msg = currentMessages[i];
-      if (msg.role === 'assistant' && msg.type === 'text' && msg.costUsd != null && msg.costUsd > 0) {
-        return msg.costUsd;
+      if (msg.role === 'assistant' && msg.type === 'text') {
+        return {
+          costUsd: msg.costUsd != null && msg.costUsd > 0 ? msg.costUsd : null,
+          inputTokens: msg.inputTokens ?? null,
+          outputTokens: msg.outputTokens ?? null,
+          tokens: msg.tokens ?? null,
+        };
       }
     }
-    return null;
+    return { costUsd: null, inputTokens: null, outputTokens: null, tokens: null };
   }, [currentMessages]);
   // Maps for tool_use / tool_result pairing
   const toolExecutionIdMap = useRef<Map<string, { msgId: string; content: ToolExecutionContent }>>(new Map()); // toolUseId → { msgId, content }
@@ -249,6 +255,8 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
         const costUsd = message.payload.costUsd as number | undefined;
         const usage = message.payload.usage as Record<string, number> | undefined;
         const tokens = usage ? (usage.input_tokens || 0) + (usage.output_tokens || 0) : undefined;
+        const inputTokens = usage?.input_tokens ?? undefined;
+        const outputTokens = usage?.output_tokens ?? undefined;
 
         // Add accumulated thinking as a message if present
         const thinkingText = streamingThinkingRef.current;
@@ -277,6 +285,8 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
             sessionId: currentSessionId,
             costUsd: costUsd ?? undefined,
             tokens: tokens ?? undefined,
+            inputTokens: inputTokens ?? undefined,
+            outputTokens: outputTokens ?? undefined,
           });
           streamingTextRef.current = '';
           setStreamingText('');
@@ -287,6 +297,8 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
             updateMessage(lastAssistant.id, {
               costUsd: lastAssistant.costUsd ?? costUsd ?? undefined,
               tokens: lastAssistant.tokens ?? tokens ?? undefined,
+              inputTokens: lastAssistant.inputTokens ?? inputTokens ?? undefined,
+              outputTokens: lastAssistant.outputTokens ?? outputTokens ?? undefined,
             });
           }
         }
@@ -473,9 +485,18 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
               · {currentSession.totalTokens < 1000 ? currentSession.totalTokens : `${(currentSession.totalTokens / 1000).toFixed(1)}k`} {t('chat.tokens')}
             </span>
           )}
-          {lastAssistantCost != null && (
+          {(lastAssistantStats.inputTokens != null || lastAssistantStats.outputTokens != null) ? (
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} title="Input / Output tokens (last message)">
+              📥 {formatTokens(lastAssistantStats.inputTokens ?? 0, t)} / 📤 {formatTokens(lastAssistantStats.outputTokens ?? 0, t)}
+            </span>
+          ) : lastAssistantStats.tokens != null && lastAssistantStats.tokens > 0 ? (
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+              · {formatTokens(lastAssistantStats.tokens, t)}
+            </span>
+          ) : null}
+          {lastAssistantStats.costUsd != null && (
             <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} title={t('chat.lastMessageCost')}>
-              ({t('chat.cost', { amount: lastAssistantCost.toFixed(2) })})
+              ({t('chat.cost', { amount: lastAssistantStats.costUsd.toFixed(2) })})
             </span>
           )}
         </div>

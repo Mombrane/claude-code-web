@@ -381,7 +381,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         {/* Center Panel */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {selectedFile ? (
-            <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} />
+            <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} theme={theme} />
           ) : (
             <ChatPanel theme={theme} />
           )}
@@ -396,7 +396,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         {/* Right Panel */}
         {rightPanel === 'git' && (
           <div className={`w-80 border-l animate-slideIn ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
-            {cwd ? <GitPanel cwd={cwd} /> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
+            {cwd ? <GitPanel cwd={cwd} theme={theme} /> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
           </div>
         )}
       </div>

@@ -14,9 +14,10 @@ interface FileEditorProps {
   filePath: string;
   onClose: () => void;
   settings?: EditorSettings;
+  theme?: 'dark' | 'light';
 }
 
-export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
+export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: FileEditorProps) {
   const { t } = useI18n();
   const [content, setContent] = useState<string>('');
   const [originalContent, setOriginalContent] = useState<string>('');
@@ -124,41 +125,49 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
   return (
     <div className="flex flex-col h-full bg-gradient-subtle">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2 bg-gray-800/60 border-b border-gray-700/50">
+      <div className={`flex items-center justify-between px-4 py-2 border-b ${
+        theme === 'dark'
+          ? 'bg-gray-800/60 border-gray-700/50'
+          : 'bg-gray-50 border-gray-200'
+      }`}>
         <div className="flex items-center gap-3">
           {/* File icon */}
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-            <span className="text-white text-sm font-medium">{fileName}</span>
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{fileName}</span>
             {isModified && (
               <span className="w-2 h-2 rounded-full bg-yellow-400" title={t('editor.modified')} />
             )}
           </div>
 
           {/* Breadcrumb */}
-          <div className="flex items-center gap-1 text-xs text-gray-500">
+          <div className={`flex items-center gap-1 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
             <span>{directory}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
           {/* File info */}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
+          <div className={`flex items-center gap-3 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
             <span>{language}</span>
             <span>{totalLines} lines</span>
             <span>{formatSize(fileSize)}</span>
           </div>
 
           {/* Separator */}
-          <div className="w-px h-4 bg-gray-700/50" />
+          <div className={`w-px h-4 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`} />
 
           {/* Actions */}
           {isModified && (
             <button
               onClick={handleRevert}
-              className="px-2 py-1 text-xs text-gray-400 hover:text-white hover:bg-gray-700/50 rounded transition-colors"
+              className={`px-2 py-1 text-xs rounded transition-colors ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+              }`}
               title={t('editor.revert')}
             >
               {t('editor.revert')}
@@ -188,7 +197,11 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
           </button>
           <button
             onClick={onClose}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-colors"
+            className={`p-1.5 rounded-md transition-colors ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+            }`}
             title={t('editor.close')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +234,11 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
             Monaco Editor failed to load. Using basic editor. Check your network connection.
           </div>
           <textarea
-            className="flex-1 w-full bg-[#1e1e1e] text-gray-200 p-4 font-mono text-sm resize-none focus:outline-none"
+            className={`flex-1 w-full p-4 font-mono text-sm resize-none focus:outline-none ${
+              theme === 'dark'
+                ? 'bg-[#1e1e1e] text-gray-200'
+                : 'bg-white text-gray-900'
+            }`}
             value={content}
             onChange={(e) => handleChange(e.target.value)}
             spellCheck={false}
@@ -234,7 +251,7 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
             <svg className="w-8 h-8 mx-auto mb-3 animate-spin text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <p className="text-gray-400 text-sm">Loading editor...</p>
+            <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Loading editor...</p>
           </div>
         </div>
       ) : null}
@@ -247,7 +264,7 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
           value={content}
           onChange={handleChange}
           onMount={handleEditorMount}
-          theme="vs-dark"
+          theme={theme === 'dark' ? 'vs-dark' : 'vs'}
           options={{
             minimap: { enabled: settings?.minimap ?? false },
             fontSize: settings?.fontSize ?? 14,
@@ -271,7 +288,11 @@ export function FileEditor({ filePath, onClose, settings }: FileEditorProps) {
       </div>
 
       {/* Status bar */}
-      <div className="flex items-center justify-between px-4 py-1.5 bg-gray-800/60 border-t border-gray-700/50 text-[11px] text-gray-500">
+      <div className={`flex items-center justify-between px-4 py-1.5 border-t text-[11px] ${
+        theme === 'dark'
+          ? 'bg-gray-800/60 border-gray-700/50 text-gray-500'
+          : 'bg-gray-50 border-gray-200 text-gray-400'
+      }`}>
         <div className="flex items-center gap-4">
           <span>Ln {cursorPosition.line}, Col {cursorPosition.column}</span>
           <span>{language}</span>

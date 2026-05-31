@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
 import { Toast, type ToastData } from './Toast';
+import { useTheme } from './ThemeProvider';
 
 interface ToastContextType {
   toast: {
@@ -17,6 +18,7 @@ const MAX_TOASTS = 5;
 
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
+  const { theme } = useTheme();
 
   const addToast = useCallback((message: string, type: ToastData['type']) => {
     const id = `toast-${++toastIdCounter}`;
@@ -53,6 +55,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               message={t.message}
               type={t.type}
               onDismiss={dismissToast}
+              theme={theme}
             />
           ))}
         </div>

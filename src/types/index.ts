@@ -47,6 +47,8 @@ export interface Message {
   sessionId: string;
   costUsd?: number;
   tokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 export interface ToolCallContent {
