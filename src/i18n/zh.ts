@@ -205,6 +205,7 @@ export default {
   'tool.running': '运行中',
   'tool.completed': '已完成',
   'tool.noOutput': '（无输出）',
+  'tool.fileWritten': '文件写入成功',
   'tool.input': '输入',
   'tool.groupSummary': '{count} 个工具已执行',
   'tool.groupExpanded': '已展开',

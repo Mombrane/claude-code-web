@@ -205,6 +205,7 @@ export default {
   'tool.running': 'Running',
   'tool.completed': 'Completed',
   'tool.noOutput': '(no output)',
+  'tool.fileWritten': 'File written successfully',
   'tool.input': 'Input',
   'tool.groupSummary': '{count} tools executed',
   'tool.groupExpanded': 'expanded',

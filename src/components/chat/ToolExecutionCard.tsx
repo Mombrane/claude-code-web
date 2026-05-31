@@ -276,6 +276,50 @@ function PlainTextResult({ output, theme }: { output: string; theme: 'dark' | 'l
   );
 }
 
+function WriteResult({ output, input, theme }: { output: string; input: Record<string, unknown>; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
+  const filePath = (input.file_path as string) || '';
+  return (
+    <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
+      <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
+        <span className="text-sm">✏️</span>
+        <span className={`text-sm font-mono ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{filePath}</span>
+      </div>
+      <div className="p-3">
+        {output ? (
+          <pre className={`text-sm overflow-x-auto font-mono whitespace-pre-wrap break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+            {output}
+          </pre>
+        ) : (
+          <span className={`text-sm font-mono ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+            {t('tool.fileWritten')}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WebResult({ output, input, theme }: { output: string; input: Record<string, unknown>; theme: 'dark' | 'light' }) {
+  const { t } = useI18n();
+  const url = (input.url as string) || (input.query as string) || '';
+  return (
+    <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
+      {url && (
+        <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
+          <span className="text-sm"> </span>
+          <span className={`text-sm font-mono truncate ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>{url}</span>
+        </div>
+      )}
+      <div className="p-3">
+        <pre className={`text-sm font-mono whitespace-pre-wrap break-words ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+          {output || t('tool.noOutput')}
+        </pre>
+      </div>
+    </div>
+  );
+}
+
 // ---- ToolExecutionCard — unified tool call + result ----
 
 export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: {
@@ -341,9 +385,14 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
         return <ReadResult output={displayOutput} input={execution.input} theme={theme} />;
       case 'Edit':
         return <EditResult output={displayOutput} input={execution.input} theme={theme} />;
+      case 'Write':
+        return <WriteResult output={displayOutput} input={execution.input} theme={theme} />;
       case 'Grep':
       case 'Glob':
         return <GrepGlobResult output={displayOutput} theme={theme} />;
+      case 'WebFetch':
+      case 'WebSearch':
+        return <WebResult output={displayOutput} input={execution.input} theme={theme} />;
       default:
         return <PlainTextResult output={displayOutput} theme={theme} />;
     }

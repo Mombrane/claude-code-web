@@ -211,7 +211,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
           <button
             onClick={handleCreateSession}
             disabled={isCreating}
-            className="p-1.5 text-gray-400 hover:text-white hover:bg-gray-700/50 rounded-md transition-all duration-200"
+            className={`p-1.5 text-gray-400 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-700/50' : 'hover:text-gray-900 hover:bg-gray-200'} rounded-md transition-all duration-200`}
             title={t('sidebar.newSessionTooltip')}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -264,7 +264,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
               onClick={() => setTagFilter(null)}
               className={`text-[10px] px-1.5 py-0.5 rounded-full transition-all ${
                 tagFilter === null
-                  ? 'bg-gray-600 text-gray-300'
+                  ? theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-700'
                   : 'text-gray-500 hover:text-gray-400'
               }`}
             >
@@ -368,7 +368,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           onChange={(e) => setEditName(e.target.value)}
                           onBlur={() => handleRenameSession(session.id)}
                           onKeyDown={(e) => handleKeyDown(e, session.id)}
-                          className="w-full bg-gray-600 text-white text-sm px-1 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className={`w-full text-sm px-1 py-0.5 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 ${theme === 'dark' ? 'bg-gray-600 text-white' : 'bg-white text-gray-800 border border-gray-300'}`}
                           onClick={(e) => e.stopPropagation()}
                         />
                       ) : (
@@ -506,7 +506,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                         )}
                         <button
                           onClick={(e) => handleStartRename(session, e)}
-                          className="p-1 text-gray-500 hover:text-white hover:bg-gray-600/50 rounded transition-colors"
+                          className={`p-1 text-gray-500 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-600/50' : 'hover:text-gray-900 hover:bg-gray-200'} rounded transition-colors`}
                           title={t('sidebar.rename')}
                         >
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -521,7 +521,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           className={`p-1 rounded transition-colors ${
                             editingTagsSessionId === session.id
                               ? 'text-blue-400 bg-blue-500/10'
-                              : 'text-gray-500 hover:text-white hover:bg-gray-600/50'
+                              : `text-gray-500 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-600/50' : 'hover:text-gray-900 hover:bg-gray-200'}`
                           }`}
                           title={t('tags.edit')}
                         >
@@ -549,12 +549,12 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       </div>
 
       {/* Footer */}
-      <div className="p-3 border-t border-gray-700/50">
+      <div className={`p-3 border-t ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
         <div className="flex items-center justify-between text-xs text-gray-500">
           <span>{t('sidebar.sessionCount', { count: sessions.length })} · {formatCost(totalCost, t)} · {formatTokens(totalTokens, t)}</span>
           <button
             onClick={loadSessions}
-            className="p-1 hover:text-gray-300 hover:bg-gray-700/50 rounded transition-colors"
+            className={`p-1 ${theme === 'dark' ? 'hover:text-gray-300 hover:bg-gray-700/50' : 'hover:text-gray-700 hover:bg-gray-200'} rounded transition-colors`}
             title={t('sidebar.refresh')}
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
