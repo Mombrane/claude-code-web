@@ -13,6 +13,8 @@ export default {
   'sidebar.createFirst': 'Create your first session',
   'sidebar.rename': 'Rename',
   'sidebar.delete': 'Delete',
+  'sidebar.pin': 'Pin',
+  'sidebar.unpin': 'Unpin',
   'sidebar.refresh': 'Refresh',
   'sidebar.title': 'Sidebar',
   'sidebar.newSessionTooltip': 'New Session (Ctrl+N)',
@@ -205,6 +207,8 @@ export default {
   'tool.groupSummary': '{count} tools executed',
   'tool.groupExpanded': 'expanded',
   'tool.groupCollapsed': 'collapsed',
+  'tool.showMore': 'Show more',
+  'tool.showLess': 'Show less',
 
   // Step labels
   'step.label': 'Step',

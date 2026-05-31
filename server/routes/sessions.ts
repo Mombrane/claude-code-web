@@ -109,4 +109,18 @@ router.delete('/:id', async (req: Request, res: Response) => {
   }
 });
 
+// Toggle pin on a session
+router.patch('/:id/pin', async (req: Request, res: Response) => {
+  try {
+    const sessionId = req.params.id as string;
+    const { pinned } = req.body;
+    const session = await sessionStore.getSession(sessionId);
+    if (!session) return res.status(404).json({ error: 'Session not found' });
+    await sessionStore.updateSession(sessionId, { pinned: !!pinned });
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to toggle pin' });
+  }
+});
+
 export default router;

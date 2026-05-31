@@ -12,6 +12,7 @@ export interface Session {
   totalCostUsd: number;
   totalTokens: number;
   lastUserMessage?: string;
+  pinned?: boolean;
 }
 
 export interface Project {

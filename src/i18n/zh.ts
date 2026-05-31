@@ -13,6 +13,8 @@ export default {
   'sidebar.createFirst': '创建第一个会话',
   'sidebar.rename': '重命名',
   'sidebar.delete': '删除',
+  'sidebar.pin': '置顶',
+  'sidebar.unpin': '取消置顶',
   'sidebar.refresh': '刷新',
   'sidebar.title': '侧边栏',
   'sidebar.newSessionTooltip': '新建会话 (Ctrl+N)',
@@ -205,6 +207,8 @@ export default {
   'tool.groupSummary': '{count} 个工具已执行',
   'tool.groupExpanded': '已展开',
   'tool.groupCollapsed': '已折叠',
+  'tool.showMore': '展开全部',
+  'tool.showLess': '收起',
 
   // Step labels
   'step.label': '步骤',

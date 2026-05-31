@@ -41,6 +41,7 @@ export class SessionStore {
       status: 'active',
       totalCostUsd: 0,
       totalTokens: 0,
+      pinned: false,
     };
 
     await this.saveSession(session);
@@ -91,10 +92,12 @@ export class SessionStore {
         );
       }
 
-      // Sort by updated time
-      sessions.sort((a, b) =>
-        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-      );
+      // Sort: pinned sessions first, then by updated time
+      sessions.sort((a, b) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+      });
 
       // Apply pagination
       if (options?.offset) {
@@ -143,7 +146,7 @@ export class SessionStore {
     }
   }
 
-  async updateSession(sessionId: string, updates: Partial<Pick<Session, 'name' | 'cwd' | 'model' | 'status' | 'lastUserMessage'>>): Promise<boolean> {
+  async updateSession(sessionId: string, updates: Partial<Pick<Session, 'name' | 'cwd' | 'model' | 'status' | 'lastUserMessage' | 'pinned'>>): Promise<boolean> {
     const session = await this.getSession(sessionId);
     if (!session) return false;
 

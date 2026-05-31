@@ -283,6 +283,9 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
 }) {
   const { t } = useI18n();
   const icon = getToolIcon(execution.toolName);
+  const [isOutputExpanded, setIsOutputExpanded] = useState(false);
+  const OUTPUT_TRUNCATE_LENGTH = 500;
+  const shouldTruncate = execution.output && execution.output.length > OUTPUT_TRUNCATE_LENGTH && !execution.isError;
 
   const getKeyInfo = () => {
     if (!execution.input) return null;
@@ -324,18 +327,22 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
       return <span className={`text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('tool.noOutput')}</span>;
     }
 
+    const displayOutput = shouldTruncate && !isOutputExpanded
+      ? execution.output.slice(0, OUTPUT_TRUNCATE_LENGTH) + '...'
+      : execution.output;
+
     switch (execution.toolName) {
       case 'Bash':
-        return <BashResult output={execution.output} isError={execution.isError} theme={theme} />;
+        return <BashResult output={displayOutput} isError={execution.isError} theme={theme} />;
       case 'Read':
-        return <ReadResult output={execution.output} input={execution.input} theme={theme} />;
+        return <ReadResult output={displayOutput} input={execution.input} theme={theme} />;
       case 'Edit':
-        return <EditResult output={execution.output} input={execution.input} theme={theme} />;
+        return <EditResult output={displayOutput} input={execution.input} theme={theme} />;
       case 'Grep':
       case 'Glob':
-        return <GrepGlobResult output={execution.output} theme={theme} />;
+        return <GrepGlobResult output={displayOutput} theme={theme} />;
       default:
-        return <PlainTextResult output={execution.output} theme={theme} />;
+        return <PlainTextResult output={displayOutput} theme={theme} />;
     }
   };
 
@@ -381,6 +388,18 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
           </details>
           {/* Result */}
           {renderResult()}
+          {shouldTruncate && (
+            <button
+              onClick={() => setIsOutputExpanded(prev => !prev)}
+              className={`mt-2 text-xs font-medium transition-colors ${
+                theme === 'dark'
+                  ? 'text-blue-400 hover:text-blue-300'
+                  : 'text-blue-600 hover:text-blue-500'
+              }`}
+            >
+              {isOutputExpanded ? t('tool.showLess') : t('tool.showMore')}
+            </button>
+          )}
         </div>
       )}
     </div>

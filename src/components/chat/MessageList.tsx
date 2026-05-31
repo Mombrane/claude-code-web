@@ -378,7 +378,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   <p className="whitespace-pre-wrap leading-relaxed">
                     {searchQuery ? highlightPlainText(message.content as string, searchQuery) : message.content as string}
                   </p>
-                  <div className="text-xs opacity-70 mt-2 text-right">
+                  <div className="text-xs opacity-70 mt-2 text-right" title={new Date(message.timestamp).toLocaleString(locale)}>
                     {getRelativeTime(message.timestamp, t) || new Date(message.timestamp).toLocaleTimeString(locale)}
                   </div>
                 </div>
@@ -408,7 +408,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   </div>
                   <div className={`text-xs mt-3 ${
                     theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
-                  }`}>
+                  }`} title={new Date(message.timestamp).toLocaleString(locale)}>
                     {getRelativeTime(message.timestamp, t) || new Date(message.timestamp).toLocaleTimeString(locale)}
                     {(message.costUsd || message.tokens) && (
                       <>

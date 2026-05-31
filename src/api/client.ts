@@ -76,6 +76,15 @@ export const api = {
     return res.json();
   },
 
+  async togglePin(sessionId: string, pinned: boolean): Promise<{ success: boolean }> {
+    const res = await fetch(`${API_BASE}/sessions/${sessionId}/pin`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pinned }),
+    });
+    return res.json();
+  },
+
   async deleteSession(id: string): Promise<void> {
     await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
   },
