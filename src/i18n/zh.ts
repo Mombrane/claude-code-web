@@ -63,6 +63,7 @@ export default {
   'message.copied': '已复制!',
   'message.startConversation': '开始对话以开始编程',
   'message.retry': '重试',
+  'message.scrollToBottom': '回到底部',
   'message.streaming': '生成中...',
 
   // Chat cost/tokens
@@ -209,6 +210,8 @@ export default {
   'tool.groupCollapsed': '已折叠',
   'tool.showMore': '展开全部',
   'tool.showLess': '收起',
+  'tool.terminal': '终端',
+  'tool.exitCode': '退出码 {code}',
 
   // Step labels
   'step.label': '步骤',

@@ -307,7 +307,7 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
       unsubscribers.forEach((unsub) => unsub());
       wsClient.unsubscribe(currentSessionId);
     };
-  }, [currentSessionId, addMessage]);
+  }, [currentSessionId, addMessage, updateMessage]);
 
   const handleSendMessage = useCallback((message: string) => {
     if (!currentSessionId || !message.trim()) return;
@@ -506,6 +506,7 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
         onStop={handleStopStreaming}
         model={currentSession?.model}
         theme={theme}
+        rootPath={currentSession?.cwd}
       />
 
       {/* Keyboard shortcuts dialog */}

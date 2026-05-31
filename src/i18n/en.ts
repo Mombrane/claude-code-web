@@ -63,6 +63,7 @@ export default {
   'message.copied': 'Copied!',
   'message.startConversation': 'Start a conversation to begin coding',
   'message.retry': 'Retry',
+  'message.scrollToBottom': 'Scroll to bottom',
   'message.streaming': 'streaming...',
 
   // Chat cost/tokens
@@ -209,6 +210,8 @@ export default {
   'tool.groupCollapsed': 'collapsed',
   'tool.showMore': 'Show more',
   'tool.showLess': 'Show less',
+  'tool.terminal': 'terminal',
+  'tool.exitCode': 'exit {code}',
 
   // Step labels
   'step.label': 'Step',

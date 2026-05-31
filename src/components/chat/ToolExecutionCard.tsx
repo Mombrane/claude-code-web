@@ -39,7 +39,7 @@ export function ToolCallCard({ toolCall, isExpanded, onToggle, theme = 'dark' }:
       return toolCall.input.command as string;
     }
     if (toolCall.toolName === 'Grep' || toolCall.toolName === 'Glob') {
-      return toolCall.input.pattern as string || toolCall.input.query as string;
+      return (toolCall.input.pattern as string) || (toolCall.input.query as string);
     }
     return null;
   };
@@ -168,16 +168,19 @@ export function ToolResultCard({ result, theme = 'dark' }: { result: ToolResultC
 function BashResult({ output, isError, theme }: { output: string; isError?: boolean; theme: 'dark' | 'light' }) {
   const { t } = useI18n();
   return (
-    <div className={`rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-900'}`}>
-      <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-800 border-b border-gray-700">
-        <span className="text-xs text-gray-400 font-mono">terminal</span>
+    <div className={`rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-900' : 'bg-white'}`}>
+      <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-gray-100 border-gray-200'}`}>
+        <span className={`text-xs font-mono ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('tool.terminal')}</span>
         {isError !== undefined && (
-          <span className={`text-xs px-1.5 py-0.5 rounded ${isError ? 'text-red-400 bg-red-500/20' : 'text-green-400 bg-green-500/20'}`}>
-            exit {isError ? '1' : '0'}
+          <span className={`text-xs px-1.5 py-0.5 rounded ${isError
+            ? theme === 'dark' ? 'text-red-400 bg-red-500/20' : 'text-red-600 bg-red-100'
+            : theme === 'dark' ? 'text-green-400 bg-green-500/20' : 'text-green-600 bg-green-100'
+          }`}>
+            {t('tool.exitCode', { code: isError ? '1' : '0' })}
           </span>
         )}
       </div>
-      <pre className="p-3 text-sm font-mono text-green-300 overflow-x-auto whitespace-pre-wrap break-words">
+      <pre className={`p-3 text-sm font-mono overflow-x-auto whitespace-pre-wrap break-words ${theme === 'dark' ? 'text-green-300' : 'text-green-800'}`}>
         {output || t('tool.noOutput')}
       </pre>
     </div>
@@ -185,7 +188,7 @@ function BashResult({ output, isError, theme }: { output: string; isError?: bool
 }
 
 function ReadResult({ output, input, theme }: { output: string; input: Record<string, unknown>; theme: 'dark' | 'light' }) {
-  const filePath = input.file_path as string || '';
+  const filePath = (input.file_path as string) || '';
   return (
     <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
       <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
@@ -203,7 +206,7 @@ function ReadResult({ output, input, theme }: { output: string; input: Record<st
 
 function EditResult({ output, input, theme }: { output: string; input: Record<string, unknown>; theme: 'dark' | 'light' }) {
   const { t } = useI18n();
-  const filePath = input.file_path as string || '';
+  const filePath = (input.file_path as string) || '';
   return (
     <div className={`border rounded-lg overflow-hidden ${theme === 'dark' ? 'bg-gray-800/60 border-gray-700/50' : 'bg-white border-gray-200'}`}>
       <div className={`flex items-center gap-2 px-3 py-1.5 border-b ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-gray-50 border-gray-200'}`}>
@@ -296,7 +299,7 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
       return execution.input.command as string;
     }
     if (execution.toolName === 'Grep' || execution.toolName === 'Glob') {
-      return execution.input.pattern as string || execution.input.query as string;
+      return (execution.input.pattern as string) || (execution.input.query as string);
     }
     return null;
   };

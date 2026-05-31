@@ -111,6 +111,21 @@
   color: white;
 }
 
+/* Search match highlight */
+[data-search-match] {
+  background-color: rgba(234, 179, 8, 0.4);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+.dark [data-search-match] {
+  background-color: rgba(234, 179, 8, 0.4);
+}
+
+.light [data-search-match] {
+  background-color: rgba(234, 179, 8, 0.25);
+}
+
 /* Focus styles */
 *:focus-visible {
   outline: 2px solid rgba(59, 130, 246, 0.5);

@@ -43,7 +43,7 @@ function highlightPlainText(text: string, query: string): (string | JSX.Element)
           key={`${i}-${idx}`}
           data-search-match
           data-match-index={idx}
-          className="bg-yellow-500/40 text-inherit rounded-sm px-0.5"
+          className="text-inherit"
         >
           {part}
         </mark>
@@ -94,7 +94,6 @@ function walkAndHighlight(node: any, queryLower: string): void {
           tagName: 'mark',
           properties: {
             'data-search-match': true,
-            style: 'background-color: rgba(234, 179, 8, 0.4); border-radius: 2px; padding: 0 2px;',
           },
           children: [{ type: 'text', value: remaining.slice(idx, idx + queryLower.length) }],
         });
@@ -633,6 +632,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                 : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
             }`}
             title={t('chat.copyMessage')}
+            aria-label={t('message.copy')}
           >
             {copiedMessageId === message.id ? '✓' : ' '}
           </button>
@@ -645,6 +645,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                   : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
               }`}
               title={t('message.retry')}
+              aria-label={t('message.retry')}
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -657,7 +658,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   };
 
   return (
-    <div ref={containerRef} className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
+    <div ref={containerRef} role="log" aria-label="Chat messages" className={`h-full overflow-y-auto p-6 space-y-4 scroll-smooth ${
       theme === 'dark' ? 'bg-gray-900' : 'bg-gray-100'
     }`}>
       {messages.length === 0 && !isStreaming && isLoading && (
@@ -763,6 +764,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
               : 'bg-white/90 hover:bg-gray-100 text-gray-700 border border-gray-200'
           }`}
           title={t('chat.scrollToBottom') || 'Scroll to bottom'}
+          aria-label={t('message.scrollToBottom')}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
