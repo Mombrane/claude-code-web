@@ -67,9 +67,12 @@ export default {
   'message.streaming': '生成中...',
 
   // Chat cost/tokens
-  'chat.cost': '¥{amount}',
+  'chat.cost': '${amount}',
   'chat.tokens': '令牌',
   'chat.lastMessageCost': '最近消息费用',
+  'chat.inputTokens': '输入',
+  'chat.outputTokens': '输出',
+  'chat.tokenBreakdown': '输入 / 输出令牌（最近消息）',
 
   // Layout tooltips
   'layout.gitTooltip': 'Git 面板 (Ctrl+G)',

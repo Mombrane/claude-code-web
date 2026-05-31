@@ -7,7 +7,8 @@ import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent,
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
 import { CopyButton } from './CopyButton';
-import { ToolCallCard, ToolResultCard, ToolExecutionCard, ToolGroupCard } from './ToolExecutionCard';
+import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
+import { ToolGroupCard } from './ToolGroupCard';
 import { ThinkingBlock } from './ThinkingBlock';
 
 function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {

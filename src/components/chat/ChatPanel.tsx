@@ -486,7 +486,7 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
             </span>
           )}
           {(lastAssistantStats.inputTokens != null || lastAssistantStats.outputTokens != null) ? (
-            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} title="Input / Output tokens (last message)">
+            <span className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} title={t('chat.tokenBreakdown')}>
               📥 {formatTokens(lastAssistantStats.inputTokens ?? 0, t)} / 📤 {formatTokens(lastAssistantStats.outputTokens ?? 0, t)}
             </span>
           ) : lastAssistantStats.tokens != null && lastAssistantStats.tokens > 0 ? (
