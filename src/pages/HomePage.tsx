@@ -3,14 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useSessionStore } from '../stores/sessionStore';
 import { useI18n } from '../i18n';
+import { useTheme } from '../components/ui/ThemeProvider';
 import { formatCost, formatTokens, formatDate, groupSessionsByTime } from '../utils/format';
 import type { Project, Session } from '../types';
 
-interface HomePageProps {
-  theme?: 'dark' | 'light';
-}
-
-export function HomePage({ theme = 'dark' }: HomePageProps) {
+export function HomePage() {
+  const { theme } = useTheme();
   const navigate = useNavigate();
   const { t, locale } = useI18n();
   const { setSessions, setCurrentSession } = useSessionStore();

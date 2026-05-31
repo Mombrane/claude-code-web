@@ -276,6 +276,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                 tag={tag}
                 active={tagFilter === tag}
                 onClick={(tag) => setTagFilter(tagFilter === tag ? null : tag)}
+                theme={theme}
               />
             ))}
           </div>
@@ -390,7 +391,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           {session.tags && session.tags.length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {session.tags.map((tag) => (
-                                <TagChip key={tag} tag={tag} />
+                                <TagChip key={tag} tag={tag} theme={theme} />
                               ))}
                             </div>
                           )}
@@ -405,6 +406,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                                 key={tag}
                                 tag={tag}
                                 onRemove={(t) => handleRemoveTag(session.id, t, session.tags || [])}
+                                theme={theme}
                               />
                             ))}
                           </div>

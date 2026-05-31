@@ -10,12 +10,12 @@ import { SettingsPanel } from '../settings/SettingsPanel';
 import { wsClient } from '../../api/websocket';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useI18n } from '../../i18n';
+import { useTheme } from '../ui/ThemeProvider';
 
 type LeftPanel = 'sessions' | 'files';
 type RightPanel = 'git' | 'terminal' | 'none';
 
 interface Settings {
-  theme: 'dark' | 'light';
   model: string;
   fontSize: number;
   tabSize: number;
@@ -27,7 +27,6 @@ interface Settings {
 const SETTINGS_KEY = 'claude-code-web-settings';
 
 const defaultSettings: Settings = {
-  theme: 'dark',
   model: '',
   fontSize: 14,
   tabSize: 2,
@@ -40,7 +39,10 @@ function loadSettings(): Settings {
   try {
     const saved = localStorage.getItem(SETTINGS_KEY);
     if (saved) {
-      return { ...defaultSettings, ...JSON.parse(saved) };
+      const parsed = JSON.parse(saved);
+      // Remove legacy theme field if present
+      delete parsed.theme;
+      return { ...defaultSettings, ...parsed };
     }
   } catch (e) {
     console.error('Failed to load settings:', e);
@@ -56,14 +58,10 @@ function saveSettings(settings: Settings) {
   }
 }
 
-function applyTheme(theme: 'dark' | 'light') {
-  document.documentElement.classList.toggle('dark', theme === 'dark');
-  document.documentElement.classList.toggle('light', theme === 'light');
-}
-
 export function AppLayout({ projectPath }: { projectPath?: string }) {
   const navigate = useNavigate();
   const { t } = useI18n();
+  const { theme, toggleTheme } = useTheme();
   const [leftPanel, setLeftPanel] = useState<LeftPanel>('sessions');
   const [rightPanel, setRightPanel] = useState<RightPanel>('none');
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
@@ -74,9 +72,8 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const { currentSessionId } = useSessionStore();
   const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false });
 
-  // Apply theme on mount and when settings change
+  // Persist non-theme settings
   useEffect(() => {
-    applyTheme(settings.theme);
     saveSettings(settings);
   }, [settings]);
 
@@ -167,7 +164,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
       // Ctrl+Shift+T: Toggle theme
       if (e.ctrlKey && e.shiftKey && (e.key === 'T' || e.key === 't')) {
         e.preventDefault();
-        setSettings(prev => ({ ...prev, theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+        toggleTheme();
       }
 
       // Ctrl+Up/Down: Session quick-switch
@@ -205,23 +202,23 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [projectPath, navigate]);
+  }, [projectPath, navigate, toggleTheme]);
 
   const cwd = projectPath || '';
 
   return (
-    <div className={`flex flex-col h-screen overflow-hidden ${settings.theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
+    <div className={`flex flex-col h-screen overflow-hidden ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-900'}`}>
       {/* Header */}
-      <header className={`flex items-center justify-between px-3 py-2 border-b ${settings.theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-white/80 border-gray-200'}`}>
+      <header className={`flex items-center justify-between px-3 py-2 border-b ${theme === 'dark' ? 'bg-gray-800/80 border-gray-700/50' : 'bg-white/80 border-gray-200'}`}>
         <div className="flex items-center gap-3">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <span className="text-xl"> </span>
-            <h1 className={`text-sm font-semibold ${settings.theme === 'dark' ? 'text-gradient' : 'text-gray-800'}`}>{t('app.name')}</h1>
+            <h1 className={`text-sm font-semibold ${theme === 'dark' ? 'text-gradient' : 'text-gray-800'}`}>{t('app.name')}</h1>
           </div>
 
           {/* Separator */}
-          <div className={`w-px h-5 ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
+          <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
 
           {/* Panel toggles */}
           <div className="flex items-center gap-1">
@@ -229,10 +226,10 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               onClick={() => setLeftPanel('sessions')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
                 leftPanel === 'sessions'
-                  ? settings.theme === 'dark'
+                  ? theme === 'dark'
                     ? 'bg-gray-700/80 text-white shadow-sm'
                     : 'bg-gray-200 text-gray-800 shadow-sm'
-                  : settings.theme === 'dark'
+                  : theme === 'dark'
                     ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
               }`}
@@ -246,10 +243,10 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               onClick={() => setLeftPanel('files')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
                 leftPanel === 'files'
-                  ? settings.theme === 'dark'
+                  ? theme === 'dark'
                     ? 'bg-gray-700/80 text-white shadow-sm'
                     : 'bg-gray-200 text-gray-800 shadow-sm'
-                  : settings.theme === 'dark'
+                  : theme === 'dark'
                     ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
               }`}
@@ -267,7 +264,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           <button
             onClick={() => setShowCommandPalette(true)}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs rounded-md transition-all duration-200 ${
-              settings.theme === 'dark'
+              theme === 'dark'
                 ? 'text-gray-400 hover:text-white bg-gray-700/30 hover:bg-gray-700/50'
                 : 'text-gray-600 hover:text-gray-800 bg-gray-200 hover:bg-gray-300'
             }`}
@@ -276,11 +273,11 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <span>{t('command.palette')}</span>
-            <kbd className={`ml-1 px-1 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-600/50' : 'bg-gray-300'}`}>Ctrl+K</kbd>
+            <kbd className={`ml-1 px-1 py-0.5 rounded text-[10px] ${theme === 'dark' ? 'bg-gray-600/50' : 'bg-gray-300'}`}>Ctrl+K</kbd>
           </button>
 
           {/* Separator */}
-          <div className={`w-px h-5 ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
+          <div className={`w-px h-5 ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-300'}`} />
 
           {/* Right panel toggles */}
           <div className="flex items-center gap-1">
@@ -288,10 +285,10 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               onClick={() => setRightPanel(prev => prev === 'git' ? 'none' : 'git')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
                 rightPanel === 'git'
-                  ? settings.theme === 'dark'
+                  ? theme === 'dark'
                     ? 'bg-gray-700/80 text-white shadow-sm'
                     : 'bg-gray-200 text-gray-800 shadow-sm'
-                  : settings.theme === 'dark'
+                  : theme === 'dark'
                     ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
               }`}
@@ -306,10 +303,10 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               onClick={() => setRightPanel(prev => prev === 'terminal' ? 'none' : 'terminal')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
                 rightPanel === 'terminal'
-                  ? settings.theme === 'dark'
+                  ? theme === 'dark'
                     ? 'bg-gray-700/80 text-white shadow-sm'
                     : 'bg-gray-200 text-gray-800 shadow-sm'
-                  : settings.theme === 'dark'
+                  : theme === 'dark'
                     ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
                     : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
               }`}
@@ -323,7 +320,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
             <button
               onClick={() => setShowSettings(true)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
-                settings.theme === 'dark'
+                theme === 'dark'
                   ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
                   : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
               }`}
@@ -337,7 +334,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           </div>
 
           {/* Connection status indicator */}
-          <div className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md ${settings.theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+          <div className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-green-400' : wsStatus.reconnecting ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'}`} />
             {wsStatus.connected
               ? t('status.connected')
@@ -347,7 +344,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
                     {t('status.disconnected')}
                     <button
                       onClick={() => wsClient.connect()}
-                      className={`ml-1 px-1.5 py-0.5 rounded text-[10px] transition-colors ${settings.theme === 'dark' ? 'bg-gray-600/50 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
+                      className={`ml-1 px-1.5 py-0.5 rounded text-[10px] transition-colors ${theme === 'dark' ? 'bg-gray-600/50 hover:bg-gray-600' : 'bg-gray-200 hover:bg-gray-300'}`}
                     >
                       {t('status.reconnect')}
                     </button>
@@ -363,12 +360,12 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         <div
           className={`border-r transition-all duration-300 ${
             sidebarCollapsed ? 'w-0 overflow-hidden' : 'w-64'
-          } ${settings.theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}
+          } ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}
         >
           {leftPanel === 'sessions' ? (
-            <Sidebar projectPath={projectPath} theme={settings.theme} />
+            <Sidebar projectPath={projectPath} theme={theme} />
           ) : (
-            cwd ? <FileExplorer rootPath={cwd} onFileSelect={setSelectedFile} /> : <div className="flex items-center justify-center h-full text-gray-500"><p>{t("fileExplorer.noProject")}</p></div>
+            cwd ? <FileExplorer rootPath={cwd} onFileSelect={setSelectedFile} theme={theme} /> : <div className="flex items-center justify-center h-full text-gray-500"><p>{t("fileExplorer.noProject")}</p></div>
           )}
         </div>
 
@@ -377,19 +374,19 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           {selectedFile ? (
             <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} />
           ) : (
-            <ChatPanel theme={settings.theme} />
+            <ChatPanel theme={theme} />
           )}
           {rightPanel === 'terminal' && currentSessionId && (
             <TerminalPanel
               sessionId={currentSessionId}
-              theme={settings.theme}
+              theme={theme}
             />
           )}
         </div>
 
         {/* Right Panel */}
         {rightPanel === 'git' && (
-          <div className={`w-80 border-l animate-slideIn ${settings.theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
+          <div className={`w-80 border-l animate-slideIn ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
             {cwd ? <GitPanel cwd={cwd} /> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
           </div>
         )}
@@ -401,8 +398,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           commands={commands}
           onSelect={handleCommandSelect}
           onClose={() => setShowCommandPalette(false)}
-          theme={settings.theme}
-
+          theme={theme}
         />
       )}
 
@@ -412,13 +408,13 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           settings={settings}
           onSave={setSettings}
           onClose={() => setShowSettings(false)}
-          theme={settings.theme}
+          theme={theme}
         />
       )}
 
       {/* Status Bar */}
       <footer className={`flex items-center justify-between px-4 py-1.5 border-t text-[11px] ${
-        settings.theme === 'dark'
+        theme === 'dark'
           ? 'bg-gray-800/60 border-gray-700/50 text-gray-500'
           : 'bg-gray-100 border-gray-200 text-gray-600'
       }`}>
@@ -426,21 +422,21 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           <span className="flex items-center gap-1.5">
             <span className="text-base"> </span>
             <span className="font-medium">{t('app.name')}</span>
-            <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>{t('app.version')}</span>
+            <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>{t('app.version')}</span>
           </span>
-          <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
+          <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span className="flex items-center gap-1">
             <span className={`w-2 h-2 rounded-full ${wsStatus.connected ? 'bg-green-400' : wsStatus.reconnecting ? 'bg-yellow-400' : 'bg-red-400'}`} />
             {wsStatus.connected ? t('status.connected') : wsStatus.reconnecting ? t('status.reconnecting') : t('status.disconnected')}
           </span>
-          <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
+          <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span>{settings.model || t('status.defaultModel')}</span>
         </div>
         <div className="flex items-center gap-3">
-          <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+K</kbd>
+          <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+K</kbd>
           <span>{t('command.palette')}</span>
-          <span className={settings.theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
-          <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${settings.theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+B</kbd>
+          <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
+          <kbd className={`px-1.5 py-0.5 rounded text-[10px] ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-200'}`}>Ctrl+B</kbd>
           <span>{t('sidebar.title')}</span>
         </div>
       </footer>

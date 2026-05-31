@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useI18n, type Locale } from '../../i18n';
+import { useTheme } from '../ui/ThemeProvider';
 
 interface Settings {
-  theme: 'dark' | 'light';
   model: string;
   fontSize: number;
   tabSize: number;
@@ -20,6 +20,7 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ settings, onSave, onClose, theme = 'dark' }: SettingsPanelProps) {
   const { t, locale, setLocale } = useI18n();
+  const { theme: currentTheme, setTheme } = useTheme();
   const [localSettings, setLocalSettings] = useState<Settings>(settings);
 
   const handleChange = <K extends keyof Settings>(key: K, value: Settings[K]) => {
@@ -117,9 +118,9 @@ export function SettingsPanel({ settings, onSave, onClose, theme = 'dark' }: Set
             <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{t('settings.theme')}</label>
             <div className="flex gap-2">
               <button
-                onClick={() => handleChange('theme', 'dark')}
+                onClick={() => setTheme('dark')}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ${
-                  localSettings.theme === 'dark'
+                  currentTheme === 'dark'
                     ? 'bg-gray-600/80 text-white border border-gray-500/50'
                     : theme === 'dark'
                       ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'
@@ -132,9 +133,9 @@ export function SettingsPanel({ settings, onSave, onClose, theme = 'dark' }: Set
                 {t('settings.theme.dark')}
               </button>
               <button
-                onClick={() => handleChange('theme', 'light')}
+                onClick={() => setTheme('light')}
                 className={`flex-1 flex items-center justify-center gap-2 px-3 py-2.5 text-sm rounded-lg transition-all duration-200 ${
-                  localSettings.theme === 'light'
+                  currentTheme === 'light'
                     ? 'bg-gray-200 text-gray-900 border border-gray-300'
                     : theme === 'dark'
                       ? 'bg-gray-700/50 text-gray-400 border border-gray-600/50 hover:bg-gray-700/70'

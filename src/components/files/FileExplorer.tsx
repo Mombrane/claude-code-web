@@ -13,9 +13,10 @@ interface FileEntry {
 interface FileExplorerProps {
   rootPath: string;
   onFileSelect: (path: string) => void;
+  theme?: 'dark' | 'light';
 }
 
-export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
+export function FileExplorer({ rootPath, onFileSelect, theme = 'dark' }: FileExplorerProps) {
   const { t } = useI18n();
   const [entries, setEntries] = useState<FileEntry[]>([]);
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set([rootPath]));
@@ -73,25 +74,9 @@ export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
     if (type === 'dir') return '📁';
     const ext = name.split('.').pop()?.toLowerCase() || '';
     const iconMap: Record<string, string> = {
-      ts: '📘',
-      tsx: '⚛️',
-      js: '📙',
-      jsx: '⚛️',
-      json: '📋',
-      md: '📝',
-      css: '🎨',
-      html: '🌐',
-      py: '🐍',
-      go: '🔵',
-      rs: '🦀',
-      java: '☕',
-      sh: '⚙️',
-      yml: '⚙️',
-      yaml: '⚙️',
-      svg: '🖼️',
-      png: '🖼️',
-      jpg: '🖼️',
-      gif: '🖼️',
+      ts: '📘', tsx: '⚛️', js: '📙', jsx: '⚛️', json: '📋', md: '📝',
+      css: '🎨', html: '🌐', py: '🐍', go: '🔵', rs: '🦀', java: '☕',
+      sh: '⚙️', yml: '⚙️', yaml: '⚙️', svg: '🖼️', png: '🖼️', jpg: '🖼️', gif: '🖼️',
     };
     return iconMap[ext] || '📄';
   };
@@ -109,7 +94,9 @@ export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
     return (
       <div key={entry.path}>
         <div
-          className="flex items-center py-1 px-2 hover:bg-gray-700 cursor-pointer group"
+          className={`flex items-center py-1 px-2 cursor-pointer group ${
+            theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+          }`}
           style={{ paddingLeft: `${indent + 8}px` }}
           onClick={() => {
             if (entry.type === 'dir') {
@@ -120,13 +107,13 @@ export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
           }}
         >
           {entry.type === 'dir' && (
-            <span className="mr-1 text-gray-500 text-xs">
+            <span className={`mr-1 text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
               {isExpanded ? '▼' : '▶'}
             </span>
           )}
           <span className="mr-2">{getFileIcon(entry.name, entry.type)}</span>
-          <span className="flex-1 text-sm text-gray-300 truncate">{entry.name}</span>
-          <span className="text-xs text-gray-500 opacity-0 group-hover:opacity-100">
+          <span className={`flex-1 text-sm truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>{entry.name}</span>
+          <span className={`text-xs opacity-0 group-hover:opacity-100 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
             {entry.type === 'file' && formatSize(entry.size)}
           </span>
         </div>
@@ -149,19 +136,23 @@ export function FileExplorer({ rootPath, onFileSelect }: FileExplorerProps) {
   const displayEntries = searchQuery.length >= 2 ? searchResults : entries.filter(e => e.path.startsWith(rootPath) && e.path.split('/').length === rootPath.split('/').length + 1);
 
   return (
-    <div className="h-full flex flex-col bg-gray-800">
-      <div className="p-2 border-b border-gray-700">
+    <div className={`h-full flex flex-col ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'}`}>
+      <div className={`p-2 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
           placeholder={t('fileExplorer.search')}
-          className="w-full px-3 py-1.5 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:outline-none focus:border-blue-500"
+          className={`w-full px-3 py-1.5 text-sm rounded border focus:outline-none focus:border-blue-500 ${
+            theme === 'dark'
+              ? 'bg-gray-700 text-white border-gray-600'
+              : 'bg-gray-50 text-gray-800 border-gray-300'
+          }`}
         />
       </div>
       <div className="flex-1 overflow-y-auto">
         {loading && (
-          <div className="p-4 text-center text-gray-500 text-sm">{t('fileExplorer.loading')}</div>
+          <div className={`p-4 text-center text-sm ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>{t('fileExplorer.loading')}</div>
         )}
         {displayEntries
           .sort((a, b) => {
