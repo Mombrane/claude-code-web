@@ -75,6 +75,20 @@ export function groupSessionsByTime(
     .map(([key, sessions]) => ({ label: labelMap[key] || key, sessions }));
 }
 
+export function formatDuration(startDate: string, endDate: string): string | null {
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  if (isNaN(start) || isNaN(end) || end <= start) return null;
+  const diffMs = end - start;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+  if (diffMin < 1) return '<1m';
+  if (diffMin < 60) return `${diffMin}m`;
+  if (diffHours < 24) return `${diffHours}h${diffMin % 60 > 0 ? `${diffMin % 60}m` : ''}`;
+  return `${diffDays}d${diffHours % 24 > 0 ? `${diffHours % 24}h` : ''}`;
+}
+
 /**
  * Encode a filesystem path for use in a single URL segment.
  * Handles non-ASCII paths (Chinese, Japanese, etc.) unlike btoa().

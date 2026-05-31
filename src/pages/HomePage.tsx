@@ -271,31 +271,64 @@ export function HomePage() {
         {/* Statistics */}
         {!isLoading && sessions.length > 0 && (
           <div className={`px-6 py-4 border-b ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
-            <h3 className={`text-[11px] font-medium uppercase tracking-wider mb-3 ${'text-gray-500'}`}>{t('home.statistics')}</h3>
+            <h3 className={`text-[11px] font-medium uppercase tracking-wider mb-3 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{t('home.statistics')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className={`rounded-lg px-4 py-3 ${theme === 'dark' ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
-                <div className={`text-[11px] mb-1 ${'text-gray-500'}`}>{t('home.sessions')}</div>
+                <div className={`text-[11px] mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{t('home.sessions')}</div>
                 <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{stats.totalSessions}</div>
               </div>
               <div className={`rounded-lg px-4 py-3 ${theme === 'dark' ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
-                <div className={`text-[11px] mb-1 ${'text-gray-500'}`}>{t('home.totalCost')}</div>
+                <div className={`text-[11px] mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{t('home.totalCost')}</div>
                 <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{formatCost(stats.totalCost, t)}</div>
               </div>
               <div className={`rounded-lg px-4 py-3 ${theme === 'dark' ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
-                <div className={`text-[11px] mb-1 ${'text-gray-500'}`}>{t('home.totalTokens')}</div>
+                <div className={`text-[11px] mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{t('home.totalTokens')}</div>
                 <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{formatTokens(stats.totalTokens, t)}</div>
               </div>
               <div className={`rounded-lg px-4 py-3 ${theme === 'dark' ? 'bg-gray-800/60' : 'bg-gray-50'}`}>
-                <div className={`text-[11px] mb-1 ${'text-gray-500'}`}>{t('home.avgCost')}</div>
+                <div className={`text-[11px] mb-1 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{t('home.avgCost')}</div>
                 <div className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{formatCost(stats.avgCost, t)}</div>
               </div>
             </div>
             {stats.mostExpensive && (stats.mostExpensive.totalCostUsd ?? 0) > 0 && (
-              <div className={`mt-2 text-[11px] ${'text-gray-500'}`}>
+              <div className={`mt-2 text-[11px] ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
                 {t('home.mostExpensive')} <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}>"{stats.mostExpensive.name}"</span>{' '}
                 <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>({formatCost(stats.mostExpensive.totalCostUsd, t)})</span>
               </div>
             )}
+            {/* Per-session cost distribution mini-chart */}
+            {(() => {
+              const costSessions = sessions.filter(s => (s.totalCostUsd ?? 0) > 0);
+              if (costSessions.length < 2) return null;
+              const sorted = [...costSessions].sort((a, b) => (b.totalCostUsd ?? 0) - (a.totalCostUsd ?? 0)).slice(0, 8);
+              const maxCost = sorted[0]?.totalCostUsd ?? 1;
+              return (
+                <div className="mt-4">
+                  <div className="space-y-1.5">
+                    {sorted.map(s => {
+                      const cost = s.totalCostUsd ?? 0;
+                      const pct = Math.max((cost / maxCost) * 100, 3);
+                      return (
+                        <div key={s.id} className="flex items-center gap-2">
+                          <span className={`w-[100px] flex-shrink-0 text-[11px] truncate ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`} title={s.name}>
+                            {s.name.length > 25 ? s.name.slice(0, 25) + '…' : s.name}
+                          </span>
+                          <div className={`flex-1 h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-200/50'}`}>
+                            <div
+                              className={`h-full rounded-full ${theme === 'dark' ? 'bg-blue-600/80' : 'bg-blue-500'}`}
+                              style={{ width: `${pct}%`, minWidth: '4px' }}
+                            />
+                          </div>
+                          <span className={`w-[56px] flex-shrink-0 text-right text-[11px] ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {formatCost(cost, t)}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         )}
 

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
-import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath } from '../../utils/format';
+import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
 import type { Session } from '../../types';
 
@@ -488,6 +488,9 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                             )}
                             {session.totalTokens > 0 && (
                               <span>{formatTokens(session.totalTokens, t)}</span>
+                            )}
+                            {formatDuration(session.createdAt, session.updatedAt) && (
+                              <span>· {formatDuration(session.createdAt, session.updatedAt)}</span>
                             )}
                           </>
                         )}
