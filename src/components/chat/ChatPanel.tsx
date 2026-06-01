@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
 import { formatTokens } from '../../utils/format';
 
-export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
+export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChange }: { theme?: 'dark' | 'light'; timelineVisible?: boolean; onVisibleRangeChange?: (range: { start: number; end: number }) => void }) {
   const { t } = useI18n();
   const { sessions, currentSessionId, currentMessages, addMessage, updateMessage, isLoadingMessages } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
@@ -501,8 +501,14 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
       }
     };
     window.addEventListener('retry-last-message', handleRetryEvent);
-    return () => window.removeEventListener('retry-last-message', handleRetryEvent);
+    return () =>    window.removeEventListener('retry-last-message', handleRetryEvent);
   }, [isStreaming, currentSessionId, handleRetry]);
+
+  const handleVisibleRangeChange = useCallback((range: { start: number; end: number }) => {
+    if (onVisibleRangeChange) {
+      onVisibleRangeChange(range);
+    }
+  }, [onVisibleRangeChange]);
 
   if (!currentSessionId) {
     return (
@@ -656,6 +662,7 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
           onRetry={handleRetry}
           isLoading={isLoadingMessages}
           theme={theme}
+          onVisibleRangeChange={handleVisibleRangeChange}
         />
       </div>
 

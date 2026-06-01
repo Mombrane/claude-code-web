@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '../chat/ChatPanel';
+import { SessionTimeline } from '../chat/SessionTimeline';
 import { FileExplorer } from '../files/FileExplorer';
 import { wsClient } from '../../api/websocket';
 import { useSessionStore } from '../../stores/sessionStore';
@@ -16,7 +17,7 @@ const TerminalPanel = lazy(() => import('../terminal/TerminalPanel').then(m => (
 const SettingsPanel = lazy(() => import('../settings/SettingsPanel').then(m => ({ default: m.SettingsPanel })));
 
 type LeftPanel = 'sessions' | 'files';
-type RightPanel = 'git' | 'terminal' | 'none';
+type RightPanel = 'git' | 'terminal' | 'timeline' | 'none';
 
 interface Settings {
   model: string;
@@ -74,6 +75,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { currentSessionId, currentMessages, sessions } = useSessionStore();
   const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false, attempts: 0, maxAttempts: 10 });
+  const [visibleRange, setVisibleRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
 
   // Persist non-theme settings
   useEffect(() => {
@@ -104,6 +106,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
     { id: 'toggle-files', label: t('command.toggleFiles'), shortcut: 'Ctrl+Shift+F', action: () => setLeftPanel(prev => prev === 'files' ? 'sessions' : 'files') },
     { id: 'toggle-terminal', label: t('command.toggleTerminal'), shortcut: 'Ctrl+`', action: () => setRightPanel(prev => prev === 'terminal' ? 'none' : 'terminal') },
     { id: 'toggle-git', label: t('command.toggleGit'), shortcut: 'Ctrl+G', action: () => setRightPanel(prev => prev === 'git' ? 'none' : 'git') },
+    { id: 'toggle-timeline', label: t('command.toggleTimeline'), shortcut: 'Ctrl+T', action: () => setRightPanel(prev => prev === 'timeline' ? 'none' : 'timeline') },
     { id: 'open-settings', label: t('command.openSettings'), shortcut: 'Ctrl+,', action: () => setShowSettings(true) },
     { id: 'toggle-sidebar', label: t('command.toggleSidebar'), shortcut: 'Ctrl+B', action: () => setSidebarCollapsed(prev => !prev) },
     { id: 'duplicate-session', label: t('command.duplicateSession'), shortcut: 'Ctrl+D', action: async () => {
@@ -159,6 +162,13 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
       if (e.ctrlKey && e.key === 'g' && !e.shiftKey) {
         e.preventDefault();
         setRightPanel(prev => prev === 'git' ? 'none' : 'git');
+      }
+      // Ctrl+T: Toggle timeline panel
+      if (e.ctrlKey && e.key === 't' && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+        e.preventDefault();
+        setRightPanel(prev => prev === 'timeline' ? 'none' : 'timeline');
       }
       // Ctrl+,: Open settings
       if (e.ctrlKey && e.key === ',') {
@@ -342,6 +352,23 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
           {/* Right panel toggles */}
           <div className="flex items-center gap-1">
             <button
+              onClick={() => setRightPanel(prev => prev === 'timeline' ? 'none' : 'timeline')}
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
+                rightPanel === 'timeline'
+                  ? theme === 'dark'
+                    ? 'bg-gray-700/80 text-white shadow-sm'
+                    : 'bg-gray-200 text-gray-800 shadow-sm'
+                  : theme === 'dark'
+                    ? 'text-gray-400 hover:text-white hover:bg-gray-700/40'
+                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-200'
+              }`}
+              title={t('layout.timelineTooltip')}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button
               onClick={() => setRightPanel(prev => prev === 'git' ? 'none' : 'git')}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded-md transition-all duration-200 ${
                 rightPanel === 'git'
@@ -436,7 +463,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
               <FileEditor filePath={selectedFile} onClose={() => setSelectedFile(null)} settings={{ fontSize: settings.fontSize, tabSize: settings.tabSize, wordWrap: settings.wordWrap, minimap: settings.minimap }} theme={theme} />
             </Suspense>
           ) : (
-            <ChatPanel theme={theme} />
+            <ChatPanel theme={theme} timelineVisible={rightPanel === 'timeline'} onVisibleRangeChange={setVisibleRange} />
           )}
           {rightPanel === 'terminal' && currentSessionId && (
             <Suspense fallback={<LoadingPanel theme={theme} />}>
@@ -452,6 +479,15 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         {rightPanel === 'git' && (
           <div className={`w-80 border-l animate-slideIn ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
             {cwd ? <Suspense fallback={<LoadingPanel theme={theme} />}><GitPanel cwd={cwd} theme={theme} /></Suspense> : <div className="flex items-center justify-center h-full text-gray-500 p-4"><p>{t("git.noProject")}</p></div>}
+          </div>
+        )}
+        {rightPanel === 'timeline' && (
+          <div className={`w-12 border-l animate-slideIn ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>
+            <SessionTimeline
+              messages={currentMessages}
+              visibleRange={visibleRange}
+              theme={theme}
+            />
           </div>
         )}
       </div>

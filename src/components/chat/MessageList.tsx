@@ -193,6 +193,7 @@ interface MessageListProps {
   currentMatchIndex?: number;
   onRetry?: () => void;
   isLoading?: boolean;
+  onVisibleRangeChange?: (range: { start: number; end: number }) => void;
 }
 
 // Code block wrapper with copy button — uses ref to extract textContent
@@ -230,7 +231,7 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
   );
 }
 
-export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry, isLoading = false }: MessageListProps) {
+export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry, isLoading = false, onVisibleRangeChange }: MessageListProps) {
   const { t, locale } = useI18n();
   const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -292,6 +293,19 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
     window.addEventListener('scroll-to-bottom', handleScrollToBottom);
     return () => window.removeEventListener('scroll-to-bottom', handleScrollToBottom);
   }, [scrollToBottom]);
+
+  // Listen for scroll-to-message-index event (triggered by timeline click)
+  useEffect(() => {
+    const handleScrollToIndex = (e: Event) => {
+      const customEvent = e as CustomEvent<{ index: number }>;
+      const index = customEvent.detail?.index;
+      if (typeof index === 'number' && virtuosoRef.current) {
+        virtuosoRef.current.scrollToIndex({ index, align: 'center', behavior: 'smooth' });
+      }
+    };
+    window.addEventListener('scroll-to-message-index', handleScrollToIndex);
+    return () => window.removeEventListener('scroll-to-message-index', handleScrollToIndex);
+  }, []);
 
   // Pre-process messages: group consecutive tool_execution and tool_use messages
   type RenderItem =
@@ -756,6 +770,11 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
           ]}
           followOutput="smooth"
           atBottomStateChange={(atBottom) => setIsNearBottom(atBottom)}
+          rangeChanged={(range) => {
+            if (onVisibleRangeChange) {
+              onVisibleRangeChange({ start: range.startIndex, end: range.endIndex });
+            }
+          }}
           computeItemKey={(index, item) => {
             if (item.kind === 'tool_group') return `group-${item.startIndex}`;
             if (item.kind === 'streaming_thinking') return 'streaming-thinking';

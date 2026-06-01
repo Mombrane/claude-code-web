@@ -84,6 +84,16 @@ export default {
   'layout.gitTooltip': 'Git Panel (Ctrl+G)',
   'layout.terminalTooltip': 'Terminal (Ctrl+`)',
   'layout.settingsTooltip': 'Settings (Ctrl+,)',
+  'layout.timelineTooltip': 'Activity Timeline (Ctrl+T)',
+
+  // Timeline
+  'timeline.title': 'Timeline',
+  'timeline.userMessage': 'User message',
+  'timeline.assistantMessage': 'Assistant message',
+  'timeline.toolCall': 'Tool call',
+  'timeline.toolResult': 'Tool result',
+  'timeline.thinking': 'Thinking',
+  'timeline.error': 'Error',
 
   // Tools
   'tool.read': 'Read',
@@ -176,6 +186,7 @@ export default {
   'command.openSettings': 'Open Settings',
   'command.toggleSidebar': 'Toggle Sidebar',
   'command.duplicateSession': 'Duplicate Session',
+  'command.toggleTimeline': 'Toggle Activity Timeline',
 
   // Status bar
   'status.connected': 'Connected',
@@ -274,6 +285,7 @@ export default {
   'shortcuts.focusInput': 'Focus input',
   'shortcuts.retry': 'Retry last message',
   'shortcuts.scrollToBottom': 'Scroll to bottom',
+  'shortcuts.toggleTimeline': 'Toggle activity timeline',
 
   'shortcuts.toggleSidebar': 'Toggle sidebar',
   'shortcuts.duplicateSession': 'Duplicate current session',

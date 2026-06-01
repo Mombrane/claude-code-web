@@ -84,6 +84,16 @@ export default {
   'layout.gitTooltip': 'Git 面板 (Ctrl+G)',
   'layout.terminalTooltip': '终端 (Ctrl+`)',
   'layout.settingsTooltip': '设置 (Ctrl+,)',
+  'layout.timelineTooltip': '活动时间线 (Ctrl+T)',
+
+  // Timeline
+  'timeline.title': '时间线',
+  'timeline.userMessage': '用户消息',
+  'timeline.assistantMessage': '助手消息',
+  'timeline.toolCall': '工具调用',
+  'timeline.toolResult': '工具结果',
+  'timeline.thinking': '思考',
+  'timeline.error': '错误',
 
   // Tools
   'tool.read': '读取',
@@ -176,6 +186,7 @@ export default {
   'command.openSettings': '打开设置',
   'command.toggleSidebar': '切换侧边栏',
   'command.duplicateSession': '复制当前会话',
+  'command.toggleTimeline': '切换活动时间线',
 
   // Status bar
   'status.connected': '已连接',
@@ -274,6 +285,7 @@ export default {
   'shortcuts.focusInput': '聚焦输入框',
   'shortcuts.retry': '重试上一条消息',
   'shortcuts.scrollToBottom': '滚动到底部',
+  'shortcuts.toggleTimeline': '切换活动时间线',
 
   'shortcuts.toggleSidebar': '切换侧边栏',
   'shortcuts.duplicateSession': '复制当前会话',
