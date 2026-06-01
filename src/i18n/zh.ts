@@ -239,6 +239,8 @@ export default {
   'input.attachFile': '附加文件',
   'input.processing': '⏳ 处理中...',
   'input.modelLabel': 'Claude Code',
+  'input.imageAttach': '已粘贴图片',
+  'input.dropImage': '拖拽图片到此处',
 
   // Render errors
   'error.renderMessage': '此消息无法渲染',
@@ -345,6 +347,12 @@ export default {
   'sidebar.noFilterResults': '没有 {filter} 状态的会话',
   'sidebar.deepSearch': '搜索消息内容',
   'sidebar.clearFilter': '清除筛选',
+  'sidebar.sortBy': '排序方式',
+  'sidebar.sortDate': '最近活跃',
+  'sidebar.sortCost': '费用',
+  'sidebar.sortTokens': '令牌数',
+  'sidebar.sortCreated': '创建时间',
+  'sidebar.sortName': '名称',
 
   // Tags
   'tags.label': '标签',

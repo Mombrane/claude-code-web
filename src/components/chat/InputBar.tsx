@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type KeyboardEvent, type ClipboardEvent } from 'react';
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent, type DragEvent } from 'react';
 import { FilePickerModal } from '../files/FilePickerModal';
 import { useI18n } from '../../i18n';
 
@@ -18,7 +18,9 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<Array<{ path: string; content: string }>>([]);
+  const [attachedFiles, setAttachedFiles] = useState<Array<{ path: string; content: string; isImage?: boolean }>>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounterRef = useRef(0);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [messageHistory, setMessageHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -119,9 +121,12 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     if (message.trim() && !disabled && !isStreaming) {
       let finalMessage = message.trim();
 
-      // Prepend attached files as code blocks
+      // Prepend attached files as code blocks (images are embedded inline)
       if (attachedFiles.length > 0) {
         const fileBlocks = attachedFiles.map(file => {
+          if (file.isImage) {
+            return `[Image: ${file.content}]`;
+          }
           const ext = file.path.split('.').pop() || '';
           return `\`\`\`${ext} file:${file.path}\n${file.content}\n\`\`\``;
         }).join('\n\n');
@@ -149,7 +154,7 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     }
   };
 
-  const handleFileSelect = (files: Array<{ path: string; content: string }>) => {
+  const handleFileSelect = (files: Array<{ path: string; content: string; isImage?: boolean }>) => {
     setAttachedFiles(prev => [...prev, ...files]);
     setShowFilePicker(false);
   };
@@ -217,7 +222,38 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     }
   };
 
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+  const addImageFile = useCallback((file: File) => {
+    if (file.size > MAX_IMAGE_SIZE) {
+      // Silently reject oversized images
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setAttachedFiles(prev => [...prev, { path: file.name, content: dataUrl, isImage: true }]);
+    };
+    reader.onerror = () => {
+      // Silently handle read errors
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
   const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
+    // Check for image data first (image paste takes priority)
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find(item => item.type.startsWith('image/'));
+    if (imageItem) {
+      e.preventDefault();
+      const file = imageItem.getAsFile();
+      if (file) {
+        addImageFile(file);
+      }
+      return;
+    }
+
+    // Fall through to text paste handling
     const pastedText = e.clipboardData.getData('text');
     if (!pastedText) return;
 
@@ -236,15 +272,68 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     }
   };
 
+  // Drag-drop handlers
+  const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDragEnter = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounterRef.current = 0;
+
+    const files = Array.from(e.dataTransfer.files);
+    const imageFiles = files.filter(f => f.type.startsWith('image/'));
+    imageFiles.forEach(f => addImageFile(f));
+  }, [addImageFile]);
+
   const charCount = message.length;
   const isNearLimit = charCount > 4000;
 
   return (
-    <div className={`border-t p-4 ${
+    <div
+      className={`border-t p-4 relative ${
       theme === 'dark'
         ? 'border-gray-700/50 bg-gradient-to-t from-gray-900 to-gray-800/80'
         : 'border-gray-200 bg-white'
-    }`}>
+    }`}
+      onDragOver={handleDragOver}
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag-drop overlay */}
+      {isDragging && (
+        <div className={`absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed ${
+          theme === 'dark'
+            ? 'border-blue-400/60 bg-blue-900/30'
+            : 'border-blue-400/60 bg-blue-50/80'
+        }`}>
+          <span className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-blue-300' : 'text-blue-600'
+          }`}>{t('input.dropImage')}</span>
+        </div>
+      )}
       {/* Attached files */}
       {attachedFiles.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
@@ -257,9 +346,13 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
                   : 'bg-gray-200 text-gray-700'
               }`}
             >
-              <span> </span>
+              {file.isImage ? (
+                <img src={file.content} alt={file.path} className="w-6 h-6 rounded object-cover" />
+              ) : (
+                <span> </span>
+              )}
               <span className="truncate max-w-[150px]">
-                {file.path.split('/').pop()}
+                {file.isImage ? t('input.imageAttach') : file.path.split('/').pop()}
               </span>
               <button
                 onClick={() => removeAttachedFile(file.path)}

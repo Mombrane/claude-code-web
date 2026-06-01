@@ -39,6 +39,10 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const [editingNotesSessionId, setEditingNotesSessionId] = useState<string | null>(null);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
+  const [sortField, setSortField] = useState<'updatedAt' | 'cost' | 'tokens' | 'created' | 'name'>('updatedAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadSessions();
@@ -94,6 +98,19 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   }, [selectMode]);
+
+  // Close sort menu on click outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(e.target as Node)) {
+        setSortMenuOpen(false);
+      }
+    };
+    if (sortMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [sortMenuOpen]);
 
   const loadSessions = async () => {
     try {
@@ -291,8 +308,41 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
         session.tags && session.tags.includes(tagFilter)
       );
     }
-    return result;
-  }, [sessions, searchQuery, statusFilter, tagFilter]);
+    // Sort: pinned sessions always on top
+    const pinned = result.filter(s => s.pinned);
+    const unpinned = result.filter(s => !s.pinned);
+    const compare = (a: Session, b: Session) => {
+      let valA: number | string;
+      let valB: number | string;
+      switch (sortField) {
+        case 'cost':
+          valA = a.totalCostUsd ?? 0;
+          valB = b.totalCostUsd ?? 0;
+          break;
+        case 'tokens':
+          valA = a.totalTokens ?? 0;
+          valB = b.totalTokens ?? 0;
+          break;
+        case 'created':
+          valA = new Date(a.createdAt).getTime();
+          valB = new Date(b.createdAt).getTime();
+          break;
+        case 'name':
+          valA = a.name.toLowerCase();
+          valB = b.name.toLowerCase();
+          return sortDir === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'updatedAt':
+        default:
+          valA = new Date(a.updatedAt).getTime();
+          valB = new Date(b.updatedAt).getTime();
+          break;
+      }
+      return sortDir === 'asc' ? (valA as number) - (valB as number) : (valB as number) - (valA as number);
+    };
+    pinned.sort(compare);
+    unpinned.sort(compare);
+    return [...pinned, ...unpinned];
+  }, [sessions, searchQuery, statusFilter, tagFilter, sortField, sortDir]);
 
   const groupedSessions = useMemo(() =>
     groupSessionsByTime(filteredSessions, t),
@@ -462,6 +512,64 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             ))}
           </div>
         )}
+        {/* Sort options */}
+        <div className="flex items-center justify-between mt-2">
+          <div className="relative" ref={sortMenuRef}>
+            <button
+              onClick={() => setSortMenuOpen(!sortMenuOpen)}
+              className={`flex items-center gap-1 px-2 py-1 text-[11px] rounded-md transition-all duration-200 focus:outline-none focus:ring-1 focus:ring-blue-500/50 ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/60'
+              }`}
+              aria-label={t('sidebar.sortBy')}
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h13M3 8h9M3 12h5m4 0v6m0 0l-3-3m3 3l3-3" />
+              </svg>
+              <span>{t(`sidebar.${({ updatedAt: 'sortDate', cost: 'sortCost', tokens: 'sortTokens', created: 'sortCreated', name: 'sortName' } as const)[sortField]}`)}</span>
+              <span className="text-[10px] opacity-60">{sortDir === 'asc' ? '↑' : '↓'}</span>
+            </button>
+            {sortMenuOpen && (
+              <div className={`absolute left-0 top-full mt-1 z-50 min-w-[140px] rounded-lg border shadow-xl backdrop-blur-sm ${
+                theme === 'dark'
+                  ? 'bg-gray-800/95 border-gray-600/50'
+                  : 'bg-white/95 border-gray-200'
+              }`}>
+                {([
+                  { field: 'updatedAt' as const, labelKey: 'sortDate' },
+                  { field: 'cost' as const, labelKey: 'sortCost' },
+                  { field: 'tokens' as const, labelKey: 'sortTokens' },
+                  { field: 'created' as const, labelKey: 'sortCreated' },
+                  { field: 'name' as const, labelKey: 'sortName' },
+                ]).map(({ field, labelKey }) => (
+                  <button
+                    key={field}
+                    onClick={() => {
+                      if (sortField === field) {
+                        setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+                      } else {
+                        setSortField(field);
+                        setSortDir(field === 'name' ? 'asc' : 'desc');
+                      }
+                      setSortMenuOpen(false);
+                    }}
+                    className={`flex items-center justify-between w-full px-3 py-1.5 text-[11px] transition-colors ${
+                      sortField === field
+                        ? theme === 'dark' ? 'text-blue-400 bg-blue-500/10' : 'text-blue-600 bg-blue-50'
+                        : theme === 'dark' ? 'text-gray-300 hover:bg-gray-700/60' : 'text-gray-700 hover:bg-gray-100'
+                    } ${field === 'updatedAt' ? 'rounded-t-lg' : ''} ${field === 'name' ? 'rounded-b-lg' : ''}`}
+                  >
+                    <span>{t(`sidebar.${labelKey}`)}</span>
+                    {sortField === field && (
+                      <span className="text-[10px] opacity-70">{sortDir === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Session list */}

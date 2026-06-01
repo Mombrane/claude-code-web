@@ -239,6 +239,8 @@ export default {
   'input.attachFile': 'Attach file',
   'input.processing': '⏳ Processing...',
   'input.modelLabel': 'Claude Code',
+  'input.imageAttach': 'Image attached',
+  'input.dropImage': 'Drop image here',
 
   // Render errors
   'error.renderMessage': 'This message could not be rendered',
@@ -345,6 +347,12 @@ export default {
   'sidebar.noFilterResults': 'No {filter} sessions',
   'sidebar.deepSearch': 'Search in messages',
   'sidebar.clearFilter': 'Clear filter',
+  'sidebar.sortBy': 'Sort by',
+  'sidebar.sortDate': 'Last active',
+  'sidebar.sortCost': 'Cost',
+  'sidebar.sortTokens': 'Tokens',
+  'sidebar.sortCreated': 'Created',
+  'sidebar.sortName': 'Name',
 
   // Tags
   'tags.label': 'Tags',
