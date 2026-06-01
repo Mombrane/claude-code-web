@@ -2,23 +2,28 @@ import type { WebSocketMessage } from '../types';
 
 type MessageHandler = (message: WebSocketMessage) => void;
 
+const MAX_RECONNECT_DELAY = 30000;
+const BASE_RECONNECT_DELAY = 1000;
+const MAX_RECONNECT_ATTEMPTS = 10;
+
 class WebSocketClient {
   private ws: WebSocket | null = null;
   private handlers: Map<string, Set<MessageHandler>> = new Map();
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 5;
-  private reconnectDelay = 1000;
+  private reconnectDelay = BASE_RECONNECT_DELAY;
   private sessionId: string | null = null;
   private messageQueue: WebSocketMessage[] = [];
   private isConnected = false;
   private isReconnecting = false;
-  private statusCallbacks: Set<(status: { connected: boolean; reconnecting: boolean }) => void> = new Set();
+  private intentionalDisconnect = false;
+  private statusCallbacks: Set<(status: { connected: boolean; reconnecting: boolean; attempts: number; maxAttempts: number }) => void> = new Set();
 
   connect() {
     // Guard against duplicate connections
     if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
       return;
     }
+    this.intentionalDisconnect = false;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
     this.ws = new WebSocket(wsUrl);
@@ -66,11 +71,19 @@ class WebSocketClient {
   }
 
   private tryReconnect() {
-    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+    if (this.intentionalDisconnect) return;
+    if (this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts++;
       this.isReconnecting = true;
       this.fireStatusChange();
-      setTimeout(() => this.connect(), this.reconnectDelay * this.reconnectAttempts);
+      // Exponential backoff with jitter: min(base * 2^attempt + random(0,1000), 30000)
+      const jitter = Math.random() * 1000;
+      const delay = Math.min(BASE_RECONNECT_DELAY * Math.pow(2, this.reconnectAttempts) + jitter, MAX_RECONNECT_DELAY);
+      setTimeout(() => this.connect(), delay);
+    } else {
+      // Max attempts reached — stop reconnecting, mark as disconnected
+      this.isReconnecting = false;
+      this.fireStatusChange();
     }
   }
 
@@ -81,11 +94,16 @@ class WebSocketClient {
     }
   }
 
-  getStatus(): { connected: boolean; reconnecting: boolean } {
-    return { connected: this.isConnected, reconnecting: this.isReconnecting };
+  getStatus(): { connected: boolean; reconnecting: boolean; attempts: number; maxAttempts: number } {
+    return {
+      connected: this.isConnected,
+      reconnecting: this.isReconnecting,
+      attempts: this.reconnectAttempts,
+      maxAttempts: MAX_RECONNECT_ATTEMPTS,
+    };
   }
 
-  onStatusChange(callback: (status: { connected: boolean; reconnecting: boolean }) => void): () => void {
+  onStatusChange(callback: (status: { connected: boolean; reconnecting: boolean; attempts: number; maxAttempts: number }) => void): () => void {
     this.statusCallbacks.add(callback);
     return () => {
       this.statusCallbacks.delete(callback);
@@ -167,10 +185,14 @@ class WebSocketClient {
   }
 
   disconnect() {
+    this.intentionalDisconnect = true;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+    this.isConnected = false;
+    this.isReconnecting = false;
+    this.fireStatusChange();
   }
 }
 

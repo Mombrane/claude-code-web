@@ -73,7 +73,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { currentSessionId, currentMessages, sessions } = useSessionStore();
-  const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false });
+  const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false, attempts: 0, maxAttempts: 10 });
 
   // Persist non-theme settings
   useEffect(() => {

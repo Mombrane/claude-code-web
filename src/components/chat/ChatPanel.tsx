@@ -22,6 +22,10 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const streamingTextRef = useRef<string>('');
   const streamingThinkingRef = useRef<string>('');
 
+  // File change tracker state
+  const [sessionFiles, setSessionFiles] = useState<Set<string>>(new Set());
+  const [filesExpanded, setFilesExpanded] = useState(false);
+
   // Compute session context info for header display
   const sessionModelDisplay = useMemo(() => {
     if (!currentSession?.model) return null;
@@ -201,6 +205,8 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
     setStreamingMessageId(null);
     setStreamingThinking('');
     streamingThinkingRef.current = '';
+    setSessionFiles(new Set());
+    setFilesExpanded(false);
   }, [currentSessionId]);
 
   useEffect(() => {
@@ -246,6 +252,16 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
             // Record mapping: toolUseId → { msgId, content }
             toolExecutionIdMap.current.set(toolUseId, { msgId, content });
             entryTimestamps.current.set(toolUseId, Date.now());
+
+            // Track file changes from tool executions
+            const trackableTools = ['Read', 'Write', 'Edit'];
+            if (trackableTools.includes(data.toolName) && data.input?.file_path) {
+              setSessionFiles(prev => {
+                const next = new Set(prev);
+                next.add(String(data.input.file_path));
+                return next;
+              });
+            }
 
             addMessage({
               id: msgId,
@@ -577,6 +593,41 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
           )}
         </div>
       </div>
+
+      {/* Files Modified tracker */}
+      {sessionFiles.size > 0 && (
+        <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
+          <button
+            onClick={() => setFilesExpanded(prev => !prev)}
+            className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
+              theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <span> </span>
+            <span>{t('chat.filesModified')}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+            }`}>{sessionFiles.size}</span>
+            <span className="ml-1">{filesExpanded ? '▾' : '▸'}</span>
+          </button>
+          {filesExpanded && (
+            <div className={`px-4 pb-2 max-h-32 overflow-y-auto text-[11px] font-mono ${
+              theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+            }`}>
+              {Array.from(sessionFiles).sort().map((filePath) => {
+                const relativePath = currentSession?.cwd && filePath.startsWith(currentSession.cwd)
+                  ? filePath.slice(currentSession.cwd.length).replace(/^\//, '')
+                  : filePath;
+                return (
+                  <div key={filePath} className="py-0.5 truncate" title={filePath}>
+                     {relativePath}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Search bar */}
       {searchOpen && (

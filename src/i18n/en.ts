@@ -386,4 +386,7 @@ export default {
   'chat.sessionModel': 'Model',
   'chat.sessionPath': 'Path',
   'chat.sessionAge': 'Session age',
+
+  // File change tracker
+  'chat.filesModified': 'Files Modified',
 } as const;

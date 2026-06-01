@@ -5,8 +5,9 @@ import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
-import { SessionNotesDialog } from '../ui/SessionNotesDialog';
-import { useToast } from '../ui/ToastProvider';
+ import { SessionNotesDialog } from '../ui/SessionNotesDialog';
+ import { Tooltip } from '../ui/Tooltip';
+ import { useToast } from '../ui/ToastProvider';
 import type { Session } from '../../types';
 
 export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string; theme?: 'dark' | 'light' }) {
@@ -619,10 +620,9 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
               </div>
               <div className="space-y-0.5 px-1.5">
                 {groupSessions.map((session) => (
+                  <Tooltip key={session.id} content={buildSessionTooltip(session)} theme={theme}>
                   <div
-                    key={session.id}
                     onClick={() => handleSessionClick(session)}
-                    title={buildSessionTooltip(session)}
                     aria-current={currentSessionId === session.id ? 'true' : undefined}
                     className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       currentSessionId === session.id
@@ -899,7 +899,8 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                       </div>
                     </div>
                   </div>
-                ))}
+                  </Tooltip>
+               ))}
               </div>
             </div>
           ))

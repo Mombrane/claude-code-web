@@ -386,4 +386,7 @@ export default {
   'chat.sessionModel': '模型',
   'chat.sessionPath': '路径',
   'chat.sessionAge': '会话时长',
+
+  // File change tracker
+  'chat.filesModified': '修改的文件',
 } as const;
