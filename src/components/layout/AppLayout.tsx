@@ -220,6 +220,13 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
         return;
       }
 
+      // Ctrl+End: Scroll to bottom of message list
+      if (e.ctrlKey && e.key === 'End') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('scroll-to-bottom'));
+        return;
+      }
+
       // Ctrl+Up/Down: Session quick-switch
       if (e.ctrlKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
         // Don't trigger when input/textarea is focused

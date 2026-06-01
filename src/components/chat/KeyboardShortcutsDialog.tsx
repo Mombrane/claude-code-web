@@ -32,6 +32,7 @@ export function KeyboardShortcutsDialog({ onClose, theme = 'dark' }: KeyboardSho
     { keys: ['Ctrl', 'F'], label: t('shortcuts.search') },
     { keys: ['Ctrl', 'L'], label: t('shortcuts.focusInput') },
     { keys: ['Ctrl', 'R'], label: t('shortcuts.retry') },
+    { keys: ['Ctrl', 'End'], label: t('shortcuts.scrollToBottom') },
     { keys: ['Ctrl', '/'], label: t('shortcuts.showShortcuts') },
     { keys: ['Ctrl', ','], label: t('shortcuts.settings') },
     { keys: ['Ctrl', 'Shift', 'T'], label: t('shortcuts.toggleTheme') },

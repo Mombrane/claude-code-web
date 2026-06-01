@@ -250,6 +250,11 @@ export default {
   'search.close': 'Close',
   'search.previous': 'Previous (Shift+Enter)',
   'search.next': 'Next (Enter)',
+  'search.filterAll': 'All',
+  'search.filterText': 'Text',
+  'search.filterTools': 'Tools',
+  'search.filterThinking': 'Thinking',
+  'search.filterErrors': 'Errors',
 
   // Keyboard shortcuts
   'shortcuts.title': 'Keyboard Shortcuts',
@@ -266,6 +271,7 @@ export default {
   'shortcuts.nextSession': 'Next session',
   'shortcuts.focusInput': 'Focus input',
   'shortcuts.retry': 'Retry last message',
+  'shortcuts.scrollToBottom': 'Scroll to bottom',
 
   'shortcuts.toggleSidebar': 'Toggle sidebar',
   'shortcuts.duplicateSession': 'Duplicate current session',

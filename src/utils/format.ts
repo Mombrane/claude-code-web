@@ -108,3 +108,28 @@ export function encodePath(path: string): string {
 export function decodePath(encoded: string): string {
   return '/' + encoded.split('~').map(s => decodeURIComponent(s)).join('/');
 }
+
+/**
+ * Get relative time string (e.g., "just now", "5m ago", "3h ago").
+ * Returns null if older than 24 hours (caller should fall back to full time).
+ */
+export function getRelativeTime(timestamp: string, t: TFunction): string | null {
+  const now = Date.now();
+  const msgTime = new Date(timestamp).getTime();
+  if (isNaN(msgTime)) return null;
+  const diffMs = now - msgTime;
+  const diffMin = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+
+  if (diffMin < 1) return t('time.justNow');
+  if (diffMin < 60) return t('time.minutesAgo', { n: diffMin });
+  if (diffHours < 24) return t('time.hoursAgo', { n: diffHours });
+  return null;
+}
+
+/**
+ * Escape special regex characters in a string.
+ */
+export function escapeRegex(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

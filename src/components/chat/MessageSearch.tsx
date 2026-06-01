@@ -1,24 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '../../i18n';
 
+export type MessageFilter = 'all' | 'text' | 'tools' | 'thinking' | 'errors';
+
 interface MessageSearchProps {
   onSearch: (query: string) => void;
   onNext: () => void;
   onPrevious: () => void;
   onClose: () => void;
+  onFilterChange?: (filter: MessageFilter) => void;
   currentMatch: number;
   totalMatches: number;
   theme?: 'dark' | 'light';
+  activeFilter?: MessageFilter;
 }
+
+const FILTER_OPTIONS: { key: MessageFilter; i18nKey: string }[] = [
+  { key: 'all', i18nKey: 'search.filterAll' },
+  { key: 'text', i18nKey: 'search.filterText' },
+  { key: 'tools', i18nKey: 'search.filterTools' },
+  { key: 'thinking', i18nKey: 'search.filterThinking' },
+  { key: 'errors', i18nKey: 'search.filterErrors' },
+];
 
 export function MessageSearch({
   onSearch,
   onNext,
   onPrevious,
   onClose,
+  onFilterChange,
   currentMatch,
   totalMatches,
   theme = 'dark',
+  activeFilter = 'all',
 }: MessageSearchProps) {
   const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -63,6 +77,33 @@ export function MessageSearch({
           theme === 'dark' ? 'text-gray-200 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'
         }`}
       />
+      
+      {/* Message type filter */}
+      {onFilterChange && (
+        <div className={`flex items-center gap-0.5 shrink-0 ${
+          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+        }`}>
+          {FILTER_OPTIONS.map(({ key, i18nKey }) => (
+            <button
+              key={key}
+              onClick={() => onFilterChange(key)}
+              className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
+                activeFilter === key
+                  ? theme === 'dark'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-500 text-white'
+                  : theme === 'dark'
+                    ? 'hover:bg-gray-700 text-gray-400'
+                    : 'hover:bg-gray-200 text-gray-500'
+              }`}
+              title={t(i18nKey)}
+            >
+              {t(i18nKey)}
+            </button>
+          ))}
+        </div>
+      )}
+      
       {localQuery && (
         <span className={`text-xs shrink-0 min-w-[60px] text-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
           {totalMatches > 0

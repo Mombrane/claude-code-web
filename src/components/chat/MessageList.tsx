@@ -7,6 +7,7 @@ import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent,
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
 import { useSessionStore } from '../../stores/sessionStore';
+import { getRelativeTime, escapeRegex } from '../../utils/format';
 import { CopyButton } from './CopyButton';
 import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
 import { ToolGroupCard } from './ToolGroupCard';
@@ -103,26 +104,6 @@ function MessageActionToolbar({
   );
 }
 
-function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {
-  const now = Date.now();
-  const msgTime = new Date(timestamp).getTime();
-  if (isNaN(msgTime)) return null;
-  const diffMs = now - msgTime;
-  const diffMin = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-
-  if (diffMin < 1) return t('time.justNow');
-  if (diffMin < 60) return t('time.minutesAgo', { n: diffMin });
-  if (diffHours < 24) return t('time.hoursAgo', { n: diffHours });
-  return null;
-}
-
-// Escape special regex characters
-function escapeRegex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-// Highlight text by wrapping matches in <mark> elements (for plain text rendering)
 function highlightPlainText(text: string, query: string): (string | JSX.Element)[] {
   if (!query) return [text];
   const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
@@ -304,6 +285,13 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       virtuosoRef.current.scrollToIndex({ index: 'LAST', align: 'end', behavior: 'smooth' });
     }
   }, []);
+
+  // Listen for scroll-to-bottom event (triggered by Ctrl+End)
+  useEffect(() => {
+    const handleScrollToBottom = () => scrollToBottom();
+    window.addEventListener('scroll-to-bottom', handleScrollToBottom);
+    return () => window.removeEventListener('scroll-to-bottom', handleScrollToBottom);
+  }, [scrollToBottom]);
 
   // Pre-process messages: group consecutive tool_execution and tool_use messages
   type RenderItem =

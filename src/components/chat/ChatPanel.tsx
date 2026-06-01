@@ -4,7 +4,7 @@ import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { ExportButton } from './ExportButton';
-import { MessageSearch } from './MessageSearch';
+import { MessageSearch, type MessageFilter } from './MessageSearch';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import type { StreamEvent, StreamTextData, StreamToolUseData, StreamToolResultData, ResultPayload, ToolExecutionContent } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -74,6 +74,21 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [messageFilter, setMessageFilter] = useState<MessageFilter>('all');
+
+  // Filter messages based on the selected type
+  const filteredMessages = useMemo(() => {
+    if (messageFilter === 'all') return currentMessages;
+    return currentMessages.filter(msg => {
+      switch (messageFilter) {
+        case 'text': return msg.type === 'text';
+        case 'tools': return msg.type === 'tool_execution' || msg.type === 'tool_use' || msg.type === 'tool_result';
+        case 'thinking': return msg.type === 'thinking';
+        case 'errors': return msg.type === 'error';
+        default: return true;
+      }
+    });
+  }, [currentMessages, messageFilter]);
 
   // Extract text from message content for search
   const getMessageText = useCallback((msg: typeof currentMessages[number]): string => {
@@ -570,16 +585,18 @@ export function ChatPanel({ theme = 'dark' }: { theme?: 'dark' | 'light' }) {
           onNext={handleNextMatch}
           onPrevious={handlePreviousMatch}
           onClose={handleCloseSearch}
+          onFilterChange={setMessageFilter}
           currentMatch={currentMatchIndex}
           totalMatches={matchCount}
           theme={theme}
+          activeFilter={messageFilter}
         />
       )}
 
       {/* Messages */}
       <div className="flex-1 overflow-hidden">
         <MessageList
-          messages={currentMessages}
+          messages={filteredMessages}
           streamingText={streamingText}
           isStreaming={isStreaming}
           streamingThinking={streamingThinking}
