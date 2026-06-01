@@ -45,6 +45,13 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
   // Tool usage stats state
   const [toolStatsExpanded, setToolStatsExpanded] = useState(false);
 
+  // Timer to re-compute session age display every 60 seconds
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Compute session context info for header display
   const sessionModelDisplay = useMemo(() => {
     if (!currentSession?.model) return null;
@@ -59,17 +66,16 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
 
   const sessionAgeDisplay = useMemo(() => {
     if (!currentSession?.createdAt) return null;
-    const now = Date.now();
     const created = new Date(currentSession.createdAt).getTime();
     if (isNaN(created)) return null;
     const diffMs = now - created;
     const diffMin = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
-    if (diffMin < 60) return `${diffMin}m`;
-    if (diffHours < 24) return `${diffHours}h`;
-    return `${diffDays}d`;
-  }, [currentSession?.createdAt]);
+    if (diffMin < 60) return `${diffMin}${t('time.minutesShort')}`;
+    if (diffHours < 24) return `${diffHours}${t('time.hoursShort')}`;
+    return `${diffDays}${t('time.daysShort')}`;
+  }, [currentSession?.createdAt, t, now]);
 
   // Compute tool usage statistics from currentMessages
   const toolUsageStats = useMemo(() => {

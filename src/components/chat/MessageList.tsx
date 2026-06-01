@@ -827,8 +827,12 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                     <span className="truncate">{preview}</span>
                     {onPinToggle && (
                       <span
+                        role="button"
+                        tabIndex={0}
                         onClick={(e) => { e.stopPropagation(); onPinToggle(msgId); }}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); onPinToggle(msgId); } }}
                         className={`flex-shrink-0 ml-auto opacity-0 group-hover:opacity-100 hover:opacity-100 cursor-pointer ${theme === 'dark' ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}
+                        aria-label={t('message.unpin')}
                         title={t('message.unpin')}
                       >
                         ✕

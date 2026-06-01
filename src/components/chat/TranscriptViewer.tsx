@@ -101,7 +101,7 @@ export function TranscriptViewer({ sessionId, theme = 'dark', onClose }: Transcr
         }
       } catch (e) {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : 'Failed to load transcript');
+          setError(e instanceof Error ? e.message : t('transcript.loadFailed'));
         }
       } finally {
         if (!cancelled) setLoading(false);

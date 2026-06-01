@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback, type KeyboardEvent, type ClipboardEvent, type DragEvent } from 'react';
 import { FilePickerModal } from '../files/FilePickerModal';
 import { useI18n } from '../../i18n';
+import { useToast } from '../ui/ToastProvider';
 
 interface InputBarProps {
   onSend: (message: string) => void;
@@ -13,8 +14,11 @@ interface InputBarProps {
   sessionId?: string;
 }
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
 export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark', rootPath, model, sessionId }: InputBarProps) {
   const { t } = useI18n();
+  const toast = useToast();
   const [message, setMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const [showFilePicker, setShowFilePicker] = useState(false);
@@ -222,11 +226,9 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
     }
   };
 
-  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
-
   const addImageFile = useCallback((file: File) => {
     if (file.size > MAX_IMAGE_SIZE) {
-      // Silently reject oversized images
+      toast.error(t('input.imageTooLarge'));
       return;
     }
     const reader = new FileReader();
@@ -235,10 +237,10 @@ export function InputBar({ onSend, disabled, isStreaming, onStop, theme = 'dark'
       setAttachedFiles(prev => [...prev, { path: file.name, content: dataUrl, isImage: true }]);
     };
     reader.onerror = () => {
-      // Silently handle read errors
+      toast.error(t('input.imageReadError'));
     };
     reader.readAsDataURL(file);
-  }, []);
+  }, [toast, t]);
 
   const handlePaste = (e: ClipboardEvent<HTMLTextAreaElement>) => {
     // Check for image data first (image paste takes priority)

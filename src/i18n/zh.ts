@@ -31,6 +31,9 @@ export default {
   'time.justNow': '刚刚',
   'time.minutesAgo': '{n}分钟前',
   'time.hoursAgo': '{n}小时前',
+  'time.minutesShort': '分钟',
+  'time.hoursShort': '小时',
+  'time.daysShort': '天',
 
   // Sidebar groups
   'sidebar.group.today': '今天',
@@ -122,6 +125,7 @@ export default {
   // File Explorer
   'fileExplorer.search': '搜索文件...',
   'fileExplorer.loading': '加载中...',
+  'fileExplorer.attachFiles': '附加文件',
 
 
   // File Editor
@@ -137,6 +141,7 @@ export default {
   'editor.encoding': 'UTF-8',
   'editor.spaces': '空格: 2',
   'editor.loading': '加载编辑器...',
+  'editor.saveFailed': '保存文件失败',
 
   // Git Panel
   'git.title': 'Git',
@@ -145,6 +150,7 @@ export default {
   'git.log': '日志',
   'git.branch': '分支',
   'git.staged': '已暂存',
+  'git.changes': '已修改',
   'git.unstaged': '已修改',
   'git.untracked': '未跟踪',
   'git.stage': '暂存',
@@ -259,6 +265,8 @@ export default {
   'input.modelLabel': 'Claude Code',
   'input.imageAttach': '已粘贴图片',
   'input.dropImage': '拖拽图片到此处',
+  'input.imageTooLarge': '图片太大（最大 5MB）',
+  'input.imageReadError': '读取图片失败',
 
   // Render errors
   'error.renderMessage': '此消息无法渲染',
@@ -416,6 +424,7 @@ export default {
   'transcript.copy': '复制',
   'transcript.copied': '已复制！',
   'transcript.empty': '暂无原始记录',
+  'transcript.loadFailed': '加载原始记录失败',
 
   // Tool usage stats
   'chat.toolStats': '工具使用',

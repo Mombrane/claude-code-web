@@ -31,6 +31,9 @@ export default {
   'time.justNow': 'just now',
   'time.minutesAgo': '{n}m ago',
   'time.hoursAgo': '{n}h ago',
+  'time.minutesShort': 'm',
+  'time.hoursShort': 'h',
+  'time.daysShort': 'd',
 
   // Sidebar groups
   'sidebar.group.today': 'Today',
@@ -122,6 +125,7 @@ export default {
   // File Explorer
   'fileExplorer.search': 'Search files...',
   'fileExplorer.loading': 'Loading...',
+  'fileExplorer.attachFiles': 'Attach Files',
 
 
   // File Editor
@@ -137,6 +141,7 @@ export default {
   'editor.encoding': 'UTF-8',
   'editor.spaces': 'Spaces: 2',
   'editor.loading': 'Loading editor...',
+  'editor.saveFailed': 'Failed to save file',
 
   // Git Panel
   'git.title': 'Git',
@@ -145,6 +150,7 @@ export default {
   'git.log': 'Log',
   'git.branch': 'Branch',
   'git.staged': 'Staged',
+  'git.changes': 'Changes',
   'git.unstaged': 'Modified',
   'git.untracked': 'Untracked',
   'git.stage': 'Stage',
@@ -259,6 +265,8 @@ export default {
   'input.modelLabel': 'Claude Code',
   'input.imageAttach': 'Image attached',
   'input.dropImage': 'Drop image here',
+  'input.imageTooLarge': 'Image too large (max 5MB)',
+  'input.imageReadError': 'Failed to read image',
 
   // Render errors
   'error.renderMessage': 'This message could not be rendered',
@@ -416,6 +424,7 @@ export default {
   'transcript.copy': 'Copy',
   'transcript.copied': 'Copied!',
   'transcript.empty': 'No transcript available',
+  'transcript.loadFailed': 'Failed to load transcript',
 
   // Tool usage stats
   'chat.toolStats': 'Tool Usage',

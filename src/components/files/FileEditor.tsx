@@ -66,7 +66,7 @@ export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: File
       setOriginalContent(content);
       setIsModified(false);
     } catch (e: any) {
-      setError(e.message || 'Failed to save file');
+      setError(e.message || t('editor.saveFailed'));
     } finally {
       setIsSaving(false);
     }

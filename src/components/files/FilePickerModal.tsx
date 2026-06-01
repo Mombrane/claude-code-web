@@ -154,7 +154,7 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
         }`}>
           <h2 className={`text-lg font-semibold ${
             theme === 'dark' ? 'text-white' : 'text-gray-800'
-          }`}>Attach Files</h2>
+          }`}>{t('fileExplorer.attachFiles')}</h2>
           <button
             onClick={onClose}
             className={`p-1 rounded-md transition-colors ${

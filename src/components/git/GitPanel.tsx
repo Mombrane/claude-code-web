@@ -96,7 +96,7 @@ export function GitPanel({ cwd, theme = 'dark' }: GitPanelProps) {
 
             {status.staged.length > 0 && (
               <div>
-                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Staged</h4>
+                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('git.staged')}</h4>
                 {status.staged.map(file => (
                   <div key={file} className="flex items-center gap-2 py-1 text-sm">
                     <span className="text-green-400 w-4">A</span>
@@ -108,7 +108,7 @@ export function GitPanel({ cwd, theme = 'dark' }: GitPanelProps) {
 
             {status.unstaged.length > 0 && (
               <div>
-                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Changes</h4>
+                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('git.changes')}</h4>
                 {status.unstaged.map(file => (
                   <div key={file} className="flex items-center gap-2 py-1 text-sm group">
                     <span className="text-yellow-400 w-4">M</span>
@@ -126,7 +126,7 @@ export function GitPanel({ cwd, theme = 'dark' }: GitPanelProps) {
 
             {status.untracked.length > 0 && (
               <div>
-                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Untracked</h4>
+                <h4 className={`text-xs font-medium uppercase mb-2 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>{t('git.untracked')}</h4>
                 {status.untracked.map(file => (
                   <div key={file} className="flex items-center gap-2 py-1 text-sm group">
                     <span className="text-gray-500 w-4">?</span>
