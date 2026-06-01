@@ -1,14 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
-
-interface FileEntry {
-  name: string;
-  path: string;
-  type: 'file' | 'dir' | 'symlink';
-  size: number;
-  modified: string;
-}
+import type { FileEntry } from '../../types';
 
 interface FileExplorerProps {
   rootPath: string;

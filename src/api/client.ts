@@ -1,12 +1,20 @@
-import type { Session, Message, Project } from '../types';
+import type { Session, Message, Project, FileEntry, GitStatus, CommitInfo } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE || `${window.location.protocol}//${window.location.host}/api`;
+
+async function checkResponse<T>(res: Response): Promise<T> {
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+}
 
 export const api = {
   // Projects
   async getProjects(): Promise<Project[]> {
     const res = await fetch(`${API_BASE}/projects`);
-    return res.json();
+    return checkResponse<Project[]>(res);
   },
 
   async addProject(worktree: string, name?: string): Promise<Project> {
@@ -15,11 +23,15 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ worktree, name }),
     });
-    return res.json();
+    return checkResponse<Project>(res);
   },
 
   async deleteProject(id: string): Promise<void> {
-    await fetch(`${API_BASE}/projects/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/projects/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
   },
 
   async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
@@ -28,7 +40,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    return res.json();
+    return checkResponse<Project>(res);
   },
 
   // Sessions
@@ -49,7 +61,7 @@ export const api = {
     if (options?.offset) params.set('offset', options.offset.toString());
     const query = params.toString();
     const res = await fetch(`${API_BASE}/sessions${query ? '?' + query : ''}`);
-    return res.json();
+    return checkResponse<Session[]>(res);
   },
 
   async createSession(name?: string, cwd?: string, projectPath?: string): Promise<Session> {
@@ -58,17 +70,17 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, cwd, projectPath }),
     });
-    return res.json();
+    return checkResponse<Session>(res);
   },
 
   async getSession(id: string): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions/${id}`);
-    return res.json();
+    return checkResponse<Session>(res);
   },
 
   async getSessionMessages(id: string): Promise<Message[]> {
     const res = await fetch(`${API_BASE}/sessions/${id}/messages`);
-    return res.json();
+    return checkResponse<Message[]>(res);
   },
 
   async getTranscript(id: string): Promise<string> {
@@ -83,7 +95,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(updates),
     });
-    return res.json();
+    return checkResponse<Session>(res);
   },
 
   async togglePin(sessionId: string, pinned: boolean): Promise<{ success: boolean }> {
@@ -92,18 +104,22 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pinned }),
     });
-    return res.json();
+    return checkResponse<{ success: boolean }>(res);
   },
 
   async deleteSession(id: string): Promise<void> {
-    await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/sessions/${id}`, { method: 'DELETE' });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(text || `HTTP ${res.status}: ${res.statusText}`);
+    }
   },
 
   async duplicateSession(id: string): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions/${id}/duplicate`, {
       method: 'POST',
     });
-    return res.json();
+    return checkResponse<Session>(res);
   },
 
   async updateSessionTags(id: string, tags: string[]): Promise<Session> {
@@ -112,12 +128,12 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ tags }),
     });
-    return res.json();
+    return checkResponse<Session>(res);
   },
 
   async getAllTags(): Promise<string[]> {
     const res = await fetch(`${API_BASE}/sessions/tags`);
-    return res.json();
+    return checkResponse<string[]>(res);
   },
 
   async batchDeleteSessions(sessionIds: string[]): Promise<{ deleted: number; failed: string[] }> {
@@ -126,85 +142,85 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ sessionIds }),
     });
-    return res.json();
+    return checkResponse<{ deleted: number; failed: string[] }>(res);
   },
 
   // Files
-  async listDirectory(path: string) {
+  async listDirectory(path: string): Promise<FileEntry[]> {
     const res = await fetch(`${API_BASE}/files/tree?path=${encodeURIComponent(path)}`);
-    return res.json();
+    return checkResponse<FileEntry[]>(res);
   },
 
-  async readFile(path: string, start?: number, count?: number) {
+  async readFile(path: string, start?: number, count?: number): Promise<{ content: string; language: string; totalLines: number }> {
     let url = `${API_BASE}/files/content?path=${encodeURIComponent(path)}`;
     if (start) url += `&start=${start}`;
     if (count) url += `&count=${count}`;
     const res = await fetch(url);
-    return res.json();
+    return checkResponse<{ content: string; language: string; totalLines: number }>(res);
   },
 
-  async writeFile(path: string, content: string) {
+  async writeFile(path: string, content: string): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/files/content`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ path, content }),
     });
-    return res.json();
+    return checkResponse<{ success: boolean }>(res);
   },
 
-  async searchFiles(query: string, path: string) {
+  async searchFiles(query: string, path: string): Promise<FileEntry[]> {
     const res = await fetch(`${API_BASE}/files/search?q=${encodeURIComponent(query)}&path=${encodeURIComponent(path)}`);
-    return res.json();
+    return checkResponse<FileEntry[]>(res);
   },
 
   // Git
-  async getGitStatus(cwd: string) {
+  async getGitStatus(cwd: string): Promise<GitStatus> {
     const res = await fetch(`${API_BASE}/git/status?cwd=${encodeURIComponent(cwd)}`);
-    return res.json();
+    return checkResponse<GitStatus>(res);
   },
 
-  async getGitDiff(cwd: string, staged: boolean = false) {
+  async getGitDiff(cwd: string, staged: boolean = false): Promise<{ diff: string }> {
     const res = await fetch(`${API_BASE}/git/diff?cwd=${encodeURIComponent(cwd)}&staged=${staged}`);
-    return res.json();
+    return checkResponse<{ diff: string }>(res);
   },
 
-  async getBranchDiff(cwd: string, baseBranch?: string) {
+  async getBranchDiff(cwd: string, baseBranch?: string): Promise<{ diff: string }> {
     let url = `${API_BASE}/git/diff/branch?cwd=${encodeURIComponent(cwd)}`;
     if (baseBranch) url += `&base=${encodeURIComponent(baseBranch)}`;
     const res = await fetch(url);
-    return res.json();
+    return checkResponse<{ diff: string }>(res);
   },
 
-  async getFileDiff(cwd: string, filePath: string) {
+  async getFileDiff(cwd: string, filePath: string): Promise<{ diff: string }> {
     const res = await fetch(`${API_BASE}/git/diff/file?cwd=${encodeURIComponent(cwd)}&path=${encodeURIComponent(filePath)}`);
-    return res.json();
+    return checkResponse<{ diff: string }>(res);
   },
 
-  async getDiffStat(cwd: string) {
+  async getDiffStat(cwd: string): Promise<{ additions: number; deletions: number; files: number }> {
     const res = await fetch(`${API_BASE}/git/diff/stat?cwd=${encodeURIComponent(cwd)}`);
-    return res.json();
+    return checkResponse<{ additions: number; deletions: number; files: number }>(res);
   },
 
-  async getGitLog(cwd: string, count: number = 20) {
+  async getGitLog(cwd: string, count: number = 20): Promise<CommitInfo[]> {
     const res = await fetch(`${API_BASE}/git/log?cwd=${encodeURIComponent(cwd)}&count=${count}`);
-    return res.json();
+    return checkResponse<CommitInfo[]>(res);
   },
 
-  async gitStage(cwd: string, files: string[]) {
+  async gitStage(cwd: string, files: string[]): Promise<{ success: boolean }> {
     const res = await fetch(`${API_BASE}/git/stage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cwd, files }),
     });
-    return res.json();
+    return checkResponse<{ success: boolean }>(res);
   },
 
-  async gitCommit(cwd: string, message: string) {
+  async gitCommit(cwd: string, message: string): Promise<{ success: boolean; hash: string }> {
     const res = await fetch(`${API_BASE}/git/commit`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cwd, message }),
     });
-    return res.json();
+    return checkResponse<{ success: boolean; hash: string }>(res);
   },
 };

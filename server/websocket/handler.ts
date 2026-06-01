@@ -169,37 +169,38 @@ export class WebSocketHandler {
   }
 
   private async handleMessage(ws: WebSocket, message: WebSocketMessage) {
+    const payload = message.payload as Record<string, unknown>;
     switch (message.type) {
       case 'chat':
-        await this.handleChatMessage(ws, message.payload);
+        await this.handleChatMessage(ws, payload as { sessionId: string; message: string });
         break;
 
       case 'subscribe':
-        this.subscribeToSession(ws, message.payload.sessionId);
+        this.subscribeToSession(ws, payload.sessionId as string);
         break;
 
       case 'unsubscribe':
-        this.unsubscribeFromSession(ws, message.payload.sessionId);
+        this.unsubscribeFromSession(ws, payload.sessionId as string);
         break;
 
       case 'terminal:start':
-        this.handleTerminalStart(ws, message.payload);
+        this.handleTerminalStart(ws, payload as { sessionId: string });
         break;
 
       case 'terminal:input':
-        this.handleTerminalInput(message.payload);
+        this.handleTerminalInput(payload as { sessionId: string; data: string });
         break;
 
       case 'terminal:resize':
-        this.handleTerminalResize(message.payload);
+        this.handleTerminalResize(payload as { sessionId: string; cols: number; rows: number });
         break;
 
       case 'terminal:kill':
-        this.handleTerminalKill(message.payload);
+        this.handleTerminalKill(payload as { sessionId: string });
         break;
 
       case 'stop': {
-        const { sessionId } = message.payload;
+        const sessionId = payload.sessionId as string;
         await claudeProcessManager.stopProcess(sessionId);
         this.broadcastToSession(sessionId, {
           type: 'result',

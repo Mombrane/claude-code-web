@@ -127,3 +127,29 @@ export interface WebSocketMessage {
 
 // Legacy alias — prefer StreamEventData
 export type StreamEvent = StreamEventData;
+
+// File types
+export interface FileEntry {
+  name: string;
+  path: string;
+  type: 'file' | 'dir' | 'symlink';
+  size: number;
+  modified: string;
+}
+
+// Git types
+export interface GitStatus {
+  branch: string;
+  ahead: number;
+  behind: number;
+  staged: string[];
+  unstaged: string[];
+  untracked: string[];
+}
+
+export interface CommitInfo {
+  hash: string;
+  message: string;
+  author: string;
+  date: string;
+}

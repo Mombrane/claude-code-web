@@ -186,28 +186,30 @@ export class ClaudeProcessManager extends EventEmitter {
           for (const block of event.message.content) {
             if (block.type === 'text') {
               this.emit('assistant:text', sessionId, {
-                text: block.text,
+                text: block.text as string,
                 sessionId,
               });
             } else if (block.type === 'tool_use') {
               // Cache toolUseId -> toolName for matching tool_result later
-              if (block.id && block.name) {
-                this.pendingToolNames.set(block.id, block.name);
+              const toolUseId = block.id as string;
+              const toolName = block.name as string;
+              if (toolUseId && toolName) {
+                this.pendingToolNames.set(toolUseId, toolName);
                 // Track toolUseId -> sessionId mapping for cleanup
                 if (!this.sessionToolUseIds.has(sessionId)) {
                   this.sessionToolUseIds.set(sessionId, new Set());
                 }
-                this.sessionToolUseIds.get(sessionId)!.add(block.id);
+                this.sessionToolUseIds.get(sessionId)!.add(toolUseId);
               }
               this.emit('assistant:tool_use', sessionId, {
-                toolName: block.name,
-                toolUseId: block.id,
-                input: block.input,
+                toolName,
+                toolUseId,
+                input: block.input as Record<string, unknown>,
                 sessionId,
               });
             } else if (block.type === 'thinking') {
               this.emit('assistant:thinking', sessionId, {
-                text: block.text,
+                text: block.text as string,
                 sessionId,
               });
             }
@@ -234,20 +236,21 @@ export class ClaudeProcessManager extends EventEmitter {
                 output = block.content;
               } else if (Array.isArray(block.content)) {
                 output = block.content
-                  .map((c: any) => c.text || '')
+                  .map((c: Record<string, unknown>) => (c.text as string) || '')
                   .filter(Boolean)
                   .join('\n');
               }
 
-              const toolName = this.pendingToolNames.get(block.tool_use_id) || 'unknown';
+              const toolUseId = block.tool_use_id as string;
+              const toolName = this.pendingToolNames.get(toolUseId) || 'unknown';
               // Clean up the cached entry
-              this.pendingToolNames.delete(block.tool_use_id);
+              this.pendingToolNames.delete(toolUseId);
 
               this.emit('user:tool_result', sessionId, {
-                toolUseId: block.tool_use_id,
+                toolUseId,
                 toolName,
                 output,
-                isError: block.is_error || false,
+                isError: (block.is_error as boolean) || false,
                 sessionId,
               });
             }

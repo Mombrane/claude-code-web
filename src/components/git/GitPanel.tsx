@@ -2,22 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { DiffViewer } from './DiffViewer';
 import { useI18n } from '../../i18n';
-
-interface GitStatus {
-  branch: string;
-  ahead: number;
-  behind: number;
-  staged: string[];
-  unstaged: string[];
-  untracked: string[];
-}
-
-interface CommitInfo {
-  hash: string;
-  author: string;
-  date: string;
-  message: string;
-}
+import type { GitStatus, CommitInfo } from '../../types';
 
 interface GitPanelProps {
   cwd: string;

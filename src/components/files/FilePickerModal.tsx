@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
+import type { FileEntry } from '../../types';
 
 interface FilePickerModalProps {
   rootPath: string;
@@ -9,16 +10,9 @@ interface FilePickerModalProps {
   theme?: 'dark' | 'light';
 }
 
-interface FileNode {
-  name: string;
-  path: string;
-  type: 'file' | 'directory';
-  children?: FileNode[];
-}
-
 export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }: FilePickerModalProps) {
   const { t } = useI18n();
-  const [files, setFiles] = useState<FileNode[]>([]);
+  const [files, setFiles] = useState<FileEntry[]>([]);
   const [selectedFiles, setSelectedFiles] = useState<Set<string>>(new Set());
   const [expandedDirs, setExpandedDirs] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -79,8 +73,8 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
     onSelect(fileContents);
   };
 
-  const getFileIcon = (name: string, type: 'file' | 'directory') => {
-    if (type === 'directory') return ' ';
+  const getFileIcon = (name: string, type: 'file' | 'dir' | 'symlink') => {
+    if (type === 'dir') return ' ';
     const ext = name.split('.').pop()?.toLowerCase() || '';
     const iconMap: Record<string, string> = {
       ts: ' ', tsx: ' ', js: ' ', jsx: ' ',
@@ -94,7 +88,7 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
     return iconMap[ext] || ' ';
   };
 
-  const renderFileNode = (node: FileNode, depth: number = 0) => {
+  const renderFileNode = (node: FileEntry, depth: number = 0) => {
     const isExpanded = expandedDirs.has(node.path);
     const isSelected = selectedFiles.has(node.path);
     const matchesSearch = !searchQuery || node.name.toLowerCase().includes(searchQuery.toLowerCase());
@@ -115,14 +109,14 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
           }`}
           style={{ paddingLeft: `${depth * 20 + 12}px` }}
           onClick={() => {
-            if (node.type === 'directory') {
+            if (node.type === 'dir') {
               toggleDir(node.path);
             } else {
               toggleFile(node.path);
             }
           }}
         >
-          {node.type === 'directory' && (
+          {node.type === 'dir' && (
             <svg
               className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''} ${
                 theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
@@ -140,11 +134,6 @@ export function FilePickerModal({ rootPath, onSelect, onClose, theme = 'dark' }:
             <span className="ml-auto text-xs text-blue-400">✓</span>
           )}
         </div>
-        {node.type === 'directory' && isExpanded && node.children && (
-          <div>
-            {node.children.map(child => renderFileNode(child, depth + 1))}
-          </div>
-        )}
       </div>
     );
   };
