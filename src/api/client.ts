@@ -71,6 +71,12 @@ export const api = {
     return res.json();
   },
 
+  async getTranscript(id: string): Promise<string> {
+    const res = await fetch(`${API_BASE}/sessions/${id}/transcript`);
+    if (!res.ok) throw new Error('Failed to fetch transcript');
+    return res.text();
+  },
+
   async updateSession(id: string, updates: Partial<Session>): Promise<Session> {
     const res = await fetch(`${API_BASE}/sessions/${id}`, {
       method: 'PATCH',

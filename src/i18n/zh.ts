@@ -71,6 +71,12 @@ export default {
   'message.retry': '重试',
   'message.scrollToBottom': '回到底部',
   'message.streaming': '生成中...',
+  'message.pin': '置顶消息',
+  'message.unpin': '取消置顶',
+  'message.pinned': '已置顶',
+  'message.pinnedMessages': '置顶消息',
+  'message.pinnedEmpty': '暂无置顶消息',
+  'message.pinnedCount': '{count} 条置顶',
 
   // Chat cost/tokens
   'chat.cost': '${amount}',
@@ -401,4 +407,12 @@ export default {
 
   // File change tracker
   'chat.filesModified': '修改的文件',
+
+  // Transcript viewer
+  'transcript.title': '会话原始记录',
+  'transcript.view': '查看原始记录',
+  'transcript.lines': '行',
+  'transcript.copy': '复制',
+  'transcript.copied': '已复制！',
+  'transcript.empty': '暂无原始记录',
 } as const;

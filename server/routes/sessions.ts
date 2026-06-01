@@ -204,6 +204,30 @@ router.post('/:id/duplicate', async (req: Request, res: Response) => {
   }
 });
 
+// Get raw transcript (.jsonl) for a session
+router.get('/:id/transcript', async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const session = await sessionStore.getSession(id);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const projectPath = session.projectPath || session.cwd;
+    const transcriptPath = getTranscriptPath(id, projectPath);
+
+    try {
+      const content = await fs.readFile(transcriptPath, 'utf-8');
+      res.type('text/plain').send(content);
+    } catch {
+      res.status(404).json({ error: 'Transcript file not found' });
+    }
+  } catch (e) {
+    console.error('Failed to get transcript:', e);
+    res.status(500).json({ error: 'Failed to get transcript' });
+  }
+});
+
 // Get single session
 router.get('/:id', async (req: Request, res: Response) => {
   try {

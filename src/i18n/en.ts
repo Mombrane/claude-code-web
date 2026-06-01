@@ -71,6 +71,12 @@ export default {
   'message.retry': 'Retry',
   'message.scrollToBottom': 'Scroll to bottom',
   'message.streaming': 'streaming...',
+  'message.pin': 'Pin message',
+  'message.unpin': 'Unpin message',
+  'message.pinned': 'Pinned',
+  'message.pinnedMessages': 'Pinned Messages',
+  'message.pinnedEmpty': 'No pinned messages',
+  'message.pinnedCount': '{count} pinned',
 
   // Chat cost/tokens
   'chat.cost': '${amount}',
@@ -401,4 +407,12 @@ export default {
 
   // File change tracker
   'chat.filesModified': 'Files Modified',
+
+  // Transcript viewer
+  'transcript.title': 'Session Transcript',
+  'transcript.view': 'View Transcript',
+  'transcript.lines': 'lines',
+  'transcript.copy': 'Copy',
+  'transcript.copied': 'Copied!',
+  'transcript.empty': 'No transcript available',
 } as const;

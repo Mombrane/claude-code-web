@@ -22,6 +22,8 @@ function MessageActionToolbar({
   onCopy,
   onRetry,
   showRetry,
+  isPinned,
+  onPinToggle,
   t,
 }: {
   message: Message;
@@ -30,6 +32,8 @@ function MessageActionToolbar({
   onCopy: (message: Message) => void;
   onRetry?: () => void;
   showRetry: boolean;
+  isPinned: boolean;
+  onPinToggle: (messageId: string) => void;
   t: (key: string, params?: Record<string, string | number>) => string;
 }) {
   return (
@@ -100,6 +104,20 @@ function MessageActionToolbar({
           </svg>
         </button>
       )}
+
+      {/* Pin/Unpin button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onPinToggle(message.id); }}
+        className={`p-1 rounded transition-colors ${
+          isPinned
+            ? (theme === 'dark' ? 'bg-amber-600/40 text-amber-300' : 'bg-amber-100 text-amber-600')
+            : (theme === 'dark' ? 'hover:bg-gray-600 text-gray-300' : 'hover:bg-gray-100 text-gray-600')
+        }`}
+        title={isPinned ? t('message.unpin') : t('message.pin')}
+        aria-label={isPinned ? t('message.unpin') : t('message.pin')}
+      >
+        <span className="text-xs">{isPinned ? '📌' : ' '}</span>
+      </button>
     </div>
   );
 }
@@ -194,6 +212,8 @@ interface MessageListProps {
   onRetry?: () => void;
   isLoading?: boolean;
   onVisibleRangeChange?: (range: { start: number; end: number }) => void;
+  pinnedMessages?: string[];
+  onPinToggle?: (messageId: string) => void;
 }
 
 // Code block wrapper with copy button — uses ref to extract textContent
@@ -231,7 +251,7 @@ function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; t
   );
 }
 
-export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry, isLoading = false, onVisibleRangeChange }: MessageListProps) {
+export function MessageList({ messages, streamingText, isStreaming, streamingThinking, theme = 'dark', searchQuery, currentMatchIndex, onRetry, isLoading = false, onVisibleRangeChange, pinnedMessages = [], onPinToggle }: MessageListProps) {
   const { t, locale } = useI18n();
   const toast = useToast();
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -240,6 +260,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   const [expandedTools, setExpandedTools] = useState<Set<string>>(new Set());
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [pinnedExpanded, setPinnedExpanded] = useState(false);
 
   // Compute the index of the last assistant message for retry button
   const lastAssistantIndex = useMemo(() => {
@@ -717,6 +738,8 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
             onCopy={handleCopyMessage}
             onRetry={onRetry}
             showRetry={isLastAssistant && !isStreaming}
+            isPinned={pinnedMessages.includes(message.id)}
+            onPinToggle={onPinToggle || (() => {})}
             t={t}
           />
         )}
@@ -759,6 +782,65 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </div>
       )}
 
+
+      {/* Pinned messages section */}
+      {pinnedMessages.length > 0 && messages.length > 0 && (
+        <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
+          <button
+            onClick={() => setPinnedExpanded(prev => !prev)}
+            className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
+              theme === 'dark' ? 'text-amber-400/80 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'
+            }`}
+          >
+            <span>📌</span>
+            <span>{t('message.pinnedMessages')}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+              theme === 'dark' ? 'bg-amber-900/30 text-amber-300' : 'bg-amber-100 text-amber-600'
+            }`}>{pinnedMessages.length}</span>
+            <span className="ml-1">{pinnedExpanded ? '▾' : '▸'}</span>
+          </button>
+          {pinnedExpanded && (
+            <div className={`px-4 pb-2 max-h-40 overflow-y-auto text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+              {pinnedMessages.map((msgId) => {
+                const msg = messages.find(m => m.id === msgId);
+                if (!msg) return null;
+                const preview = typeof msg.content === 'string'
+                  ? msg.content.slice(0, 80) + (msg.content.length > 80 ? '...' : '')
+                  : `[${msg.type}]`;
+                const idx = messages.indexOf(msg);
+                return (
+                  <button
+                    key={msgId}
+                    onClick={() => {
+                      if (virtuosoRef.current) {
+                        virtuosoRef.current.scrollToIndex({ index: idx, align: 'center', behavior: 'smooth' });
+                      }
+                    }}
+                    className={`w-full text-left py-1 px-2 rounded transition-colors truncate flex items-center gap-2 ${
+                      theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-200/50'
+                    }`}
+                    title={preview}
+                  >
+                    <span className={`flex-shrink-0 ${msg.role === 'user' ? 'text-blue-400' : 'text-emerald-400'}`}>
+                      {msg.role === 'user' ? '›' : '‹'}
+                    </span>
+                    <span className="truncate">{preview}</span>
+                    {onPinToggle && (
+                      <span
+                        onClick={(e) => { e.stopPropagation(); onPinToggle(msgId); }}
+                        className={`flex-shrink-0 ml-auto opacity-0 group-hover:opacity-100 hover:opacity-100 cursor-pointer ${theme === 'dark' ? 'text-gray-500 hover:text-red-400' : 'text-gray-400 hover:text-red-500'}`}
+                        title={t('message.unpin')}
+                      >
+                        ✕
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
       {/* Virtuoso virtualized message list — includes streaming items */}
       {(renderItems.length > 0 || isStreaming) ? (
         <Virtuoso

@@ -33,6 +33,10 @@ interface SessionState {
   markSessionStreaming: (sessionId: string) => void;
   markSessionIdle: (sessionId: string) => void;
   markSessionError: (sessionId: string) => void;
+
+  // Message pinning
+  pinMessage: (sessionId: string, messageId: string) => Promise<void>;
+  unpinMessage: (sessionId: string, messageId: string) => Promise<void>;
 }
 
 export const useSessionStore = create<SessionState>((set, get) => ({
@@ -186,4 +190,39 @@ export const useSessionStore = create<SessionState>((set, get) => ({
       newErrorSet.add(sessionId);
       return { streamingSessions: newSet, errorSessions: newErrorSet };
     }),
+
+  pinMessage: async (sessionId, messageId) => {
+    const state = get();
+    const session = state.sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+    const currentPinned = session.pinnedMessages || [];
+    if (currentPinned.includes(messageId)) return;
+    const newPinned = [...currentPinned, messageId];
+    // Optimistic update
+    state.updateSession(sessionId, { pinnedMessages: newPinned });
+    try {
+      await api.updateSession(sessionId, { pinnedMessages: newPinned });
+    } catch (e) {
+      console.error('Failed to pin message:', e);
+      // Revert on failure
+      state.updateSession(sessionId, { pinnedMessages: currentPinned });
+    }
+  },
+
+  unpinMessage: async (sessionId, messageId) => {
+    const state = get();
+    const session = state.sessions.find((s) => s.id === sessionId);
+    if (!session) return;
+    const currentPinned = session.pinnedMessages || [];
+    const newPinned = currentPinned.filter((id) => id !== messageId);
+    // Optimistic update
+    state.updateSession(sessionId, { pinnedMessages: newPinned });
+    try {
+      await api.updateSession(sessionId, { pinnedMessages: newPinned });
+    } catch (e) {
+      console.error('Failed to unpin message:', e);
+      // Revert on failure
+      state.updateSession(sessionId, { pinnedMessages: currentPinned });
+    }
+  },
 }));

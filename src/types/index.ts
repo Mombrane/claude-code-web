@@ -14,6 +14,7 @@ export interface Session {
   tags?: string[];
   notes?: string;
   matchSnippet?: string;
+  pinnedMessages?: string[];
 }
 
 export interface Project {

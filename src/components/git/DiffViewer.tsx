@@ -93,7 +93,7 @@ function DiffLineComponent({ line, theme }: { line: DiffLine; theme: 'dark' | 'l
     add: theme === 'dark' ? 'text-green-400' : 'text-green-600',
     delete: theme === 'dark' ? 'text-red-400' : 'text-red-600',
     context: theme === 'dark' ? 'text-gray-300' : 'text-gray-700',
-    header: theme === 'dark' ? 'text-gray-500' : 'text-gray-500',
+    header: 'text-gray-500',
     hunk: theme === 'dark' ? 'text-blue-400' : 'text-blue-600',
   }[line.type];
 

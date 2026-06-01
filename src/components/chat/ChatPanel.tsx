@@ -4,6 +4,7 @@ import { wsClient } from '../../api/websocket';
 import { MessageList } from './MessageList';
 import { InputBar } from './InputBar';
 import { ExportButton } from './ExportButton';
+import { TranscriptViewer } from './TranscriptViewer';
 import { MessageSearch, type MessageFilter } from './MessageSearch';
 import { KeyboardShortcutsDialog } from './KeyboardShortcutsDialog';
 import type { StreamEvent, StreamTextData, StreamToolUseData, StreamToolResultData, ResultPayload, ToolExecutionContent } from '../../types';
@@ -14,6 +15,7 @@ import { formatTokens } from '../../utils/format';
 export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChange }: { theme?: 'dark' | 'light'; timelineVisible?: boolean; onVisibleRangeChange?: (range: { start: number; end: number }) => void }) {
   const { t } = useI18n();
   const { sessions, currentSessionId, currentMessages, addMessage, updateMessage, isLoadingMessages } = useSessionStore();
+  const { pinMessage, unpinMessage } = useSessionStore();
   const [streamingText, setStreamingText] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
@@ -75,6 +77,7 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
 
   // Search state
   const [searchOpen, setSearchOpen] = useState(false);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentMatchIndex, setCurrentMatchIndex] = useState(0);
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
@@ -510,6 +513,17 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
     }
   }, [onVisibleRangeChange]);
 
+  // Pin/unpin message toggle handler
+  const handlePinToggle = useCallback((messageId: string) => {
+    if (!currentSessionId) return;
+    const pinned = currentSession?.pinnedMessages || [];
+    if (pinned.includes(messageId)) {
+      unpinMessage(currentSessionId, messageId);
+    } else {
+      pinMessage(currentSessionId, messageId);
+    }
+  }, [currentSessionId, currentSession?.pinnedMessages, pinMessage, unpinMessage]);
+
   if (!currentSessionId) {
     return (
       <div className={`flex-1 flex items-center justify-center ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
@@ -570,6 +584,19 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
         </div>
         <div className="flex items-center gap-2">
           <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} theme={theme} />
+          <button
+            onClick={() => setTranscriptOpen(true)}
+            className={`p-1.5 rounded-md transition-colors ${
+              theme === 'dark'
+                ? 'text-gray-400 hover:text-white hover:bg-gray-700'
+                : 'text-gray-500 hover:text-gray-900 hover:bg-gray-100'
+            }`}
+            title={t('transcript.view')}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </button>
           <span className={`text-xs ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`}>
             {t('chat.messages', { count: currentMessages.length })}
           </span>
@@ -663,6 +690,8 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
           isLoading={isLoadingMessages}
           theme={theme}
           onVisibleRangeChange={handleVisibleRangeChange}
+          pinnedMessages={currentSession?.pinnedMessages}
+          onPinToggle={handlePinToggle}
         />
       </div>
 
@@ -681,6 +710,11 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
       {/* Keyboard shortcuts dialog */}
       {shortcutsOpen && (
         <KeyboardShortcutsDialog onClose={() => setShortcutsOpen(false)} theme={theme} />
+      )}
+
+      {/* Transcript viewer */}
+      {transcriptOpen && currentSessionId && (
+        <TranscriptViewer sessionId={currentSessionId} theme={theme} onClose={() => setTranscriptOpen(false)} />
       )}
     </div>
   );
