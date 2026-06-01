@@ -23,13 +23,15 @@ function getContentString(content: unknown): string {
   return typeof content === 'string' ? content : JSON.stringify(content);
 }
 
-function generateMarkdown(messages: Message[], sessionTitle?: string): string {
-  const title = sessionTitle || 'Untitled Session';
+type TFunction = (key: string, params?: Record<string, string | number>) => string;
+
+function generateMarkdown(messages: Message[], sessionTitle: string | undefined, t: TFunction): string {
+  const title = sessionTitle || t('export.untitledSession');
   const date = new Date().toISOString().split('T')[0];
 
   let md = `---
-title: "${title}"
-exported: "${date}"
+title: \"${title}\"
+exported: \"${date}\"
 ---
 
 # ${title}
@@ -41,22 +43,22 @@ exported: "${date}"
       case 'text': {
         const textContent = getContentString(msg.content);
         if (msg.role === 'user') {
-          md += `## 👤 User\n\n${textContent}\n\n`;
+          md += `## 👤 ${t('export.user')}\n\n${textContent}\n\n`;
         } else if (msg.role === 'assistant') {
-          md += `## 🤖 Assistant\n\n${textContent}\n\n`;
+          md += `## 🤖 ${t('export.assistant')}\n\n${textContent}\n\n`;
         }
         break;
       }
 
       case 'thinking': {
         const thinkingContent = getContentString(msg.content);
-        md += `<details><summary>💭 Thinking</summary>\n\n${thinkingContent}\n</details>\n\n`;
+        md += `<details><summary>💭 ${t('export.thinking')}</summary>\n\n${thinkingContent}\n</details>\n\n`;
         break;
       }
 
       case 'tool_execution': {
         const toolContent = msg.content as ToolExecutionContent;
-        md += `### 🔧 Tool: ${toolContent.toolName}\n\n`;
+        md += `### 🔧 ${t('export.tool')}: ${toolContent.toolName}\n\n`;
         md += codeBlock(JSON.stringify(toolContent.input, null, 2), 'json');
         md += '\n\n';
         if (toolContent.output) {
@@ -67,7 +69,7 @@ exported: "${date}"
 
       case 'tool_use': {
         const callContent = msg.content as ToolCallContent;
-        md += `### 🔧 Tool Call: ${callContent.toolName}\n\n`;
+        md += `### 🔧 ${t('export.toolCall')}: ${callContent.toolName}\n\n`;
         md += codeBlock(JSON.stringify(callContent.input, null, 2), 'json');
         md += '\n\n';
         break;
@@ -75,14 +77,14 @@ exported: "${date}"
 
       case 'tool_result': {
         const resultContent = msg.content as ToolResultContent;
-        md += `### 📋 Tool Result\n\n${resultContent.output}\n\n`;
+        md += `### 📋 ${t('export.toolResult')}\n\n${resultContent.output}\n\n`;
         break;
       }
 
       case 'file': {
         const fileContent = msg.content as FileContent;
         const fileBody = fileContent.content || '';
-        md += `### 📄 File\n\n`;
+        md += `### 📄 ${t('export.file')}\n\n`;
         if (fileContent.path) {
           md += `**${fileContent.path}**\n\n`;
         }
@@ -92,7 +94,7 @@ exported: "${date}"
 
       case 'patch': {
         const patchContent = msg.content as PatchContent;
-        md += `### 🔀 Patch\n\n`;
+        md += `### 🔀 ${t('export.patch')}\n\n`;
         md += codeBlock(patchContent.diff, 'diff');
         md += '\n\n';
         break;
@@ -101,19 +103,19 @@ exported: "${date}"
       case 'step_start':
       case 'step_finish': {
         const stepContent = getContentString(msg.content);
-        md += `### ⚡ Step\n\n${stepContent}\n\n`;
+        md += `### ⚡ ${t('export.step')}\n\n${stepContent}\n\n`;
         break;
       }
 
       case 'error': {
         const errorContent = getContentString(msg.content);
-        md += `## ❌ Error\n\n${errorContent}\n\n`;
+        md += `## ❌ ${t('export.error')}\n\n${errorContent}\n\n`;
         break;
       }
 
       default: {
         const fallbackContent = getContentString(msg.content);
-        md += `### 📝 Message\n\n${fallbackContent}\n\n`;
+        md += `### 📝 ${t('export.message')}\n\n${fallbackContent}\n\n`;
         break;
       }
     }
@@ -143,7 +145,7 @@ export function ExportButton({ messages, sessionTitle, theme = 'dark' }: ExportB
   const toast = useToast();
   const handleExport = () => {
     try {
-      const markdown = generateMarkdown(messages, sessionTitle);
+      const markdown = generateMarkdown(messages, sessionTitle, t);
       const safeTitle = (sessionTitle || 'session')
         .replace(/[^a-zA-Z0-9\-_ ]/g, '')
         .replace(/\s+/g, '-')

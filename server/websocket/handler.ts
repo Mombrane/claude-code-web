@@ -11,7 +11,7 @@ export class WebSocketHandler {
   private processedResults = new Set<string>();
 
   constructor(server: Server) {
-    this.wss = new WebSocketServer({ server, path: '/ws' });
+    this.wss = new WebSocketServer({ server, path: '/ws', maxPayload: 1024 * 1024 }); // 1MB limit
     this.setupWebSocket();
     this.setupClaudeEventHandlers();
     this.setupTerminalEventHandlers();

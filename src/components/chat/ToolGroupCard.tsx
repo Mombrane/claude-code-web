@@ -1,24 +1,11 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent } from '../../types';
 import { useI18n } from '../../i18n';
-import { ToolExecutionCard, ToolCallCard, ToolResultCard } from './ToolExecutionCard';
-
-// Tool icon mapping (shared with ToolExecutionCard)
-const TOOL_ICONS: Record<string, string> = {
-  'Read': ' ',
-  'Edit': '✏️',
-  'Write': ' ',
-  'Bash': ' ️',
-  'Grep': ' ',
-  'Glob': ' ',
-  'Agent': ' ',
-  'WebFetch': ' ',
-  'WebSearch': ' ',
-  'default': ' '
-};
+import ToolExecutionCard, { ToolCallCard, ToolResultCard } from './ToolExecutionCard';
+import { getToolIcon } from '../../utils/tool-icons';
 
 // Collapsible group of consecutive tool execution cards
-export function ToolGroupCard({
+function ToolGroupCard({
   messages,
   expandedTools,
   onToggleTool,
@@ -55,7 +42,7 @@ export function ToolGroupCard({
 
   const summaryParts: string[] = [];
   for (const [name, count] of nameCounts) {
-    const icon = TOOL_ICONS[name] || TOOL_ICONS['default'];
+    const icon = getToolIcon(name);
     summaryParts.push(count > 1 ? `${icon} ${name}×${count}` : `${icon} ${name}`);
   }
 
@@ -74,6 +61,8 @@ export function ToolGroupCard({
       {/* Group header — always visible */}
       <button
         onClick={() => setIsGroupExpanded(prev => !prev)}
+        aria-label={t('tool.toggleGroup')}
+        aria-expanded={isGroupExpanded}
         className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
           theme === 'dark' ? 'hover:bg-gray-700/30' : 'hover:bg-gray-100'
         }`}
@@ -135,6 +124,7 @@ export function ToolGroupCard({
                   {/* Copy button per tool */}
                   <button
                     onClick={() => onCopyMessage(msg)}
+                    aria-label={t('tool.copyResult')}
                     className={`absolute top-2 right-2 p-1 rounded-md text-xs opacity-0 group-hover/tool:opacity-100 transition-opacity ${
                       theme === 'dark'
                         ? 'bg-gray-700/80 hover:bg-gray-600 text-gray-300'
@@ -175,3 +165,5 @@ export function ToolGroupCard({
     </div>
   );
 }
+
+export default memo(ToolGroupCard);

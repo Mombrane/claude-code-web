@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { ChatPanel } from '../chat/ChatPanel';
@@ -74,6 +74,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
   const [settings, setSettings] = useState<Settings>(loadSettings);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const { currentSessionId, currentMessages, sessions } = useSessionStore();
+  const sessionMap = useMemo(() => new Map(sessions.map(s => [s.id, s])), [sessions]);
   const [wsStatus, setWsStatus] = useState({ connected: false, reconnecting: false, attempts: 0, maxAttempts: 10 });
   const [visibleRange, setVisibleRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
 
@@ -532,7 +533,7 @@ export function AppLayout({ projectPath }: { projectPath?: string }) {
             {wsStatus.connected ? t('status.connected') : wsStatus.reconnecting ? t('status.reconnecting') : t('status.disconnected')}
           </span>
           <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
-          <span>{sessions.find(s => s.id === currentSessionId)?.model?.split('/').pop() || settings.model || t('status.defaultModel')}</span>
+          <span>{(currentSessionId ? sessionMap.get(currentSessionId) : null)?.model?.split('/').pop() || settings.model || t('status.defaultModel')}</span>
           <span className={theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}>|</span>
           <span>{t('status.messages', { count: currentMessages.length })}</span>
         </div>

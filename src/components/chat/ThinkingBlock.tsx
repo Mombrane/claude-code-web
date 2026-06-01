@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useI18n } from '../../i18n';
 
 // Thinking block component - real-time display
-export function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: string; isStreaming?: boolean; theme?: 'dark' | 'light' }) {
+function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { content: string; isStreaming?: boolean; theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
   const [isExpanded, setIsExpanded] = useState(true);
   const safeContent = typeof content === 'string' ? content : String(content || '');
@@ -16,6 +16,8 @@ export function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { conten
     }`}>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
+        aria-label={t('tool.toggleThinking')}
+        aria-expanded={isExpanded}
         className={`w-full flex items-center gap-2 p-3 text-left transition-colors ${
           theme === 'dark' ? 'hover:bg-purple-800/10' : 'hover:bg-purple-100'
         }`}
@@ -59,3 +61,5 @@ export function ThinkingBlock({ content, isStreaming, theme = 'dark' }: { conten
     </div>
   );
 }
+
+export default memo(ThinkingBlock);

@@ -233,6 +233,18 @@ export default {
   // Export
   'export.markdown': 'Export as Markdown',
   'export.button': 'Export',
+  'export.untitledSession': 'Untitled Session',
+  'export.user': 'User',
+  'export.assistant': 'Assistant',
+  'export.thinking': 'Thinking',
+  'export.tool': 'Tool',
+  'export.toolCall': 'Tool Call',
+  'export.toolResult': 'Tool Result',
+  'export.file': 'File',
+  'export.patch': 'Patch',
+  'export.step': 'Step',
+  'export.error': 'Error',
+  'export.message': 'Message',
 
   // Tool execution UI
   'tool.error': 'Error',
@@ -279,6 +291,13 @@ export default {
   'search.previous': 'Previous (Shift+Enter)',
   'search.next': 'Next (Enter)',
   'search.filterAll': 'All',
+  'search.input': 'Search messages',
+  'search.prev': 'Previous match',
+  'search.filter.all': 'All',
+  'search.filter.text': 'Text',
+  'search.filter.tools': 'Tools',
+  'search.filter.thinking': 'Thinking',
+  'search.filter.errors': 'Errors',
   'search.filterText': 'Text',
   'search.filterTools': 'Tools',
   'search.filterThinking': 'Thinking',
@@ -326,6 +345,8 @@ export default {
 
   // Common
   'common.cancel': 'Cancel',
+  'common.close': 'Close',
+  'common.copy': 'Copy',
 
   // Home page
   'home.projects': 'Projects',
@@ -430,4 +451,16 @@ export default {
   'chat.toolStats': 'Tool Usage',
   'chat.toolStats.expand': 'Show tool usage',
   'chat.toolStats.collapse': 'Hide tool usage',
+  'chat.viewTranscript': 'View Transcript',
+  'chat.toggleFilesModified': 'Toggle files modified',
+  'chat.toggleToolStats': 'Toggle tool usage stats',
+  'chat.togglePinnedMessages': 'Toggle pinned messages',
+  'chat.viewPinnedMessage': 'View pinned message',
+  'input.removeFile': 'Remove file',
+  'tool.toggleGroup': 'Toggle tool group',
+  'tool.copyResult': 'Copy tool result',
+  'tool.toggleThinking': 'Toggle thinking',
+  'tool.toggleOutput': 'Toggle output',
+  'dialog.shortcuts': 'Keyboard Shortcuts',
+  'dialog.transcript': 'Session Transcript',
 } as const;

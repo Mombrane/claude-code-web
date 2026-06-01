@@ -136,6 +136,9 @@ export function TranscriptViewer({ sessionId, theme = 'dark', onClose }: Transcr
       onClick={handleBackdropClick}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('dialog.transcript')}
         className={`w-full h-full max-w-6xl max-h-[90vh] m-4 rounded-xl shadow-2xl overflow-hidden flex flex-col animate-fadeIn ${
           isDark
             ? 'bg-gray-800 border border-gray-700'
@@ -162,6 +165,7 @@ export function TranscriptViewer({ sessionId, theme = 'dark', onClose }: Transcr
             {content && (
               <button
                 onClick={handleCopy}
+                aria-label={t('common.copy')}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-xs rounded-md transition-colors ${
                   isDark
                     ? 'text-gray-300 hover:text-white hover:bg-gray-700'
@@ -187,6 +191,7 @@ export function TranscriptViewer({ sessionId, theme = 'dark', onClose }: Transcr
             )}
             <button
               onClick={onClose}
+              aria-label={t('common.close')}
               className={`p-1 rounded-md transition-colors ${
                 isDark
                   ? 'text-gray-400 hover:text-white hover:bg-gray-700'

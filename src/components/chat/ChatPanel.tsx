@@ -11,20 +11,7 @@ import type { StreamEvent, StreamTextData, StreamToolUseData, StreamToolResultDa
 import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
 import { formatTokens } from '../../utils/format';
-
-// Tool icon mapping for stats display (module-level constant)
-const TOOL_STATS_ICONS: Record<string, string> = {
-  'Read': ' ',
-  'Edit': '✏️',
-  'Write': ' ',
-  'Bash': ' ️',
-  'Grep': ' ',
-  'Glob': ' ',
-  'Agent': ' ',
-  'WebFetch': ' ',
-  'WebSearch': ' ',
-  'default': ' '
-};
+import { getToolIcon } from '../../utils/tool-icons';
 
 export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChange }: { theme?: 'dark' | 'light'; timelineVisible?: boolean; onVisibleRangeChange?: (range: { start: number; end: number }) => void }) {
   const { t } = useI18n();
@@ -34,7 +21,8 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null);
   const [streamingThinking, setStreamingThinking] = useState('');
-  const currentSession = sessions.find((s) => s.id === currentSessionId);
+  const sessionMap = useMemo(() => new Map(sessions.map(s => [s.id, s])), [sessions]);
+  const currentSession = currentSessionId ? sessionMap.get(currentSessionId) ?? null : null;
   const streamingTextRef = useRef<string>('');
   const streamingThinkingRef = useRef<string>('');
 
@@ -91,7 +79,7 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
     return Object.entries(counts)
       .sort(([, a], [, b]) => b - a)
       .slice(0, 5)
-      .map(([name, count]) => ({ name, count, icon: TOOL_STATS_ICONS[name] || TOOL_STATS_ICONS['default'] }));
+      .map(([name, count]) => ({ name, count, icon: getToolIcon(name) }));
   }, [currentMessages]);
 
   // Compute last assistant message cost and token breakdown for header display
@@ -626,6 +614,7 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
           <ExportButton messages={currentMessages} sessionTitle={currentSession?.name} theme={theme} />
           <button
             onClick={() => setTranscriptOpen(true)}
+            aria-label={t('chat.viewTranscript')}
             className={`p-1.5 rounded-md transition-colors ${
               theme === 'dark'
                 ? 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -672,6 +661,7 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
         <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
           <button
             onClick={() => setFilesExpanded(prev => !prev)}
+            aria-label={t('chat.toggleFilesModified')}
             className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
               theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
             }`}
@@ -707,6 +697,7 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
         <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
           <button
             onClick={() => setToolStatsExpanded(prev => !prev)}
+            aria-label={t('chat.toggleToolStats')}
             className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
               theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
             }`}

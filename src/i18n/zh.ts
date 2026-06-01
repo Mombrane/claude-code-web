@@ -233,6 +233,18 @@ export default {
   // Export
   'export.markdown': '导出为 Markdown',
   'export.button': '导出',
+  'export.untitledSession': '未命名会话',
+  'export.user': '用户',
+  'export.assistant': '助手',
+  'export.thinking': '思考',
+  'export.tool': '工具',
+  'export.toolCall': '工具调用',
+  'export.toolResult': '工具结果',
+  'export.file': '文件',
+  'export.patch': '补丁',
+  'export.step': '步骤',
+  'export.error': '错误',
+  'export.message': '消息',
 
   // Tool execution UI
   'tool.error': '错误',
@@ -279,6 +291,13 @@ export default {
   'search.previous': '上一个 (Shift+Enter)',
   'search.next': '下一个 (Enter)',
   'search.filterAll': '全部',
+  'search.input': '搜索消息',
+  'search.prev': '上一个匹配',
+  'search.filter.all': '全部',
+  'search.filter.text': '文本',
+  'search.filter.tools': '工具',
+  'search.filter.thinking': '思考',
+  'search.filter.errors': '错误',
   'search.filterText': '文本',
   'search.filterTools': '工具',
   'search.filterThinking': '思考',
@@ -326,6 +345,8 @@ export default {
 
   // Common
   'common.cancel': '取消',
+  'common.close': '关闭',
+  'common.copy': '复制',
 
   // Home page
   'home.projects': '项目',
@@ -430,4 +451,16 @@ export default {
   'chat.toolStats': '工具使用',
   'chat.toolStats.expand': '显示工具使用',
   'chat.toolStats.collapse': '隐藏工具使用',
+  'chat.viewTranscript': '查看原始记录',
+  'chat.toggleFilesModified': '切换修改文件列表',
+  'chat.toggleToolStats': '切换工具使用统计',
+  'chat.togglePinnedMessages': '切换置顶消息',
+  'chat.viewPinnedMessage': '查看置顶消息',
+  'input.removeFile': '移除文件',
+  'tool.toggleGroup': '切换工具组',
+  'tool.copyResult': '复制工具结果',
+  'tool.toggleThinking': '切换思考',
+  'tool.toggleOutput': '切换输出',
+  'dialog.shortcuts': '键盘快捷键',
+  'dialog.transcript': '会话原始记录',
 } as const;

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import Editor from '@monaco-editor/react';
+import Editor, { type OnMount } from '@monaco-editor/react';
+import type { editor } from 'monaco-editor';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
 
@@ -54,8 +55,8 @@ export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: File
       setLanguage(data.language);
       setTotalLines(data.totalLines);
       setIsModified(false);
-    } catch (e: any) {
-      setError(e.message || t('editor.error'));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t('editor.error'));
     }
   };
 
@@ -65,8 +66,8 @@ export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: File
       await api.writeFile(filePath, content);
       setOriginalContent(content);
       setIsModified(false);
-    } catch (e: any) {
-      setError(e.message || t('editor.saveFailed'));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : t('editor.saveFailed'));
     } finally {
       setIsSaving(false);
     }
@@ -86,9 +87,9 @@ export function FileEditor({ filePath, onClose, settings, theme = 'dark' }: File
     }
   };
 
-  const handleEditorMount = (editor: any) => {
+  const handleEditorMount: OnMount = (editor) => {
     setMonacoLoaded(true);
-    editor.onDidChangeCursorPosition((e: any) => {
+    editor.onDidChangeCursorPosition((e: editor.ICursorPositionChangedEvent) => {
       setCursorPosition({
         line: e.position.lineNumber,
         column: e.position.column,

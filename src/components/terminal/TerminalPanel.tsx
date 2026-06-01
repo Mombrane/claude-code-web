@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { wsClient } from '../../api/websocket';
+import type { WebSocketMessage } from '../../types';
 import { useI18n } from '../../i18n';
 import '@xterm/xterm/css/xterm.css';
 
@@ -97,9 +98,10 @@ export function TerminalPanel({ sessionId, theme = 'dark' }: TerminalPanelProps)
     });
 
     // Handle terminal output from server
-    const handleTerminalOutput = (message: any) => {
-      if (message.payload?.sessionId === sessionId) {
-        terminal.write(message.payload.data);
+    const handleTerminalOutput = (message: WebSocketMessage) => {
+      const payload = message.payload as Record<string, unknown>;
+      if (payload?.sessionId === sessionId && typeof payload.data === 'string') {
+        terminal.write(payload.data);
       }
     };
 

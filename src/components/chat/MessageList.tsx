@@ -4,14 +4,17 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent, FileContent, PatchContent } from '../../types';
+import type { Root, ElementContent, Node as HastNode } from 'hast';
+import type { ExtraProps } from 'react-markdown';
+import type { Pluggable } from 'unified';
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
 import { useSessionStore } from '../../stores/sessionStore';
 import { getRelativeTime, escapeRegex } from '../../utils/format';
-import { CopyButton } from './CopyButton';
-import { ToolCallCard, ToolResultCard, ToolExecutionCard } from './ToolExecutionCard';
-import { ToolGroupCard } from './ToolGroupCard';
-import { ThinkingBlock } from './ThinkingBlock';
+import CopyButton from './CopyButton';
+import ToolExecutionCard, { ToolCallCard, ToolResultCard } from './ToolExecutionCard';
+import ToolGroupCard from './ToolGroupCard';
+import ThinkingBlock from './ThinkingBlock';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 
 // Floating action toolbar that appears on hover over message bubbles
@@ -147,15 +150,16 @@ function highlightPlainText(text: string, query: string): (string | JSX.Element)
 
 // Rehype plugin to highlight search matches in HAST tree (for ReactMarkdown)
 function rehypeSearchHighlight(query: string) {
-  return () => (tree: any) => {
+  return () => (tree: Root) => {
     if (!query) return;
     const queryLower = query.toLowerCase();
     walkAndHighlight(tree, queryLower);
   };
 }
 
-function walkAndHighlight(node: any, queryLower: string): void {
-  if (!node || !node.children) return;
+function walkAndHighlight(node: HastNode, queryLower: string): void {
+  // Type guard: only nodes with children (Root, Element) need recursive processing
+  if (!node || !('children' in node) || !Array.isArray(node.children)) return;
 
   let i = 0;
   while (i < node.children.length) {
@@ -168,7 +172,7 @@ function walkAndHighlight(node: any, queryLower: string): void {
         continue;
       }
 
-      const parts: any[] = [];
+      const parts: ElementContent[] = [];
       let remaining = child.value;
       let searchFrom = 0;
 
@@ -218,7 +222,7 @@ interface MessageListProps {
 
 // Code block wrapper with copy button — uses ref to extract textContent
 // so it works with syntax-highlighted code (rehype-highlight)
-function CodeBlock({ children, theme, ...props }: { children: React.ReactNode; theme: 'dark' | 'light'; [key: string]: any }) {
+function CodeBlock({ children, theme, ...props }: React.HTMLAttributes<HTMLPreElement> & { children: React.ReactNode; theme: 'dark' | 'light' }) {
   const preRef = useRef<HTMLPreElement>(null);
   const [codeText, setCodeText] = useState('');
 
@@ -272,7 +276,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
 
   // Build rehype plugins array — include search highlight plugin when searching
   const rehypePlugins = useMemo(() => {
-    const plugins: any[] = [rehypeHighlight];
+    const plugins: Pluggable[] = [rehypeHighlight];
     if (searchQuery) {
       plugins.push(rehypeSearchHighlight(searchQuery));
     }
@@ -391,10 +395,10 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
   };
 
   const markdownComponents = useMemo(() => ({
-    pre: ({ children, ...props }: any) => (
+    pre: ({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
       <CodeBlock theme={theme} {...props}>{children}</CodeBlock>
     ),
-    code: ({ className, children, node, ...props }: any) => {
+    code: ({ className, children, node, ...props }: React.HTMLAttributes<HTMLElement> & ExtraProps) => {
       // In react-markdown v9+, inline code has no className.
       // Fenced code blocks without a language also have no className.
       // Distinguish by checking if content has newlines (block) or not (inline).
@@ -413,7 +417,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       }
       return <code className={className} {...props}>{children}</code>;
     },
-    table: ({ children, ...props }: any) => (
+    table: ({ children, ...props }: React.HTMLAttributes<HTMLTableElement>) => (
       <div className="overflow-x-auto my-4">
         <table {...props} className={`min-w-full divide-y ${
           theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'
@@ -422,14 +426,14 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         </table>
       </div>
     ),
-    th: ({ children, ...props }: any) => (
+    th: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
       <th {...props} className={`px-4 py-2 text-left text-sm font-medium ${
         theme === 'dark' ? 'bg-gray-800/50 text-gray-300' : 'bg-gray-100 text-gray-700'
       }`}>
         {children}
       </th>
     ),
-    td: ({ children, ...props }: any) => (
+    td: ({ children, ...props }: React.HTMLAttributes<HTMLTableCellElement>) => (
       <td {...props} className={`px-4 py-2 text-sm border-t ${
         theme === 'dark' ? 'text-gray-300 border-gray-700/50' : 'text-gray-700 border-gray-200'
       }`}>
@@ -788,6 +792,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
         <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
           <button
             onClick={() => setPinnedExpanded(prev => !prev)}
+            aria-label={t('chat.togglePinnedMessages')}
             className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
               theme === 'dark' ? 'text-amber-400/80 hover:text-amber-300' : 'text-amber-600 hover:text-amber-700'
             }`}
@@ -816,6 +821,7 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
                         virtuosoRef.current.scrollToIndex({ index: idx, align: 'center', behavior: 'smooth' });
                       }
                     }}
+                    aria-label={t('chat.viewPinnedMessage')}
                     className={`w-full text-left py-1 px-2 rounded transition-colors truncate flex items-center gap-2 ${
                       theme === 'dark' ? 'hover:bg-gray-700/50' : 'hover:bg-gray-200/50'
                     }`}

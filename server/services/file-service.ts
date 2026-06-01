@@ -16,7 +16,7 @@ export interface FileContent {
   language: string;
 }
 
-const BLOCKED_PATHS = ['/etc', '/root', '/proc', '/sys', '/dev'];
+const BLOCKED_PATHS = ['/etc', '/root', '/proc', '/sys', '/dev', '/boot', '/usr/bin', '/usr/sbin'];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 function getLanguage(filename: string): string {
@@ -181,7 +181,7 @@ export class FileService {
   }
 
   private isBlockedPath(filePath: string): boolean {
-    return BLOCKED_PATHS.some(blocked => filePath.startsWith(blocked));
+    return BLOCKED_PATHS.some(blocked => filePath.startsWith(blocked + '/') || filePath === blocked);
   }
 }
 

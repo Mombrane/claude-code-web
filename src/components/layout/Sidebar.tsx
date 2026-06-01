@@ -345,6 +345,8 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     return [...pinned, ...unpinned];
   }, [sessions, searchQuery, statusFilter, tagFilter, sortField, sortDir]);
 
+  const sessionMap = useMemo(() => new Map(sessions.map(s => [s.id, s])), [sessions]);
+
   const groupedSessions = useMemo(() =>
     groupSessionsByTime(filteredSessions, t),
     [filteredSessions, t]
@@ -989,7 +991,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       {editingNotesSessionId && (
         <SessionNotesDialog
           sessionId={editingNotesSessionId}
-          initialNotes={sessions.find(s => s.id === editingNotesSessionId)?.notes || ''}
+          initialNotes={sessionMap.get(editingNotesSessionId)?.notes || ''}
           theme={theme}
           onSave={handleSaveNotes}
           onClose={() => setEditingNotesSessionId(null)}

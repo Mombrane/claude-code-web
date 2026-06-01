@@ -51,6 +51,9 @@ export function KeyboardShortcutsDialog({ onClose, theme = 'dark' }: KeyboardSho
     >
       <div
         ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('dialog.shortcuts')}
         className={`border rounded-xl shadow-2xl w-full max-w-md mx-4 overflow-hidden ${
           theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
         }`}
@@ -63,6 +66,7 @@ export function KeyboardShortcutsDialog({ onClose, theme = 'dark' }: KeyboardSho
           </h2>
           <button
             onClick={onClose}
+            aria-label={t('common.close')}
             className={`transition-colors p-1 rounded ${
               theme === 'dark' ? 'text-gray-400 hover:text-white hover:bg-gray-700' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'
             }`}

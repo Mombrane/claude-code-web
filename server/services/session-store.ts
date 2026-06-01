@@ -12,6 +12,7 @@ import type { Session } from '../types';
  */
 export class SessionStore {
   private dataDir: string;
+  private statsLocks = new Map<string, Promise<void>>();
 
   constructor() {
     this.dataDir = config.dataDir;
@@ -168,12 +169,25 @@ export class SessionStore {
   }
 
   async updateSessionStats(sessionId: string, costUsd: number, tokens: number): Promise<void> {
-    const session = await this.getSession(sessionId);
-    if (!session) return;
-
-    session.totalCostUsd += costUsd;
-    session.totalTokens += tokens;
-    await this.saveSession(session);
+    // Wait for any pending stats update for this session
+    while (this.statsLocks.has(sessionId)) {
+      await this.statsLocks.get(sessionId);
+    }
+    
+    let resolveLock!: () => void;
+    const lockPromise = new Promise<void>(resolve => { resolveLock = resolve; });
+    this.statsLocks.set(sessionId, lockPromise);
+    
+    try {
+      const session = await this.getSession(sessionId);
+      if (!session) return;
+      session.totalCostUsd = (session.totalCostUsd || 0) + costUsd;
+      session.totalTokens = (session.totalTokens || 0) + tokens;
+      await this.saveSession(session);
+    } finally {
+      this.statsLocks.delete(sessionId);
+      resolveLock();
+    }
   }
 
   async deleteSession(sessionId: string): Promise<boolean> {

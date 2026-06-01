@@ -1,24 +1,7 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import type { Message, ToolCallContent, ToolResultContent, ToolExecutionContent } from '../../types';
 import { useI18n } from '../../i18n';
-
-// Tool icon mapping
-const TOOL_ICONS: Record<string, string> = {
-  'Read': ' ',
-  'Edit': '✏️',
-  'Write': ' ',
-  'Bash': ' ️',
-  'Grep': ' ',
-  'Glob': ' ',
-  'Agent': ' ',
-  'WebFetch': ' ',
-  'WebSearch': ' ',
-  'default': ' '
-};
-
-function getToolIcon(toolName: string): string {
-  return TOOL_ICONS[toolName] || TOOL_ICONS['default'];
-}
+import { getToolIcon } from '../../utils/tool-icons';
 
 // Collapsible tool call component
 export function ToolCallCard({ toolCall, isExpanded, onToggle, theme = 'dark' }: {
@@ -324,7 +307,7 @@ function WebResult({ output, input, theme }: { output: string; input: Record<str
 
 // ---- ToolExecutionCard — unified tool call + result ----
 
-export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: {
+function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'dark' }: {
   execution: ToolExecutionContent;
   isExpanded: boolean;
   onToggle: () => void;
@@ -446,6 +429,7 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
           {shouldTruncate && (
             <button
               onClick={() => setIsOutputExpanded(prev => !prev)}
+              aria-label={isOutputExpanded ? t('tool.showLess') : t('tool.showMore')}
               className={`mt-2 text-xs font-medium transition-colors ${
                 theme === 'dark'
                   ? 'text-blue-400 hover:text-blue-300'
@@ -460,4 +444,6 @@ export function ToolExecutionCard({ execution, isExpanded, onToggle, theme = 'da
     </div>
   );
 }
+
+export default memo(ToolExecutionCard);
 

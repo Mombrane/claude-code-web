@@ -78,7 +78,7 @@ function parseLine(
       if (Array.isArray(content)) {
         // Check for tool_result blocks in array content
         const hasToolResults = content.some(
-          (block: any) => block.type === 'tool_result'
+          (block: Record<string, unknown>) => block.type === 'tool_result'
         );
 
         if (hasToolResults) {
@@ -306,15 +306,15 @@ export async function searchTranscript(
             textContent = entry.message.content;
           } else if (Array.isArray(entry.message.content)) {
             textContent = entry.message.content
-              .filter((block: any) => block.type === 'text')
-              .map((block: any) => block.text)
+              .filter((block: Record<string, unknown>) => block.type === 'text')
+              .map((block: Record<string, unknown>) => block.text as string)
               .join(' ');
           }
         } else if (entry.type === 'assistant' && entry.message?.content) {
           if (Array.isArray(entry.message.content)) {
             textContent = entry.message.content
-              .filter((block: any) => block.type === 'text')
-              .map((block: any) => block.text)
+              .filter((block: Record<string, unknown>) => block.type === 'text')
+              .map((block: Record<string, unknown>) => block.text as string)
               .join(' ');
           }
         }

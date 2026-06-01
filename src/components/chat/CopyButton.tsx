@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { useI18n } from '../../i18n';
 import { useToast } from '../ui/ToastProvider';
 
 // Copy button for code blocks
-export function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | 'light' }) {
+function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'dark' | 'light' }) {
   const { t } = useI18n();
   const toast = useToast();
   const [copied, setCopied] = useState(false);
@@ -21,6 +21,7 @@ export function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'da
   return (
     <button
       onClick={handleCopy}
+      aria-label={t('common.copy')}
       className={`absolute top-2 right-2 opacity-0 group-hover/code:opacity-100 text-xs px-2 py-1 rounded transition-opacity ${
         theme === 'dark'
           ? 'bg-gray-700 hover:bg-gray-600 text-gray-300'
@@ -37,3 +38,5 @@ export function CopyButton({ text, theme = 'dark' }: { text: string; theme?: 'da
     </button>
   );
 }
+
+export default memo(CopyButton);

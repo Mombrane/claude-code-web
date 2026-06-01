@@ -73,6 +73,7 @@ export function MessageSearch({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         placeholder={t('search.placeholder')}
+        aria-label={t('search.input')}
         className={`flex-1 bg-transparent text-sm outline-none ${
           theme === 'dark' ? 'text-gray-200 placeholder-gray-500' : 'text-gray-800 placeholder-gray-400'
         }`}
@@ -87,6 +88,7 @@ export function MessageSearch({
             <button
               key={key}
               onClick={() => onFilterChange(key)}
+              aria-label={t(`search.filter.${key}`)}
               className={`px-1.5 py-0.5 rounded text-[10px] transition-colors ${
                 activeFilter === key
                   ? theme === 'dark'
@@ -116,6 +118,7 @@ export function MessageSearch({
         <button
           onClick={onPrevious}
           disabled={totalMatches === 0}
+          aria-label={t('search.prev')}
           className={`p-1 rounded disabled:opacity-30 transition-colors ${
             theme === 'dark' ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
           }`}
@@ -128,6 +131,7 @@ export function MessageSearch({
         <button
           onClick={onNext}
           disabled={totalMatches === 0}
+          aria-label={t('search.next')}
           className={`p-1 rounded disabled:opacity-30 transition-colors ${
             theme === 'dark' ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
           }`}
@@ -140,6 +144,7 @@ export function MessageSearch({
       </div>
       <button
         onClick={onClose}
+        aria-label={t('search.close')}
         className={`p-1 rounded transition-colors shrink-0 ${
           theme === 'dark' ? 'hover:bg-gray-700 text-gray-400 hover:text-gray-200' : 'hover:bg-gray-200 text-gray-500 hover:text-gray-700'
         }`}
