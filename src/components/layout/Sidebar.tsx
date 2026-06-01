@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
@@ -37,6 +37,8 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
   const [newTagInput, setNewTagInput] = useState('');
   const tagInputRef = useRef<HTMLInputElement>(null);
   const [editingNotesSessionId, setEditingNotesSessionId] = useState<string | null>(null);
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedSessions, setSelectedSessions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadSessions();
@@ -80,6 +82,18 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
       tagInputRef.current.focus();
     }
   }, [editingTagsSessionId]);
+
+  // Escape exits select mode
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && selectMode) {
+        setSelectMode(false);
+        setSelectedSessions(new Set());
+      }
+    };
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [selectMode]);
 
   const loadSessions = async () => {
     try {
@@ -210,13 +224,33 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
 
   const handleSessionClick = (session: Session) => {
     if (editingSessionId === session.id) return;
+    if (selectMode) {
+      setSelectedSessions(prev => {
+        const next = new Set(prev);
+        if (next.has(session.id)) {
+          next.delete(session.id);
+        } else {
+          next.add(session.id);
+        }
+        return next;
+      });
+      return;
+    }
     setCurrentSession(session.id);
     const dir = encodePath(session.projectPath || session.cwd);
     navigate(`/${dir}/session/${session.id}`);
   };
 
-  // Build tooltip text for session items
-  const getSessionTooltip = (session: Session): string => {
+  const handleToggleSelectMode = useCallback(() => {
+    setSelectMode(prev => {
+      if (prev) {
+        setSelectedSessions(new Set());
+      }
+      return !prev;
+    });
+  }, []);
+
+  const buildSessionTooltip = (session: Session) => {
     const lines: string[] = [];
     lines.push(`${t('session.tooltip.name')}: ${session.name}`);
     if (session.createdAt) {
@@ -274,6 +308,44 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
     [sessions]
   );
 
+  const handleSelectAll = useCallback(() => {
+    if (selectedSessions.size === filteredSessions.length) {
+      setSelectedSessions(new Set());
+    } else {
+      setSelectedSessions(new Set(filteredSessions.map(s => s.id)));
+    }
+  }, [selectedSessions, filteredSessions]);
+
+  const handleBatchDelete = useCallback(async () => {
+    if (selectedSessions.size === 0) return;
+    if (!window.confirm(t('sidebar.batchDeleteConfirm', { count: selectedSessions.size }))) return;
+    try {
+      const ids = Array.from(selectedSessions);
+      const result = await api.batchDeleteSessions(ids);
+      const failedSet = new Set(result.failed);
+      const succeeded = ids.filter(id => !failedSet.has(id));
+      succeeded.forEach(id => removeSession(id));
+      if (result.failed.length > 0) {
+        toast.error(t('toast.batchDeleteFailed'));
+      } else {
+        toast.success(t('toast.batchDeleteSuccess', { count: result.deleted }));
+      }
+    } catch (e) {
+      console.error('Failed to batch delete:', e);
+      toast.error(t('toast.batchDeleteFailed'));
+    }
+    setSelectMode(false);
+    setSelectedSessions(new Set());
+  }, [selectedSessions, t, toast, removeSession]);
+
+  const handleBatchTag = useCallback(() => {
+    if (selectedSessions.size > 0) {
+      const firstId = Array.from(selectedSessions)[0];
+      setEditingTagsSessionId(firstId);
+    }
+  }, [selectedSessions]);
+
+
 
   return (
     <div className={`w-64 flex flex-col h-full ${theme === 'dark' ? 'bg-gray-800/80' : 'bg-gray-50'}`}>
@@ -284,16 +356,30 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             <span className="text-lg"> </span>
             <h1 className="text-sm font-semibold text-gradient">{t('app.name')}</h1>
           </div>
-          <button
-            onClick={handleCreateSession}
-            disabled={isCreating}
-            className={`p-1.5 text-gray-400 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-700/50' : 'hover:text-gray-900 hover:bg-gray-200'} rounded-md transition-all duration-200`}
-            title={t('sidebar.newSessionTooltip')}
-          >
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleToggleSelectMode}
+              className={`p-1.5 text-xs rounded-md transition-all duration-200 ${
+                selectMode
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                  : `text-gray-400 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-700/50' : 'hover:text-gray-900 hover:bg-gray-200'}`
+              }`}
+              aria-label={t(selectMode ? 'sidebar.exitSelect' : 'sidebar.selectMode')}
+            >
+              {selectMode ? t('sidebar.exitSelect') : t('sidebar.selectMode')}
+            </button>
+            <button
+              onClick={handleCreateSession}
+              disabled={isCreating}
+              className={`p-1.5 text-gray-400 ${theme === 'dark' ? 'hover:text-white hover:bg-gray-700/50' : 'hover:text-gray-900 hover:bg-gray-200'} rounded-md transition-all duration-200`}
+              title={t('sidebar.newSessionTooltip')}
+              aria-label={t('sidebar.newSession')}
+            >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
+          </div>
         </div>
 
         {/* Search */}
@@ -306,6 +392,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('sidebar.search')}
+            aria-label={t('sidebar.search')}
             className={`w-full pl-8 pr-3 py-1.5 text-sm rounded-md focus:outline-none focus:ring-1 transition-all ${
               theme === 'dark'
                 ? 'bg-gray-700/50 text-white placeholder-gray-500 focus:ring-blue-500/50 focus:bg-gray-700/70'
@@ -427,7 +514,8 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                   <div
                     key={session.id}
                     onClick={() => handleSessionClick(session)}
-                    title={getSessionTooltip(session)}
+                    title={buildSessionTooltip(session)}
+                    aria-current={currentSessionId === session.id ? 'true' : undefined}
                     className={`group relative flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer transition-all duration-200 ${
                       currentSessionId === session.id
                         ? theme === 'dark'
@@ -438,7 +526,18 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                     }`}
                   >
-                    {/* Session icon */}
+                    {/* Checkbox in select mode, session icon otherwise */}
+                    {selectMode ? (
+                      <input
+                        type="checkbox"
+                        checked={selectedSessions.has(session.id)}
+                        onChange={() => {}} // handled by parent div click
+                        aria-label={session.name}
+                        className={`flex-shrink-0 w-4 h-4 rounded border-gray-500 text-blue-500 focus:ring-blue-500/50 ${
+                          theme === 'dark' ? 'bg-gray-700' : 'bg-white'
+                        }`}
+                      />
+                    ) : (
                     <div className={`flex-shrink-0 w-6 h-6 rounded-md flex items-center justify-center ${
                       currentSessionId === session.id
                         ? theme === 'dark'
@@ -452,6 +551,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                       </svg>
                     </div>
+                    )}
 
                     {/* Session info */}
                     <div className="flex-1 min-w-0">
@@ -697,6 +797,52 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
           ))
         )}
       </div>
+
+      {/* Floating action bar for select mode */}
+      {selectMode && (
+        <div className={`px-3 py-2 border-t flex items-center gap-2 ${
+          theme === 'dark'
+            ? 'bg-gray-800 border-gray-700/50 text-gray-300'
+            : 'bg-white border-gray-200 text-gray-700'
+        }`}>
+          <span className="text-xs">{t('sidebar.selectedCount', { count: selectedSessions.size })}</span>
+          <button
+            onClick={handleSelectAll}
+            aria-label={t('sidebar.selectAll')}
+            className={`text-xs px-2 py-1 rounded transition-colors ${
+              theme === 'dark'
+                ? 'text-blue-400 hover:bg-gray-700/50'
+                : 'text-blue-600 hover:bg-gray-200'
+            }`}
+          >
+            {t('sidebar.selectAll')}
+          </button>
+          <button
+            onClick={handleBatchTag}
+            disabled={selectedSessions.size === 0}
+            aria-label={t('sidebar.batchTag')}
+            className={`text-xs px-2 py-1 rounded transition-colors disabled:opacity-50 ${
+              theme === 'dark'
+                ? 'text-yellow-400 hover:bg-gray-700/50'
+                : 'text-yellow-600 hover:bg-gray-200'
+            }`}
+          >
+            {t('sidebar.batchTag')}
+          </button>
+          <button
+            onClick={handleBatchDelete}
+            disabled={selectedSessions.size === 0}
+            aria-label={t('sidebar.batchDelete')}
+            className={`text-xs px-2 py-1 rounded transition-colors disabled:opacity-50 ${
+              theme === 'dark'
+                ? 'text-red-400 hover:bg-gray-700/50'
+                : 'text-red-600 hover:bg-gray-200'
+            }`}
+          >
+            {t('sidebar.batchDelete')}
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       <div className={`p-3 border-t ${theme === 'dark' ? 'border-gray-700/50' : 'border-gray-200'}`}>

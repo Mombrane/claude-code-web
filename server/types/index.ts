@@ -40,6 +40,10 @@ export interface Message {
   content: string | ToolCallContent | ToolResultContent | ToolExecutionContent | FileContent | PatchContent;
   timestamp: string;
   sessionId: string;
+  costUsd?: number;
+  tokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 export interface ToolCallContent {

@@ -109,7 +109,7 @@ export class SessionStore {
               const matches = await searchTranscript(session.id, projectPath, options.search);
               if (matches.length > 0) {
                 // Add match snippet to session
-                (session as any).matchSnippet = matches[0].text;
+                session.matchSnippet = matches[0].text;
                 contentMatches.push(session);
               }
             } catch {

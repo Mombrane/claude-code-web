@@ -17,6 +17,40 @@ router.get('/tags', async (req: Request, res: Response) => {
   }
 });
 
+// Batch delete sessions (must be before /:id to avoid route conflicts)
+router.post('/batch-delete', async (req: Request, res: Response) => {
+  try {
+    const { sessionIds } = req.body;
+    if (!Array.isArray(sessionIds) || sessionIds.length === 0) {
+      return res.status(400).json({ error: 'sessionIds must be a non-empty array' });
+    }
+    if (sessionIds.length > 100) {
+      return res.status(400).json({ error: 'Cannot delete more than 100 sessions at once' });
+    }
+    if (!sessionIds.every((id: unknown) => typeof id === 'string')) {
+      return res.status(400).json({ error: 'All sessionIds must be strings' });
+    }
+    const failed: string[] = [];
+    let deleted = 0;
+    for (const id of sessionIds) {
+      try {
+        await claudeProcessManager.closeSession(id);
+        const success = await sessionStore.deleteSession(id);
+        if (success) {
+          deleted++;
+        } else {
+          failed.push(id);
+        }
+      } catch {
+        failed.push(id);
+      }
+    }
+    res.json({ deleted, failed });
+  } catch (e) {
+    res.status(500).json({ error: 'Failed to batch delete sessions' });
+  }
+});
+
 // Get all sessions
 router.get('/', async (req: Request, res: Response) => {
   try {

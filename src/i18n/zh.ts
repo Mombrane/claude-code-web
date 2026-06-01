@@ -288,6 +288,8 @@ export default {
   'toast.sessionCreated': '会话已创建',
   'toast.sessionDeleted': '会话已删除',
   'toast.sessionDuplicated': '会话已复制',
+  'toast.batchDeleteSuccess': '已删除 {count} 个会话',
+  'toast.batchDeleteFailed': '部分会话删除失败',
 
   // Session rename
   'session.rename': '重命名',
@@ -325,12 +327,21 @@ export default {
   // Sidebar extra
   'sidebar.sessionCount': '{count} 个会话',
 
+  // Sidebar select mode
+  'sidebar.selectMode': '选择',
+  'sidebar.exitSelect': '退出选择',
+  'sidebar.selectedCount': '已选 {count} 个',
+  'sidebar.selectAll': '全选',
+  'sidebar.batchDelete': '删除所选',
+  'sidebar.batchDeleteConfirm': '确定要删除 {count} 个会话吗？',
+  'sidebar.batchTag': '标记所选',
+
   // Sidebar status filter
   'sidebar.filter.all': '全部',
   'sidebar.filter.active': '活跃',
   'sidebar.filter.idle': '空闲',
   'sidebar.filter.closed': '已关闭',
-  'sidebar.statusFilter': '状态筛选',
+  'sidebar.statusFilter': '按状态筛选',
   'sidebar.noFilterResults': '没有 {filter} 状态的会话',
   'sidebar.deepSearch': '搜索消息内容',
   'sidebar.clearFilter': '清除筛选',

@@ -288,6 +288,8 @@ export default {
   'toast.sessionCreated': 'Session created',
   'toast.sessionDeleted': 'Session deleted',
   'toast.sessionDuplicated': 'Session duplicated',
+  'toast.batchDeleteSuccess': '{count} sessions deleted',
+  'toast.batchDeleteFailed': 'Failed to delete some sessions',
 
   // Session rename
   'session.rename': 'Rename',
@@ -325,12 +327,21 @@ export default {
   // Sidebar extra
   'sidebar.sessionCount': '{count} sessions',
 
+  // Sidebar select mode
+  'sidebar.selectMode': 'Select',
+  'sidebar.exitSelect': 'Exit Select',
+  'sidebar.selectedCount': '{count} selected',
+  'sidebar.selectAll': 'Select All',
+  'sidebar.batchDelete': 'Delete Selected',
+  'sidebar.batchDeleteConfirm': 'Are you sure you want to delete {count} sessions?',
+  'sidebar.batchTag': 'Tag Selected',
+
   // Sidebar status filter
   'sidebar.filter.all': 'All',
   'sidebar.filter.active': 'Active',
   'sidebar.filter.idle': 'Idle',
   'sidebar.filter.closed': 'Closed',
-  'sidebar.statusFilter': 'Status Filter',
+  'sidebar.statusFilter': 'Filter by status',
   'sidebar.noFilterResults': 'No {filter} sessions',
   'sidebar.deepSearch': 'Search in messages',
   'sidebar.clearFilter': 'Clear filter',

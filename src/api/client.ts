@@ -114,6 +114,15 @@ export const api = {
     return res.json();
   },
 
+  async batchDeleteSessions(sessionIds: string[]): Promise<{ deleted: number; failed: string[] }> {
+    const res = await fetch(`${API_BASE}/sessions/batch-delete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionIds }),
+    });
+    return res.json();
+  },
+
   // Files
   async listDirectory(path: string) {
     const res = await fetch(`${API_BASE}/files/tree?path=${encodeURIComponent(path)}`);
