@@ -20,6 +20,7 @@ export default {
   'sidebar.title': '侧边栏',
   'sidebar.newSessionTooltip': '新建会话 (Ctrl+N)',
   'sidebar.lastMessage': '最近消息',
+  'sidebar.clearSearch': '清除搜索',
 
   // Time groups
   'time.today': '今天',
@@ -415,4 +416,9 @@ export default {
   'transcript.copy': '复制',
   'transcript.copied': '已复制！',
   'transcript.empty': '暂无原始记录',
+
+  // Tool usage stats
+  'chat.toolStats': '工具使用',
+  'chat.toolStats.expand': '显示工具使用',
+  'chat.toolStats.collapse': '隐藏工具使用',
 } as const;

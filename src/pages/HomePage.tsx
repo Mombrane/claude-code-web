@@ -4,7 +4,7 @@ import { api } from '../api/client';
 import { useSessionStore } from '../stores/sessionStore';
 import { useI18n } from '../i18n';
 import { useTheme } from '../components/ui/ThemeProvider';
-import { formatCost, formatTokens, formatDate, groupSessionsByTime, encodePath } from '../utils/format';
+import { formatCost, formatTokens, formatDate, groupSessionsByTime, encodePath, highlightMatch } from '../utils/format';
 import type { Project, Session } from '../types';
 
 export function HomePage() {
@@ -388,7 +388,7 @@ export function HomePage() {
                               ? 'text-gray-200 group-hover:text-white'
                               : 'text-gray-700 group-hover:text-gray-900'
                           }`}>
-                            {session.name}
+                            {searchQuery ? highlightMatch(session.name, searchQuery, theme) : session.name}
                           </div>
                           {session.matchSnippet && (
                             <div className={`text-[11px] truncate max-w-[250px] ${

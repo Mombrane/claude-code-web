@@ -1,3 +1,4 @@
+import React from 'react';
 import type { Session } from '../types';
 
 type TFunction = (key: string, params?: Record<string, string | number>) => string;
@@ -132,4 +133,19 @@ export function getRelativeTime(timestamp: string, t: TFunction): string | null 
  */
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Highlight matching text in a string with <mark> elements.
+ * Returns JSX-compatible output for search result highlighting.
+ */
+export function highlightMatch(text: string, query: string, theme: 'dark' | 'light'): React.ReactNode {
+  if (!query) return text;
+  const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+  const parts = text.split(regex);
+  if (parts.length === 1) return text; // No match
+  const markClass = theme === 'dark' ? 'bg-yellow-500/30 text-yellow-200' : 'bg-yellow-200 text-yellow-800';
+  return parts.map((part, i) =>
+    regex.test(part) ? React.createElement('mark', { key: i, className: markClass }, part) : part
+  );
 }

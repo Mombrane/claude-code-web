@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useSessionStore } from '../../stores/sessionStore';
 import { api } from '../../api/client';
 import { useI18n } from '../../i18n';
-import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration } from '../../utils/format';
+import { formatCost, formatTokens, formatTime, groupSessionsByTime, encodePath, formatDuration, highlightMatch } from '../../utils/format';
 import { TagChip } from '../ui/TagChip';
  import { SessionNotesDialog } from '../ui/SessionNotesDialog';
  import { Tooltip } from '../ui/Tooltip';
@@ -444,12 +444,28 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={t('sidebar.search')}
             aria-label={t('sidebar.search')}
-            className={`w-full pl-8 pr-3 py-1.5 text-sm rounded-md focus:outline-none focus:ring-1 transition-all ${
+            className={`w-full pl-8 pr-8 py-1.5 text-sm rounded-md focus:outline-none focus:ring-1 transition-all ${
               theme === 'dark'
                 ? 'bg-gray-700/50 text-white placeholder-gray-500 focus:ring-blue-500/50 focus:bg-gray-700/70'
                 : 'bg-gray-100 text-gray-800 placeholder-gray-400 focus:ring-blue-500/50 focus:bg-gray-200/70'
             }`}
           />
+          {searchQuery && (
+            <button
+              onClick={() => { setSearchQuery(''); setDeepSearch(false); }}
+              className={`absolute right-2 top-1/2 -translate-y-1/2 p-0.5 rounded-full transition-colors ${
+                theme === 'dark'
+                  ? 'text-gray-400 hover:text-white hover:bg-gray-600'
+                  : 'text-gray-500 hover:text-gray-800 hover:bg-gray-200'
+              }`}
+              aria-label={t('sidebar.clearSearch')}
+              title={t('sidebar.clearSearch')}
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          )}
         </div>
         {/* Deep search toggle */}
         {searchQuery && (
@@ -680,7 +696,7 @@ export function Sidebar({ projectPath, theme = 'dark' }: { projectPath?: string;
                             className="text-sm font-medium truncate cursor-text"
                             onDoubleClick={(e) => handleStartRename(session, e)}
                             title={t('session.renameHint')}
-                          >{session.name}</div>
+                          >{searchQuery ? highlightMatch(session.name, searchQuery, theme) : session.name}</div>
                           {session.lastUserMessage && (
                             <div
                               className={`text-[11px] truncate max-w-[180px] ${

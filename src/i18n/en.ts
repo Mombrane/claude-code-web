@@ -20,6 +20,7 @@ export default {
   'sidebar.title': 'Sidebar',
   'sidebar.newSessionTooltip': 'New Session (Ctrl+N)',
   'sidebar.lastMessage': 'Last message',
+  'sidebar.clearSearch': 'Clear search',
 
   // Time groups
   'time.today': 'Today',
@@ -415,4 +416,9 @@ export default {
   'transcript.copy': 'Copy',
   'transcript.copied': 'Copied!',
   'transcript.empty': 'No transcript available',
+
+  // Tool usage stats
+  'chat.toolStats': 'Tool Usage',
+  'chat.toolStats.expand': 'Show tool usage',
+  'chat.toolStats.collapse': 'Hide tool usage',
 } as const;

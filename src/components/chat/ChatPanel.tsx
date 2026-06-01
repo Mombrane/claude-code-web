@@ -12,6 +12,20 @@ import { v4 as uuidv4 } from 'uuid';
 import { useI18n } from '../../i18n';
 import { formatTokens } from '../../utils/format';
 
+// Tool icon mapping for stats display (module-level constant)
+const TOOL_STATS_ICONS: Record<string, string> = {
+  'Read': ' ',
+  'Edit': '✏️',
+  'Write': ' ',
+  'Bash': ' ️',
+  'Grep': ' ',
+  'Glob': ' ',
+  'Agent': ' ',
+  'WebFetch': ' ',
+  'WebSearch': ' ',
+  'default': ' '
+};
+
 export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChange }: { theme?: 'dark' | 'light'; timelineVisible?: boolean; onVisibleRangeChange?: (range: { start: number; end: number }) => void }) {
   const { t } = useI18n();
   const { sessions, currentSessionId, currentMessages, addMessage, updateMessage, isLoadingMessages } = useSessionStore();
@@ -27,6 +41,9 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
   // File change tracker state
   const [sessionFiles, setSessionFiles] = useState<Set<string>>(new Set());
   const [filesExpanded, setFilesExpanded] = useState(false);
+
+  // Tool usage stats state
+  const [toolStatsExpanded, setToolStatsExpanded] = useState(false);
 
   // Compute session context info for header display
   const sessionModelDisplay = useMemo(() => {
@@ -53,6 +70,23 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
     if (diffHours < 24) return `${diffHours}h`;
     return `${diffDays}d`;
   }, [currentSession?.createdAt]);
+
+  // Compute tool usage statistics from currentMessages
+  const toolUsageStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const msg of currentMessages) {
+      if (msg.type === 'tool_execution' || msg.type === 'tool_use') {
+        const content = msg.content as { toolName?: string };
+        if (content?.toolName) {
+          counts[content.toolName] = (counts[content.toolName] || 0) + 1;
+        }
+      }
+    }
+    return Object.entries(counts)
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([name, count]) => ({ name, count, icon: TOOL_STATS_ICONS[name] || TOOL_STATS_ICONS['default'] }));
+  }, [currentMessages]);
 
   // Compute last assistant message cost and token breakdown for header display
   const lastAssistantStats = useMemo(() => {
@@ -657,6 +691,54 @@ export function ChatPanel({ theme = 'dark', timelineVisible, onVisibleRangeChang
                   </div>
                 );
               })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tool Usage Stats */}
+      {toolUsageStats.length > 0 && (
+        <div className={`border-b ${theme === 'dark' ? 'border-gray-700/50 bg-gray-800/20' : 'border-gray-200 bg-gray-50/50'}`}>
+          <button
+            onClick={() => setToolStatsExpanded(prev => !prev)}
+            className={`w-full flex items-center gap-2 px-4 py-1.5 text-xs transition-colors ${
+              theme === 'dark' ? 'text-gray-400 hover:text-gray-300' : 'text-gray-500 hover:text-gray-700'
+            }`}
+            title={toolStatsExpanded ? t('chat.toolStats.collapse') : t('chat.toolStats.expand')}
+          >
+            <span> </span>
+            <span>{t('chat.toolStats')}</span>
+            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-medium ${
+              theme === 'dark' ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'
+            }`}>
+              {toolUsageStats.reduce((sum, s) => sum + s.count, 0)}
+            </span>
+            {!toolStatsExpanded && (
+              <span className={`flex items-center gap-2 ml-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+                {toolUsageStats.map((stat) => (
+                  <span key={stat.name} className="flex items-center gap-0.5">
+                    <span>{stat.icon}</span>
+                    <span>{stat.name}</span>
+                    <span className={`font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>×{stat.count}</span>
+                  </span>
+                ))}
+              </span>
+            )}
+            <span className="ml-1">{toolStatsExpanded ? '▾' : '▸'}</span>
+          </button>
+          {toolStatsExpanded && (
+            <div className={`px-4 pb-2 flex flex-wrap gap-3 text-[11px] ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              {toolUsageStats.map((stat) => (
+                <div key={stat.name} className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${
+                  theme === 'dark' ? 'bg-gray-700/50' : 'bg-gray-100'
+                }`}>
+                  <span className="text-sm">{stat.icon}</span>
+                  <span className="font-medium">{stat.name}</span>
+                  <span className={`font-bold ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>×{stat.count}</span>
+                </div>
+              ))}
             </div>
           )}
         </div>
