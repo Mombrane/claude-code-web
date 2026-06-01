@@ -1,7 +1,9 @@
 import { Router, Request, Response } from 'express';
 import { sessionStore } from '../services/session-store';
 import { claudeProcessManager } from '../services/claude-process';
-import { readTranscript } from '../services/claude-transcript';
+import { readTranscript, getTranscriptPath } from '../services/claude-transcript';
+import fs from 'fs/promises';
+import path from 'path';
 
 const router = Router();
 
@@ -50,6 +52,89 @@ router.post('/', async (req: Request, res: Response) => {
   } catch (e) {
     console.error('Failed to create session:', e);
     res.status(500).json({ error: 'Failed to create session' });
+  }
+});
+
+// Export session as JSON (must be before /:id to avoid route conflicts)
+router.get('/:id/export', async (req: Request, res: Response) => {
+  try {
+    const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+    const session = await sessionStore.getSession(id);
+    if (!session) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    const projectPath = session.projectPath || session.cwd;
+    const messages = await readTranscript(id, projectPath);
+
+    // Also include raw JSONL for lossless round-trip import
+    let rawJsonl: string | undefined;
+    try {
+      const transcriptPath = getTranscriptPath(id, projectPath);
+      rawJsonl = await fs.readFile(transcriptPath, 'utf-8');
+    } catch {
+      // Transcript file may not exist for empty sessions
+    }
+
+    res.json({
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      session,
+      messages,
+      rawJsonl,
+    });
+  } catch (e) {
+    console.error('Failed to export session:', e);
+    res.status(500).json({ error: 'Failed to export session' });
+  }
+});
+
+// Import session from exported JSON (must be before /:id to avoid route conflicts)
+router.post('/import', async (req: Request, res: Response) => {
+  try {
+    const { version, session: sourceSession, messages, rawJsonl } = req.body;
+
+    if (!version || !sourceSession) {
+      return res.status(400).json({ error: 'Invalid import format: missing version or session data' });
+    }
+
+    const now = new Date().toISOString();
+    const newId = crypto.randomUUID();
+
+    const newSession = {
+      ...sourceSession,
+      id: newId,
+      name: `${sourceSession.name || 'Imported Session'} (imported)`,
+      createdAt: now,
+      updatedAt: now,
+      status: 'idle' as const,
+    };
+
+    await sessionStore.saveSession(newSession);
+
+    // Write transcript — prefer raw JSONL for lossless round-trip
+    const projectPath = newSession.projectPath || newSession.cwd;
+    if (!projectPath) {
+      return res.status(400).json({ error: 'Cannot determine project path for import' });
+    }
+
+    const transcriptPath = getTranscriptPath(newId, projectPath);
+    const dir = path.dirname(transcriptPath);
+    await fs.mkdir(dir, { recursive: true });
+
+    if (rawJsonl && typeof rawJsonl === 'string') {
+      // Lossless: write the original raw JSONL content
+      await fs.writeFile(transcriptPath, rawJsonl, 'utf-8');
+    } else if (Array.isArray(messages) && messages.length > 0) {
+      // Fallback: write parsed messages as JSONL (lossy but functional)
+      const jsonlContent = messages.map((msg: unknown) => JSON.stringify(msg)).join('\n') + '\n';
+      await fs.writeFile(transcriptPath, jsonlContent, 'utf-8');
+    }
+
+    res.status(201).json(newSession);
+  } catch (e) {
+    console.error('Failed to import session:', e);
+    res.status(500).json({ error: 'Failed to import session' });
   }
 });
 

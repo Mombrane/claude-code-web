@@ -8,7 +8,7 @@ import type { Message, ToolExecutionContent } from '../types';
  * These are the authoritative source for conversation history.
  */
 
-const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
+export const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), '.claude', 'projects');
 
 /** Metadata about a tool_use block collected from assistant messages. */
 interface ToolUseInfo {
@@ -20,14 +20,14 @@ interface ToolUseInfo {
  * Convert a project path to Claude Code's directory name format.
  * e.g. /home/user/project -> -home-user-project
  */
-function projectPathToDirName(projectPath: string): string {
+export function projectPathToDirName(projectPath: string): string {
   return projectPath.replace(/\//g, '-');
 }
 
 /**
  * Get the .jsonl file path for a given session.
  */
-function getTranscriptPath(sessionId: string, projectPath: string): string {
+export function getTranscriptPath(sessionId: string, projectPath: string): string {
   const dirName = projectPathToDirName(projectPath);
   return path.join(CLAUDE_PROJECTS_DIR, dirName, `${sessionId}.jsonl`);
 }

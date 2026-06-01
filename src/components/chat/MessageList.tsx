@@ -13,6 +13,96 @@ import { ToolGroupCard } from './ToolGroupCard';
 import { ThinkingBlock } from './ThinkingBlock';
 import { Virtuoso, type VirtuosoHandle } from 'react-virtuoso';
 
+// Floating action toolbar that appears on hover over message bubbles
+function MessageActionToolbar({
+  message,
+  theme,
+  copiedMessageId,
+  onCopy,
+  onRetry,
+  showRetry,
+  t,
+}: {
+  message: Message;
+  theme: 'dark' | 'light';
+  copiedMessageId: string | null;
+  onCopy: (message: Message) => void;
+  onRetry?: () => void;
+  showRetry: boolean;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}) {
+  return (
+    <div className={`
+      absolute -top-3 right-2 z-10
+      flex items-center gap-0.5 px-1 py-0.5 rounded-md shadow-md
+      opacity-0 group-hover:opacity-100
+      transition-opacity duration-200 ease-in-out
+      ${theme === 'dark'
+        ? 'bg-gray-700/95 border border-gray-600/50'
+        : 'bg-white/95 border border-gray-200'
+      }
+    `}>
+      {/* Copy button */}
+      <button
+        onClick={(e) => { e.stopPropagation(); onCopy(message); }}
+        className={`p-1 rounded transition-colors ${
+          theme === 'dark'
+            ? 'hover:bg-gray-600 text-gray-300'
+            : 'hover:bg-gray-100 text-gray-600'
+        }`}
+        title={t('chat.copyMessage')}
+        aria-label={t('message.copy')}
+      >
+        {copiedMessageId === message.id ? (
+          <svg className="w-3.5 h-3.5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        ) : (
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        )}
+      </button>
+
+      {/* Retry button (only for last assistant text message) */}
+      {showRetry && onRetry && (
+        <button
+          onClick={(e) => { e.stopPropagation(); onRetry(); }}
+          className={`p-1 rounded transition-colors ${
+            theme === 'dark'
+              ? 'hover:bg-gray-600 text-gray-300'
+              : 'hover:bg-gray-100 text-gray-600'
+          }`}
+          title={t('message.retry')}
+          aria-label={t('message.retry')}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      )}
+
+      {/* Delete button (only for user messages) */}
+      {message.role === 'user' && (
+        <button
+          onClick={(e) => { e.stopPropagation(); useSessionStore.getState().deleteMessage(message.id); }}
+          className={`p-1 rounded transition-colors ${
+            theme === 'dark'
+              ? 'hover:bg-red-600/60 text-gray-300 hover:text-white'
+              : 'hover:bg-red-100 text-gray-600 hover:text-red-600'
+          }`}
+          title={t('message.delete')}
+          aria-label={t('message.delete')}
+        >
+          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </button>
+      )}
+    </div>
+  );
+}
+
 function getRelativeTime(timestamp: string, t: (key: string, params?: Record<string, string | number>) => string): string | null {
   const now = Date.now();
   const msgTime = new Date(timestamp).getTime();
@@ -611,58 +701,24 @@ export function MessageList({ messages, streamingText, isStreaming, streamingThi
       }
     })();
 
+    const isLastAssistant = message.role === 'assistant' && message.type === 'text' && index === lastAssistantIndex;
+
     return (
       <div className="group relative">
         {messageContent}
-        {/* Action buttons */}
-        <div className={`absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 ${
-          message.role === 'user' ? 'left-2 right-auto' : ''
-        }`}>
-          <button
-            onClick={() => handleCopyMessage(message)}
-            className={`p-1.5 rounded-md text-xs transition-colors ${
-              theme === 'dark'
-                ? 'bg-gray-700/80 hover:bg-gray-600 text-gray-300'
-                : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-            }`}
-            title={t('chat.copyMessage')}
-            aria-label={t('message.copy')}
-          >
-            {copiedMessageId === message.id ? '✓' : ' '}
-          </button>
-          {message.role === 'assistant' && index === lastAssistantIndex && !isStreaming && onRetry && (
-            <button
-              onClick={onRetry}
-              className={`p-1.5 rounded-md text-xs transition-colors ${
-                theme === 'dark'
-                  ? 'bg-gray-700/80 hover:bg-gray-600 text-gray-300'
-                  : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
-              }`}
-              title={t('message.retry')}
-              aria-label={t('message.retry')}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-            </button>
-          )}
-          {message.role === 'user' && (
-            <button
-              onClick={() => useSessionStore.getState().deleteMessage(message.id)}
-              className={`p-1.5 rounded-md text-xs transition-colors ${
-                theme === 'dark'
-                  ? 'bg-gray-700/80 hover:bg-red-600/80 text-gray-300 hover:text-white'
-                  : 'bg-gray-200 hover:bg-red-500/80 text-gray-700 hover:text-white'
-              }`}
-              title={t('message.delete')}
-              aria-label={t('message.delete')}
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          )}
-        </div>
+        {/* Floating action toolbar (appears on hover at top-right) */}
+        {(message.type === 'text' || message.type === 'tool_use' || message.type === 'tool_result' || message.type === 'tool_execution' || message.type === 'file' || message.type === 'patch') && (
+          <MessageActionToolbar
+            message={message}
+            theme={theme}
+            copiedMessageId={copiedMessageId}
+            onCopy={handleCopyMessage}
+            onRetry={onRetry}
+            showRetry={isLastAssistant && !isStreaming}
+            t={t}
+          />
+        )}
+
       </div>
     );
   };

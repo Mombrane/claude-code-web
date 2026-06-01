@@ -149,7 +149,7 @@ export function HomePage() {
 
         {/* Project list */}
         <div className="flex-1 overflow-y-auto py-2">
-          <div className={`px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${'text-gray-500'}`}>
+          <div className={`px-3 py-1.5 text-[10px] font-medium uppercase tracking-wider ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
             {t('home.projects')}
           </div>
           {projects.map(project => (
@@ -185,7 +185,7 @@ export function HomePage() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-medium truncate">{project.name}</div>
-                <div className={`text-[11px] truncate ${'text-gray-500'}`}>{project.worktree}</div>
+                <div className={`text-[11px] truncate ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{project.worktree}</div>
               </div>
               <button
                 onClick={(e) => handleDeleteProject(project.id, e)}
@@ -230,7 +230,7 @@ export function HomePage() {
                 {selectedProjectData?.name || t('home.selectProject')}
               </h2>
               {selectedProjectData && (
-                <p className={`text-xs mt-0.5 ${'text-gray-500'}`}>{selectedProjectData.worktree}</p>
+                <p className={`text-xs mt-0.5 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>{selectedProjectData.worktree}</p>
               )}
             </div>
             <button
@@ -251,7 +251,7 @@ export function HomePage() {
 
           {/* Search */}
           <div className="relative">
-            <svg className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${'text-gray-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className={`absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -339,7 +339,7 @@ export function HomePage() {
               <div className="animate-spin w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full" />
             </div>
           ) : groupedSessions.length === 0 ? (
-            <div className={`flex flex-col items-center justify-center h-full ${'text-gray-500'}`}>
+            <div className={`flex flex-col items-center justify-center h-full ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
               <svg className={`w-12 h-12 mb-4 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
@@ -359,7 +359,7 @@ export function HomePage() {
             <div className="space-y-6">
               {groupedSessions.map(({ label, sessions }) => (
                 <div key={label}>
-                  <h3 className={`text-[11px] font-medium uppercase tracking-wider mb-2 ${'text-gray-500'}`}>
+                  <h3 className={`text-[11px] font-medium uppercase tracking-wider mb-2 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
                     {label}
                   </h3>
                   <div className="space-y-1">
@@ -399,7 +399,7 @@ export function HomePage() {
                                 : session.matchSnippet}
                             </div>
                           )}
-                          <div className={`flex items-center gap-2 text-[11px] ${'text-gray-500'}`}>
+                          <div className={`flex items-center gap-2 text-[11px] ${theme === 'dark' ? 'text-gray-500' : 'text-gray-600'}`}>
                             <span>{formatDate(session.updatedAt, locale, t)}</span>
                             {session.totalCostUsd > 0 && (
                               <>
